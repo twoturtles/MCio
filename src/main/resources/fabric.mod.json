@@ -3,15 +3,14 @@
 	"id": "mcio",
 	"version": "${version}",
 	"name": "MCio",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Minecraft I/O",
 	"authors": [
-		"Me!"
+		"twoturtles"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/twoturtles/MCio"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/mcio/icon.png",
 	"environment": "*",
 	"entrypoints": {
