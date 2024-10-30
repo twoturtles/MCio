@@ -1,4 +1,4 @@
-package com.github.twoturtles;
+package net.twoturtles;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

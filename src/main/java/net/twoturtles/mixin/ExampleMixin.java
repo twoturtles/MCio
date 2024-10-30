@@ -1,4 +1,4 @@
-package com.github.twoturtles.mixin;
+package net.twoturtles.mixin;
 
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;

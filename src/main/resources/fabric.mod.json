@@ -15,10 +15,10 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.github.twoturtles.MCio"
+			"net.twoturtles.MCio"
 		],
 		"client": [
-			"com.github.twoturtles.MCioClient"
+			"net.twoturtles.MCioClient"
 		]
 	},
 	"mixins": [

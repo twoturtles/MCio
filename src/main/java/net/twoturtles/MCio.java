@@ -1,4 +1,4 @@
-package com.github.twoturtles;
+package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
 
