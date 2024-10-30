@@ -19,18 +19,28 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private static final Logger LOGGER = LogUtils.getLogger();
-	private static KeyBinding captureKey;
-	private static final String CATEGORY = "key.categories.framecapture";
-	private static int frameCount = 0;
+	private static final MCioFrameCapture fcap = new MCioFrameCapture();
 
 	@Override
 	public void onInitializeClient() {
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
 		LOGGER.info("Client Init");
+		fcap.initialize();
+	}
+}
+
+class MCioFrameCapture {
+	private static final Logger LOGGER = LogUtils.getLogger();
+	private static KeyBinding captureKey;
+	private static final String CATEGORY = "key.categories.framecapture";
+	private static int frameCount = 0;
+
+	public void initialize() {
+		LOGGER.info("Init");
 
 		// Register the keybinding (default to F8)
 		captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.framecapture.capture",
+				"key.mcio.framecapture",
 				GLFW.GLFW_KEY_F8,
 				CATEGORY
 		));
@@ -41,7 +51,6 @@ public class MCioClient implements ClientModInitializer {
 				captureFrame(client);
 			}
 		});
-
 	}
 
 	private void captureFrame(MinecraftClient client) {
@@ -54,7 +63,7 @@ public class MCioClient implements ClientModInitializer {
 				client.runDirectory,
 				fileName,
 				client.getFramebuffer(),
-				(message) -> {}		// No message to the UI
+				(message) -> {}       // No message to the UI
 		);
 	}
 }
