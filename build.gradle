@@ -91,7 +91,14 @@ publishing {
 loom {
 	runs {
 		client {
-			programArgs('--quickPlaySingleplayer', 'New World')
+			programArgs (
+					'--width', '640',
+					'--height', '640',
+					'--windowX', '100',
+					'--windowY', '100',
+					'--quickPlaySingleplayer', 'New World',
+					//'--fullscreen'
+			)
 		}
 	}
 }
