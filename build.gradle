@@ -86,3 +86,12 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+/* MCio config */
+loom {
+	runs {
+		client {
+			programArgs('--quickPlaySingleplayer', 'New World')
+		}
+	}
+}
