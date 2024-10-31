@@ -16,6 +16,7 @@ public class MCio implements ModInitializer {
 
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static int tickCount = 0;
+	private static long tickStartTime = 0, tickEndTime = 0;
 
 	@Override
 	public void onInitialize() {
@@ -27,6 +28,12 @@ public class MCio implements ModInitializer {
 
 		// XXX Check out command TickSprint
 		ServerTickEvents.START_SERVER_TICK.register(server -> {
+			tickStartTime = System.nanoTime();
+			if (tickEndTime != 0) {
+				long endToStart = tickStartTime - tickEndTime;
+				LOGGER.info("Time between ticks {} ms",
+						String.format("%.2f", (tickStartTime - tickEndTime) / 1_000_000.0));
+			}
 			if (tickCount % 20 == 0) {
 				LOGGER.info("Server Tick Count {}", tickCount);
 			}
@@ -45,6 +52,13 @@ public class MCio implements ModInitializer {
 				}
 			}
 
+		});
+
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			tickEndTime = System.nanoTime();
+			long endToStart = tickStartTime - tickEndTime;
+			LOGGER.info("Tick time {} ms",
+					String.format("%.2f", (tickEndTime - tickStartTime) / 1_000_000.0));
 		});
 	}
 }
