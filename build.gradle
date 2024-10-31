@@ -100,5 +100,33 @@ loom {
 					//'--fullscreen'
 			)
 		}
+		client1 {
+			client()  // Use client configuration as base
+			ideConfigGenerated(true)  // Generate IDE config
+			runDir "run1"
+			programArgs (
+					'--width', '640',
+					'--height', '640',
+					'--windowX', '100',
+					'--windowY', '100',
+					//'--quickPlaySingleplayer', 'New World',
+					//'--fullscreen'
+			)
+			property 'minecraft.clientPort', '25565'  // default port
+		}
+		client2 {
+			client()  // Use client configuration as base
+			ideConfigGenerated(true)  // Generate IDE config
+			runDir "run2"
+			programArgs (
+					'--width', '640',
+					'--height', '640',
+					'--windowX', '100',
+					'--windowY', '100',
+					//'--quickPlaySingleplayer', 'New World',
+					//'--fullscreen'
+			)
+			property 'minecraft.clientPort', '25566'  // different port
+		}
 	}
 }
