@@ -24,7 +24,7 @@ public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static final MCioFrameCapture fcap = new MCioFrameCapture();
-	private static final MCioIO mcio = new MCioIO();
+	private static final MCioKeys keys = new MCioKeys();
 
 	@Override
 	public void onInitializeClient() {
@@ -32,7 +32,7 @@ public class MCioClient implements ClientModInitializer {
 		LOGGER.info("Client Init");
 
 		fcap.initialize();
-		mcio.initialize();
+		keys.initialize();
 	}
 }
 
@@ -54,15 +54,15 @@ class MCioFrameCapture {
 		// Register the tick event
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (captureKey.wasPressed() && client.world != null) {
-				captureFrame(client);
+				doCapture(client);
 			}
 		});
 	}
 
-	private void captureFrame(MinecraftClient client) {
+	private void doCapture(MinecraftClient client) {
 		String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
 		String fileName = String.format("frame_%s_%d.png", timestamp, frameCount++);
-		LOGGER.info("Captured frame: " + fileName);
+		LOGGER.info("Captured frame: {}", fileName);
 
 		// Capture the frame using Minecraft's screenshot recorder
 		ScreenshotRecorder.saveScreenshot(
@@ -74,9 +74,9 @@ class MCioFrameCapture {
 	}
 }
 
-class MCioIO {
+class MCioKeys {
 	private static final Logger LOGGER = LogUtils.getLogger();
-	private static KeyBinding breakKey, nextKey, contKey;
+	private static KeyBinding breakKey, nextKey;
 	private static int tickCount = 0;
 
 	public void initialize() {
@@ -92,24 +92,20 @@ class MCioIO {
 				GLFW.GLFW_KEY_N,
 				MCIO_CONST.KEY_CATEGORY
 		));
-		contKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"MCioIO_continue",
-				GLFW.GLFW_KEY_C,
-				MCIO_CONST.KEY_CATEGORY
-		));
-		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+		ClientTickEvents.START_CLIENT_TICK.register(client -> {
+			if (tickCount % 100 == 0) {
+				LOGGER.info("Client Tick Count {}", tickCount);
+			}
 			tickCount++;
+
 			if (breakKey.wasPressed() && client.world != null) {
-				LOGGER.info("BREAK {}", tickCount);
-				client.player.networkHandler.sendCommand("tick freeze");
+				LOGGER.info("Break-Toggle");
+				/* Tell server */
+				MCio.isFrozen.set(!MCio.isFrozen.get());
 			}
 			if (nextKey.wasPressed() && client.world != null) {
-				LOGGER.info("NEXT {}", tickCount);
+				LOGGER.info("Next");
 				client.player.networkHandler.sendCommand("tick step");
-			}
-			if (contKey.wasPressed() && client.world != null) {
-				LOGGER.info("CONT {}", tickCount);
-				client.player.networkHandler.sendCommand("tick unfreeze");
 			}
 		});
 	}
