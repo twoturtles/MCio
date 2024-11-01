@@ -77,7 +77,7 @@ class MCioFrameCapture {
 class MCioKeys {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static KeyBinding breakKey, nextKey;
-	private static int tickCount = 0;
+	private static int clientTickCount = 0;
 
 	public void initialize() {
 		LOGGER.info("Init");
@@ -93,10 +93,10 @@ class MCioKeys {
 				MCIO_CONST.KEY_CATEGORY
 		));
 		ClientTickEvents.START_CLIENT_TICK.register(client -> {
-			if (tickCount % 100 == 0) {
-				LOGGER.info("Client Tick Count {}", tickCount);
+			if (clientTickCount % 20 == 0) {
+				LOGGER.info("Client Tick Count {}", clientTickCount);
 			}
-			tickCount++;
+			clientTickCount++;
 
 			if (breakKey.wasPressed() && client.world != null) {
 				LOGGER.info("Break-Toggle");
