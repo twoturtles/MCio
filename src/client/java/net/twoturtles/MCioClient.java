@@ -3,6 +3,7 @@ package net.twoturtles;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import org.slf4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
@@ -52,6 +53,11 @@ class MCioFrameCapture {
 		));
 
 		// Register the tick event
+		ClientTickEvents.START_CLIENT_TICK.register(client -> {
+			if (captureKey.wasPressed() && client.world != null) {
+				doCapture(client);
+			}
+		});
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (captureKey.wasPressed() && client.world != null) {
 				doCapture(client);
@@ -76,8 +82,9 @@ class MCioFrameCapture {
 
 class MCioKeys {
 	private static final Logger LOGGER = LogUtils.getLogger();
+	/* XXX static? */
 	private static KeyBinding breakKey, nextKey;
-	private static int clientTickCount = 0;
+	private final MCioTickTimer client_timer = new MCioTickTimer("Client");
 
 	public void initialize() {
 		LOGGER.info("Init");
@@ -93,10 +100,7 @@ class MCioKeys {
 				MCIO_CONST.KEY_CATEGORY
 		));
 		ClientTickEvents.START_CLIENT_TICK.register(client -> {
-			if (clientTickCount % 20 == 0) {
-				LOGGER.info("Client Tick Count {}", clientTickCount);
-			}
-			clientTickCount++;
+			client_timer.start();
 
 			if (breakKey.wasPressed() && client.world != null) {
 				LOGGER.info("Break-Toggle");
@@ -108,5 +112,10 @@ class MCioKeys {
 				client.player.networkHandler.sendCommand("tick step");
 			}
 		});
+
+		ClientTickEvents.END_CLIENT_TICK.register(server -> {
+			client_timer.end();
+		});
 	}
 }
+
