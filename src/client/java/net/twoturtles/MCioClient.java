@@ -17,6 +17,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 
+import net.twoturtles.util.tickTimer;
+
 class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";
 }
@@ -84,7 +86,7 @@ class MCioKeys {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	/* XXX static? */
 	private static KeyBinding breakKey, nextKey;
-	private final MCioTickTimer client_timer = new MCioTickTimer("Client");
+	private final tickTimer client_timer = new tickTimer("Client");
 
 	public void initialize() {
 		LOGGER.info("Init");

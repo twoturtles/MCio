@@ -11,12 +11,14 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
 import org.slf4j.Logger;
 
+import net.twoturtles.util.tickTimer;
+
 public class MCio implements ModInitializer {
 	public static AtomicBoolean isFrozen = new AtomicBoolean(false);
 
 	private static final Logger LOGGER = LogUtils.getLogger();
-	private final MCioTickTimer server_timer = new MCioTickTimer("Server");
-	private final MCioTickTimer world_timer = new MCioTickTimer("World");
+	private final tickTimer server_timer = new tickTimer("Server");
+	private final tickTimer world_timer = new tickTimer("World");
 
 	@Override
 	public void onInitialize() {
@@ -57,34 +59,6 @@ public class MCio implements ModInitializer {
 		ServerTickEvents.END_WORLD_TICK.register(server -> {
 			world_timer.end();
 		});
-	}
-}
-
-class MCioTickTimer {
-	private static final Logger LOGGER = LogUtils.getLogger();
-	private final String name;
-	private long startTime = 0, endTime = 0;
-	private long tickCount = 0;
-
-	public MCioTickTimer(String name) {
-		this.name = name;
-	}
-
-	public void start() {
-		startTime = System.nanoTime();
-		if (tickCount % 20 == 0) {	/* 20 tps */
-			String durr = String.format("%.2f", endTime > 0 ? (startTime - endTime) / 1_000_000.0 : 0);
-			LOGGER.info("Tick Start: {} {} between ticks = {} ms", name, tickCount, durr);
-		}
-	}
-
-	public void end() {
-		endTime = System.nanoTime();
-		if (tickCount % 20 == 0) {
-			LOGGER.info("Tick End: {} tick time = {} ms", name,
-					String.format("%.2f", (endTime - startTime) / 1_000_000.0));
-		}
-		tickCount++;
 	}
 }
 
