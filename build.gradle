@@ -98,7 +98,7 @@ loom {
 					//'--fullscreen'
 			)
 			vmArgs (
-//					'-Dfabric.log.level=warn'  // trace, debug, info, warn, error
+					'-Dfabric.log.level=warn'  // trace, debug, info, warn, error
 			)
 		}
 		client1 {

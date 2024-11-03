@@ -118,21 +118,21 @@ class MCioKeys {
 
 				client.execute(() -> {
 					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-							client.getWindow().getHandle(), -640.0, -640.0);
+							client.getWindow().getHandle(), 300.0, 300.0);
 				});
 
 			} else if (client_timer.tickCount == 200) {
 				LOGGER.warn("TWO");
 				client.execute(() -> {
 					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-							client.getWindow().getHandle(), 640.0, 640.0);
+							client.getWindow().getHandle(), 250, 250.0);
 				});
 
 			} else if (client_timer.tickCount == 300) {
 				LOGGER.warn("THREE");
 				client.execute(() -> {
 					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-							client.getWindow().getHandle(), 640.0, 640.0);
+							client.getWindow().getHandle(), 350.0, 350.0);
 				});
 		}
 
