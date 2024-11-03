@@ -7,7 +7,7 @@ public class tickTimer {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final String name;
     private long startTime = 0, endTime = 0;
-    private long tickCount = 0;
+    public long tickCount = 0;
 
     public tickTimer(String name) {
         this.name = name;

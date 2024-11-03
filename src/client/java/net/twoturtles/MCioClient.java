@@ -18,6 +18,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 
 import net.twoturtles.util.tickTimer;
+import net.twoturtles.mixin.client.MouseOnCursorPosInvoker;
 
 class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";
@@ -55,11 +56,6 @@ class MCioFrameCapture {
 		));
 
 		// Register the tick event
-		ClientTickEvents.START_CLIENT_TICK.register(client -> {
-			if (captureKey.wasPressed() && client.world != null) {
-				doCapture(client);
-			}
-		});
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (captureKey.wasPressed() && client.world != null) {
 				doCapture(client);
@@ -103,6 +99,42 @@ class MCioKeys {
 		));
 		ClientTickEvents.START_CLIENT_TICK.register(client -> {
 			client_timer.start();
+
+//			if (client_timer.tickCount == 100) {
+//				LOGGER.warn("PRESS");
+//				client.execute(() -> {
+//					client.keyboard.onKey(client.getWindow().getHandle(),
+//							GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_PRESS, 0);
+//				});
+//			} else if (client_timer.tickCount == 200) {
+//				LOGGER.warn("RELEASE");
+//				client.execute(() -> {
+//					client.keyboard.onKey(client.getWindow().getHandle(),
+//							GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_RELEASE, 0);
+//				});
+//			}
+			if (client_timer.tickCount == 100) {
+				LOGGER.warn("ONE");
+
+				client.execute(() -> {
+					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+							client.getWindow().getHandle(), -640.0, -640.0);
+				});
+
+			} else if (client_timer.tickCount == 200) {
+				LOGGER.warn("TWO");
+				client.execute(() -> {
+					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+							client.getWindow().getHandle(), 640.0, 640.0);
+				});
+
+			} else if (client_timer.tickCount == 300) {
+				LOGGER.warn("THREE");
+				client.execute(() -> {
+					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+							client.getWindow().getHandle(), 640.0, 640.0);
+				});
+		}
 
 			if (breakKey.wasPressed() && client.world != null) {
 				LOGGER.info("Break-Toggle");

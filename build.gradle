@@ -97,6 +97,9 @@ loom {
 					'--quickPlaySingleplayer', 'New World',
 					//'--fullscreen'
 			)
+			vmArgs (
+//					'-Dfabric.log.level=warn'  // trace, debug, info, warn, error
+			)
 		}
 		client1 {
 			client()  // Use client configuration as base

@@ -3,7 +3,8 @@
 	"package": "net.twoturtles.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ExampleClientMixin"
+		"ExampleClientMixin",
+		"MouseOnCursorPosInvoker"
 	],
 	"injectors": {
 		"defaultRequire": 1
