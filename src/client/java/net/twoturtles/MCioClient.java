@@ -100,41 +100,28 @@ class MCioKeys {
 		ClientTickEvents.START_CLIENT_TICK.register(client -> {
 			client_timer.start();
 
-//			if (client_timer.tickCount == 100) {
-//				LOGGER.warn("PRESS");
-//				client.execute(() -> {
-//					client.keyboard.onKey(client.getWindow().getHandle(),
-//							GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_PRESS, 0);
-//				});
-//			} else if (client_timer.tickCount == 200) {
-//				LOGGER.warn("RELEASE");
-//				client.execute(() -> {
-//					client.keyboard.onKey(client.getWindow().getHandle(),
-//							GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_RELEASE, 0);
-//				});
-//			}
 			if (client_timer.tickCount == 100) {
-				LOGGER.warn("ONE");
-
+				LOGGER.warn("PRESS");
 				client.execute(() -> {
-					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-							client.getWindow().getHandle(), 300.0, 300.0);
+					client.keyboard.onKey(client.getWindow().getHandle(),
+							GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_PRESS, 0);
 				});
-
 			} else if (client_timer.tickCount == 200) {
-				LOGGER.warn("TWO");
+				LOGGER.warn("RELEASE");
 				client.execute(() -> {
-					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-							client.getWindow().getHandle(), 250, 250.0);
+					client.keyboard.onKey(client.getWindow().getHandle(),
+							GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_RELEASE, 0);
 				});
+			}
 
-			} else if (client_timer.tickCount == 300) {
-				LOGGER.warn("THREE");
-				client.execute(() -> {
-					((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-							client.getWindow().getHandle(), 350.0, 350.0);
-				});
-		}
+			double x = ((Math.sin((client_timer.tickCount * 2 * Math.PI) / 100) + 1) / 2) * 1000;
+			double y = ((Math.cos((client_timer.tickCount * 2 * Math.PI) / 100) + 1) / 2) * 1000;
+
+			LOGGER.warn("x={} y={}", x, y);
+			client.execute(() -> {
+				((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+						client.getWindow().getHandle(), x, y);
+			});
 
 			if (breakKey.wasPressed() && client.world != null) {
 				LOGGER.info("Break-Toggle");
