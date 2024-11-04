@@ -3,8 +3,6 @@ package net.twoturtles;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.server.MinecraftServer;
-//import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.ServerTickManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -16,7 +14,7 @@ import net.twoturtles.util.tickTimer;
 public class MCio implements ModInitializer {
 	public static AtomicBoolean isFrozen = new AtomicBoolean(false);
 
-	private static final Logger LOGGER = LogUtils.getLogger();
+	private final Logger LOGGER = LogUtils.getLogger();
 	private final tickTimer server_timer = new tickTimer("Server");
 	private final tickTimer world_timer = new tickTimer("World");
 

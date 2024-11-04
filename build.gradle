@@ -38,7 +38,11 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	
+
+	// https://mvnrepository.com/artifact/org.zeromq/jeromq
+	implementation 'org.zeromq:jeromq:0.6.0'
+	// https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.18.1'
 }
 
 processResources {
@@ -98,7 +102,7 @@ loom {
 					//'--fullscreen'
 			)
 			vmArgs (
-					'-Dfabric.log.level=warn'  // trace, debug, info, warn, error
+//					'-Dfabric.log.level=warn'  // trace, debug, info, warn, error
 			)
 		}
 		client1 {
