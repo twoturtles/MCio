@@ -63,7 +63,7 @@ public class MCioClient implements ClientModInitializer {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private final MCioFrameCapture fcap = new MCioFrameCapture();
 	private final MCioKeys keys = new MCioKeys();
-	private MinecraftController mc_ctrl;
+	private MCioController mc_ctrl;
 
 	@Override
 	public void onInitializeClient() {
@@ -71,7 +71,7 @@ public class MCioClient implements ClientModInitializer {
 		LOGGER.info("Client Init");
 		tickTimer.do_log = false;
 
-		mc_ctrl = new MinecraftController();
+		mc_ctrl = new MCioController();
 		mc_ctrl.start();
 		fcap.initialize();
 		keys.initialize();
@@ -100,7 +100,7 @@ class CommandHandler {
 		this.running = running;
 
 		cmdSocket = zCtx.createSocket(SocketType.SUB);  // Sub socket for receiving commands
-		cmdSocket.bind("tcp://*:" + listen_port);
+		cmdSocket.connect("tcp://localhost:" + listen_port);
 		cmdSocket.subscribe(new byte[0]); // Subscribe to everything
 
 		this.cmdThread = new Thread(this::commandThreadRun, "MCio-CommandThread");
@@ -169,7 +169,7 @@ class CommandHandler {
 
 }
 
-class MinecraftController {
+class MCioController {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private static final int PORT_CMD = 5556;  // For receiving commands
 	private static final int PORT_STATE = 5557;    // For sending screen and other state.
@@ -179,7 +179,7 @@ class MinecraftController {
 	private final MinecraftClient client;
 	private final AtomicBoolean running = new AtomicBoolean(false);
 
-	public MinecraftController() {
+	public MCioController() {
 		this.context = new ZContext();
 		this.stateSocket = context.createSocket(SocketType.PUB);   // Pub for sending state
 
