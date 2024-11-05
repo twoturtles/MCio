@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -86,43 +87,30 @@ public class MCioClient implements ClientModInitializer {
 
 /* XXX Auto-set pauseOnLostFocus:false */
 
-class MinecraftController {
-	private final Logger LOGGER = LogUtils.getLogger();
-	private static final int PORT_CMD = 5556;  // For receiving commands
-	private static final int PORT_STATE = 5557;    // For sending screen and other state.
-	private final ZContext context;
-	private final ZMQ.Socket cmdSocket;
-	private final ZMQ.Socket stateSocket;
-
+class CommandHandler {
 	private final MinecraftClient client;
-	private volatile boolean running;
+	private final AtomicBoolean running;
 
-	public MinecraftController() {
-		this.context = new ZContext();
-		this.cmdSocket = context.createSocket(SocketType.SUB);  // Sub socket for receiving commands
-		this.stateSocket = context.createSocket(SocketType.PUB);   // Pub for sending state
+	private final ZMQ.Socket cmdSocket;
+	private final Thread cmdThread;
+	private final Logger LOGGER = LogUtils.getLogger();
 
-		this.client = MinecraftClient.getInstance();
-		this.running = true;
+	public CommandHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
+		this.client = client;
+		this.running = running;
+
+		cmdSocket = zCtx.createSocket(SocketType.SUB);  // Sub socket for receiving commands
+		cmdSocket.bind("tcp://*:" + listen_port);
+		cmdSocket.subscribe(new byte[0]); // Subscribe to everything
+
+		this.cmdThread = new Thread(this::commandThreadRun, "MCio-CommandThread");
 	}
 
 	public void start() {
-		// Bind sockets
-		cmdSocket.bind("tcp://*:" + PORT_CMD);
-		cmdSocket.subscribe(new byte[0]); // Subscribe to everything
-
-		stateSocket.bind("tcp://*:" + PORT_STATE);
-
-		// Start threads
-		Thread cmdThread = new Thread(this::commandThread, "MCio-CommandThread");
 		cmdThread.start();
-		Thread stateThread = new Thread(this::stateThread, "MCio-StateThread");
-		stateThread.start();
 	}
 
-
-
-	public void commandThread() {
+	private void commandThreadRun() {
 		try {
 			processCommandsLoop();
 		} finally {
@@ -131,7 +119,7 @@ class MinecraftController {
 	}
 
 	private void processCommandsLoop() {
-		while (running) {
+		while (running.get()) {
 			try {
 				processNextCommand();
 			} catch (ZMQException e) {
@@ -152,10 +140,16 @@ class MinecraftController {
 
 		CmdPacket cmd = packetOpt.get();
 		LOGGER.info("CMD {}", cmd);
+		for (Integer key : cmd.keys_pressed()) {
+			client.execute(() -> {
+				client.keyboard.onKey(client.getWindow().getHandle(),
+						key, 0, GLFW.GLFW_PRESS, 0);
+			});
+		}
 	}
 
 	private void handleZMQException(ZMQException e) {
-		if (!running) {
+		if (!running.get()) {
 			LOGGER.info("Command thread shutting down");
 		} else {
 			LOGGER.error("ZMQ error in command thread", e);
@@ -163,6 +157,7 @@ class MinecraftController {
 	}
 
 	private void cleanupSocket() {
+		LOGGER.info("Command thread cleanup");
 		if (cmdSocket != null) {
 			try {
 				cmdSocket.close();
@@ -172,69 +167,36 @@ class MinecraftController {
 		}
 	}
 
+}
 
+class MinecraftController {
+	private final Logger LOGGER = LogUtils.getLogger();
+	private static final int PORT_CMD = 5556;  // For receiving commands
+	private static final int PORT_STATE = 5557;    // For sending screen and other state.
+	private final ZContext context;
+	private final ZMQ.Socket stateSocket;
 
+	private final MinecraftClient client;
+	private final AtomicBoolean running = new AtomicBoolean(false);
 
-	private void commandThread() {
-		LOGGER.warn("Command Thread Starting");
-		while (running) {
-			// Receive command
-			byte[] pkt = cmdSocket.recv();
-			Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
-			if (packetOpt.isEmpty()) {
-				LOGGER.warn("Received invalid command packet");
-				return;
-			}
-			CmdPacket cmd = packetOpt.get();
-			LOGGER.info("CMD {}", cmd);
-			for (Integer key : cmd.keys_pressed()) {
-				client.execute(() -> {
-					client.keyboard.onKey(client.getWindow().getHandle(),
-							key, 0, GLFW.GLFW_PRESS, 0);
-				});
-			}
-		}
-		LOGGER.warn("Command Thread Stopping");
+	public MinecraftController() {
+		this.context = new ZContext();
+		this.stateSocket = context.createSocket(SocketType.PUB);   // Pub for sending state
+
+		this.client = MinecraftClient.getInstance();
 	}
 
-	private zmqInnerLoop () {
-		try {
-			// Receive command
-			byte[] pkt = cmdSocket.recv();
-			Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
-			if (packetOpt.isEmpty()) {
-				LOGGER.warn("Received invalid command packet");
-				return;
-			}
-			CmdPacket cmd = packetOpt.get();
-			LOGGER.info("CMD {}", cmd);
-		} catch (ZMQException e) {
-			if (!running) {
-				// Normal termination during shutdown
-				LOGGER.info("Command thread shutting down");
-				break;
-			} else {
-				// Unexpected error during normal operation
-				LOGGER.error("ZMQ error in command thread", e);
-				break;
-			}
-		}
+	public void start() {
+		this.running.set(true);
+
+		stateSocket.bind("tcp://*:" + PORT_STATE);
+
+		// Start threads
+		CommandHandler cmd = new CommandHandler(client, context, PORT_CMD, running);
+		cmd.start();
+		Thread stateThread = new Thread(this::stateThread, "MCio-StateThread");
+		stateThread.start();
 	}
-	private void zmqLoop() {
-			try {
-				while (running) {
-				}
-			} finally {
-				// Clean up
-				if (cmdSocket != null) {
-					try {
-						cmdSocket.close();
-					} catch (Exception e) {
-						LOGGER.error("Error closing command socket", e);
-					}
-				}
-			}
-		}
 
 	private void stateThread() {
 		LOGGER.warn("State Thread Starting");
@@ -268,10 +230,7 @@ class MinecraftController {
 	}
 
 	public void stop() {
-		running = false;
-		if (cmdSocket != null) {
-			cmdSocket.close();
-		}
+		running.set(false);
 		if (stateSocket != null) {
 			stateSocket.close();
 		}
