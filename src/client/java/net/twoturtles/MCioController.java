@@ -14,6 +14,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,19 +56,6 @@ public class MCioController {
 
     private void tmp() {
         final tickTimer client_timer = new tickTimer("Client");
-        if (client_timer.tickCount == 100) {
-            LOGGER.warn("PRESS");
-            client.execute(() -> {
-                client.keyboard.onKey(client.getWindow().getHandle(),
-                        GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_PRESS, 0);
-            });
-        } else if (client_timer.tickCount == 200) {
-            LOGGER.warn("RELEASE");
-            client.execute(() -> {
-                client.keyboard.onKey(client.getWindow().getHandle(),
-                        GLFW.GLFW_KEY_SPACE, 0, GLFW.GLFW_RELEASE, 0);
-            });
-        }
 
         double x = ((Math.sin((client_timer.tickCount * 2 * Math.PI) / 100) + 1) / 2) * 1000;
         double y = ((Math.cos((client_timer.tickCount * 2 * Math.PI) / 100) + 1) / 2) * 1000;
@@ -98,7 +86,9 @@ class CommandHandler {
     private final ZMQ.Socket cmdSocket;
     private final Thread cmdThread;
     private final Logger LOGGER = LogUtils.getLogger();
+    private Set<Integer> current_keys_pressed = new HashSet<>();
 
+    /* XXX Clear all commands if remote controller disconnects? */
     public CommandHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
         this.client = client;
         this.running = running;
@@ -136,7 +126,6 @@ class CommandHandler {
     private void processNextCommand() {
         byte[] pkt = cmdSocket.recv();
         Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
-
         if (packetOpt.isEmpty()) {
             LOGGER.warn("Received invalid command packet");
             return;
@@ -144,12 +133,42 @@ class CommandHandler {
 
         CmdPacket cmd = packetOpt.get();
         LOGGER.info("CMD {}", cmd);
-        for (Integer key : cmd.keys_pressed()) {
+
+        /* Do release all if called for */
+        if (cmd.key_reset()) {
+            for (Integer key : current_keys_pressed) {
+                client.execute(() -> {
+                    client.keyboard.onKey(client.getWindow().getHandle(),
+                            key, 0, GLFW.GLFW_RELEASE, 0);
+                });
+            }
+            current_keys_pressed.clear();
+        }
+
+        /* Release keys no longer pressed.
+         * curr:a b c - cmd:b c d = a */
+        Set<Integer> released = new HashSet<>(current_keys_pressed);
+        released.removeAll(cmd.keys_pressed());
+        for (Integer key : released) {
+            client.execute(() -> {
+                client.keyboard.onKey(client.getWindow().getHandle(),
+                        key, 0, GLFW.GLFW_RELEASE, 0);
+            });
+        }
+
+        /* Press newly pressed keys.
+         * cmd:b c d - curr:a b c = a */
+        Set<Integer> new_pressed = new HashSet<>(cmd.keys_pressed());
+        new_pressed.removeAll(current_keys_pressed);
+        for (Integer key : new_pressed) {
             client.execute(() -> {
                 client.keyboard.onKey(client.getWindow().getHandle(),
                         key, 0, GLFW.GLFW_PRESS, 0);
             });
         }
+
+        /* Update state */
+        this.current_keys_pressed = cmd.keys_pressed();
     }
 
     private void handleZMQException(ZMQException e) {
@@ -175,6 +194,7 @@ class CommandHandler {
 /* Definition of CmdPackets */
 record CmdPacket(
         int seq,				// sequence number
+        boolean key_reset,          // clear all pressed keys (useful for crashed controller).
         Set<Integer> keys_pressed,
         String message
 ) { }
