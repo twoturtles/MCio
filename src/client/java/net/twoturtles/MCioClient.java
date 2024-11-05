@@ -1,10 +1,10 @@
 package net.twoturtles;
 
 import java.util.Optional;
-import java.util.Arrays;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -25,6 +25,7 @@ import net.twoturtles.mixin.client.MouseOnCursorPosInvoker;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
+import org.zeromq.ZMQException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 
@@ -33,7 +34,8 @@ class MCIO_CONST {
 }
 
 record CmdPacket(
-		int id,
+		int seq,				// sequence number
+		Set<Integer> keys_pressed,
 		String message
 ) { }
 
@@ -82,6 +84,8 @@ public class MCioClient implements ClientModInitializer {
 	}
 }
 
+/* XXX Auto-set pauseOnLostFocus:false */
+
 class MinecraftController {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private static final int PORT_CMD = 5556;  // For receiving commands
@@ -116,23 +120,121 @@ class MinecraftController {
 		stateThread.start();
 	}
 
+
+
+	public void commandThread() {
+		try {
+			processCommandsLoop();
+		} finally {
+			cleanupSocket();
+		}
+	}
+
+	private void processCommandsLoop() {
+		while (running) {
+			try {
+				processNextCommand();
+			} catch (ZMQException e) {
+				handleZMQException(e);
+				break;
+			}
+		}
+	}
+
+	private void processNextCommand() {
+		byte[] pkt = cmdSocket.recv();
+		Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
+
+		if (packetOpt.isEmpty()) {
+			LOGGER.warn("Received invalid command packet");
+			return;
+		}
+
+		CmdPacket cmd = packetOpt.get();
+		LOGGER.info("CMD {}", cmd);
+	}
+
+	private void handleZMQException(ZMQException e) {
+		if (!running) {
+			LOGGER.info("Command thread shutting down");
+		} else {
+			LOGGER.error("ZMQ error in command thread", e);
+		}
+	}
+
+	private void cleanupSocket() {
+		if (cmdSocket != null) {
+			try {
+				cmdSocket.close();
+			} catch (Exception e) {
+				LOGGER.error("Error closing command socket", e);
+			}
+		}
+	}
+
+
+
+
 	private void commandThread() {
 		LOGGER.warn("Command Thread Starting");
 		while (running) {
 			// Receive command
 			byte[] pkt = cmdSocket.recv();
-			//LOGGER.warn("Received {} bytes: {}", pkt.length, Arrays.toString(pkt));
 			Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
-			if (!packetOpt.isPresent()) {
+			if (packetOpt.isEmpty()) {
 				LOGGER.warn("Received invalid command packet");
 				return;
 			}
 			CmdPacket cmd = packetOpt.get();
-//			LOGGER.info("Unpacked command - id: {}, message: '{}'", cmd.id, cmd.message);
 			LOGGER.info("CMD {}", cmd);
+			for (Integer key : cmd.keys_pressed()) {
+				client.execute(() -> {
+					client.keyboard.onKey(client.getWindow().getHandle(),
+							key, 0, GLFW.GLFW_PRESS, 0);
+				});
+			}
 		}
 		LOGGER.warn("Command Thread Stopping");
 	}
+
+	private zmqInnerLoop () {
+		try {
+			// Receive command
+			byte[] pkt = cmdSocket.recv();
+			Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
+			if (packetOpt.isEmpty()) {
+				LOGGER.warn("Received invalid command packet");
+				return;
+			}
+			CmdPacket cmd = packetOpt.get();
+			LOGGER.info("CMD {}", cmd);
+		} catch (ZMQException e) {
+			if (!running) {
+				// Normal termination during shutdown
+				LOGGER.info("Command thread shutting down");
+				break;
+			} else {
+				// Unexpected error during normal operation
+				LOGGER.error("ZMQ error in command thread", e);
+				break;
+			}
+		}
+	}
+	private void zmqLoop() {
+			try {
+				while (running) {
+				}
+			} finally {
+				// Clean up
+				if (cmdSocket != null) {
+					try {
+						cmdSocket.close();
+					} catch (Exception e) {
+						LOGGER.error("Error closing command socket", e);
+					}
+				}
+			}
+		}
 
 	private void stateThread() {
 		LOGGER.warn("State Thread Starting");
@@ -167,9 +269,15 @@ class MinecraftController {
 
 	public void stop() {
 		running = false;
-		cmdSocket.close();
-		stateSocket.close();
-		context.close();
+		if (cmdSocket != null) {
+			cmdSocket.close();
+		}
+		if (stateSocket != null) {
+			stateSocket.close();
+		}
+		if (context != null) {
+			context.close();
+		}
 	}
 
 }
