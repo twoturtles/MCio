@@ -19,7 +19,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.twoturtles.mixin.client.MouseMixin;
 
-/* Definition of CmdPackets */
+/* Definition of CmdPacket
+ * Keep types simple to ease CBOR translation between python and java.
+ */
 record CmdPacket(
         int seq,				// sequence number
         Set<Integer> keys_pressed,
@@ -33,8 +35,7 @@ record CmdPacket(
         String message
 ) { }
 
-
-/* Serialize/deserialize CmdPackets */
+/* Serialize/deserialize CmdPacket */
 class CmdPacketParser {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
@@ -154,6 +155,7 @@ class CommandHandler {
         CmdPacket cmd = packetOpt.get();
         LOGGER.info("CMD {}", cmd);
 
+        /* Keyboard handlers */
         for (int key : cmd.keys_pressed()) {
             client.execute(() -> {
                 client.keyboard.onKey(client.getWindow().getHandle(),
@@ -167,10 +169,23 @@ class CommandHandler {
             });
         }
 
+        /* Mouse handlers */
         if (cmd.mouse_pos_update()) {
             client.execute(() -> {
                 ((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
                         client.getWindow().getHandle(), cmd.mouse_pos_x(), cmd.mouse_pos_y());
+            });
+        }
+        for (int button : cmd.mouse_buttons_pressed()) {
+            client.execute(() -> {
+                ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
+                        client.getWindow().getHandle(), button, GLFW.GLFW_PRESS, 0);
+            });
+        }
+        for (int button : cmd.mouse_buttons_released()) {
+            client.execute(() -> {
+                ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
+                        client.getWindow().getHandle(), button, GLFW.GLFW_RELEASE, 0);
             });
         }
     }
