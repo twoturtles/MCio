@@ -21,14 +21,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 
 import net.twoturtles.util.tickTimer;
-import net.twoturtles.mixin.client.MouseOnCursorPosInvoker;
-
-import org.zeromq.SocketType;
-import org.zeromq.ZMQ;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 
 class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";

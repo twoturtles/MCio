@@ -19,6 +19,40 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/* Definition of CmdPackets */
+record CmdPacket(
+        int seq,				// sequence number
+        Set<Integer> keys_pressed,
+        Set<Integer> keys_released,
+        Set<Integer> mouse_buttons_pressed,
+        Set<Integer> mouse_buttons_released,
+        boolean mouse_pos_update,
+        int mouse_pos_x,
+        int mouse_pos_y,
+        boolean key_reset,          // clear all pressed keys (useful for crashed controller).
+        String message
+) { }
+
+
+/* Serialize/deserialize CmdPackets */
+class CmdPacketParser {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
+
+    public byte[] pack(CmdPacket cmd) throws IOException {
+        return CBOR_MAPPER.writeValueAsBytes(cmd);
+    }
+
+    public static Optional<CmdPacket> unpack(byte[] data) {
+        try {
+            return Optional.of(CBOR_MAPPER.readValue(data, CmdPacket.class));
+        } catch (IOException e) {
+            LOGGER.error("Failed to unpack data", e);
+            return Optional.empty();
+        }
+    }
+}
+
 /* Spawns threads for receiving commands and sending state updates. */
 public class MCioController {
     private final Logger LOGGER = LogUtils.getLogger();
@@ -54,19 +88,6 @@ public class MCioController {
         LOGGER.warn("State Thread Stopping");
     }
 
-    private void tmp() {
-        final tickTimer client_timer = new tickTimer("Client");
-
-        double x = ((Math.sin((client_timer.tickCount * 2 * Math.PI) / 100) + 1) / 2) * 1000;
-        double y = ((Math.cos((client_timer.tickCount * 2 * Math.PI) / 100) + 1) / 2) * 1000;
-        //LOGGER.warn("x={} y={}", x, y);
-        client.execute(() -> {
-            ((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-                    client.getWindow().getHandle(), x, y);
-        });
-
-    }
-
     public void stop() {
         running.set(false);
         if (stateSocket != null) {
@@ -78,7 +99,7 @@ public class MCioController {
     }
 }
 
-/* Handles incoming commnands and passes to the client/render thread. Runs on own thread. */
+/* Handles incoming commands and passes to the client/render thread. Runs on own thread. */
 class CommandHandler {
     private final MinecraftClient client;
     private final AtomicBoolean running;
@@ -86,7 +107,6 @@ class CommandHandler {
     private final ZMQ.Socket cmdSocket;
     private final Thread cmdThread;
     private final Logger LOGGER = LogUtils.getLogger();
-    private Set<Integer> current_keys_pressed = new HashSet<>();
 
     /* XXX Clear all commands if remote controller disconnects? */
     public CommandHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
@@ -134,41 +154,26 @@ class CommandHandler {
         CmdPacket cmd = packetOpt.get();
         LOGGER.info("CMD {}", cmd);
 
-        /* Do release all if called for */
-        if (cmd.key_reset()) {
-            for (Integer key : current_keys_pressed) {
-                client.execute(() -> {
-                    client.keyboard.onKey(client.getWindow().getHandle(),
-                            key, 0, GLFW.GLFW_RELEASE, 0);
-                });
-            }
-            current_keys_pressed.clear();
+        for (int key : cmd.keys_pressed()) {
+            client.execute(() -> {
+                client.keyboard.onKey(client.getWindow().getHandle(),
+                        key, 0, GLFW.GLFW_PRESS, 0);
+            });
         }
-
-        /* Release keys no longer pressed.
-         * curr:a b c - cmd:b c d = a */
-        Set<Integer> released = new HashSet<>(current_keys_pressed);
-        released.removeAll(cmd.keys_pressed());
-        for (Integer key : released) {
+        for (int key : cmd.keys_released()) {
             client.execute(() -> {
                 client.keyboard.onKey(client.getWindow().getHandle(),
                         key, 0, GLFW.GLFW_RELEASE, 0);
             });
         }
 
-        /* Press newly pressed keys.
-         * cmd:b c d - curr:a b c = a */
-        Set<Integer> new_pressed = new HashSet<>(cmd.keys_pressed());
-        new_pressed.removeAll(current_keys_pressed);
-        for (Integer key : new_pressed) {
+        if (cmd.mouse_pos_update()) {
+            LOGGER.warn("MOUSE {} {}", cmd.mouse_pos_x(), cmd.mouse_pos_y());
             client.execute(() -> {
-                client.keyboard.onKey(client.getWindow().getHandle(),
-                        key, 0, GLFW.GLFW_PRESS, 0);
+                ((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+                        client.getWindow().getHandle(), cmd.mouse_pos_x(), cmd.mouse_pos_y());
             });
         }
-
-        /* Update state */
-        this.current_keys_pressed = cmd.keys_pressed();
     }
 
     private void handleZMQException(ZMQException e) {
@@ -191,29 +196,3 @@ class CommandHandler {
     }
 }
 
-/* Definition of CmdPackets */
-record CmdPacket(
-        int seq,				// sequence number
-        boolean key_reset,          // clear all pressed keys (useful for crashed controller).
-        Set<Integer> keys_pressed,
-        String message
-) { }
-
-/* Serialize/deserialize CmdPackets */
-class CmdPacketParser {
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
-
-    public byte[] pack(CmdPacket cmd) throws IOException {
-        return CBOR_MAPPER.writeValueAsBytes(cmd);
-    }
-
-    public static Optional<CmdPacket> unpack(byte[] data) {
-        try {
-            return Optional.of(CBOR_MAPPER.readValue(data, CmdPacket.class));
-        } catch (IOException e) {
-            LOGGER.error("Failed to unpack data", e);
-            return Optional.empty();
-        }
-    }
-}
