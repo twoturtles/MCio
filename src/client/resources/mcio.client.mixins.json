@@ -4,7 +4,8 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"ExampleClientMixin",
-		"MouseOnCursorPosInvoker"
+		"MinecraftClientMixin",
+		"MouseMixin$OnCursorPosInvoker"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import net.twoturtles.mixin.client.MouseMixin;
 import org.slf4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
@@ -52,7 +53,41 @@ public class MCioClient implements ClientModInitializer {
 				mc_ctrl.stop();
 			}
 		});
+
+		Thread stateThread = new Thread(this::testThread, "MCio-TestThread");
+		stateThread.start();
 	}
+
+	private void testThread() {
+		LOGGER.warn("Test Thread Starting");
+		int count = 0;
+		final MinecraftClient client = MinecraftClient.getInstance();
+
+		while (true) {
+			double x = ((Math.sin((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
+			double y = ((Math.cos((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
+			count++;
+
+			client.execute(() -> {
+				((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+						client.getWindow().getHandle(), x, y);
+			});
+
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				LOGGER.warn("Interrupted");
+			}
+		}
+	}
+
+	private void tmp() {
+		final tickTimer client_timer = new tickTimer("Client");
+
+		//LOGGER.warn("x={} y={}", x, y);
+
+	}
+
 }
 
 class MCioFrameCapture {

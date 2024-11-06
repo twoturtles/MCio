@@ -4,8 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
-import net.twoturtles.mixin.client.MouseOnCursorPosInvoker;
-import net.twoturtles.util.tickTimer;
+
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.zeromq.SocketType;
@@ -14,10 +13,11 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import net.twoturtles.mixin.client.MouseMixin;
 
 /* Definition of CmdPackets */
 record CmdPacket(
@@ -170,7 +170,7 @@ class CommandHandler {
         if (cmd.mouse_pos_update()) {
             LOGGER.warn("MOUSE {} {}", cmd.mouse_pos_x(), cmd.mouse_pos_y());
             client.execute(() -> {
-                ((MouseOnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+                ((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
                         client.getWindow().getHandle(), cmd.mouse_pos_x(), cmd.mouse_pos_y());
             });
         }
