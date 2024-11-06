@@ -27,8 +27,6 @@ class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";
 }
 
-/* XXX Auto-set pauseOnLostFocus:false */
-
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private final Logger LOGGER = LogUtils.getLogger();
@@ -54,38 +52,31 @@ public class MCioClient implements ClientModInitializer {
 			}
 		});
 
-		Thread stateThread = new Thread(this::testThread, "MCio-TestThread");
-		stateThread.start();
+//		Thread stateThread = new Thread(this::testThread, "MCio-TestThread");
+//		stateThread.start();
 	}
 
 	private void testThread() {
-		LOGGER.warn("Test Thread Starting");
+		LOGGER.info("Test Thread Starting");
 		int count = 0;
 		final MinecraftClient client = MinecraftClient.getInstance();
 
-		while (true) {
-			double x = ((Math.sin((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
-			double y = ((Math.cos((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
-			count++;
-
-			client.execute(() -> {
-				((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-						client.getWindow().getHandle(), x, y);
-			});
-
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				LOGGER.warn("Interrupted");
-			}
-		}
-	}
-
-	private void tmp() {
-		final tickTimer client_timer = new tickTimer("Client");
-
-		//LOGGER.warn("x={} y={}", x, y);
-
+//		while (true) {
+//			double x = ((Math.sin((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
+//			double y = ((Math.cos((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
+//			count++;
+//
+//			client.execute(() -> {
+//				((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
+//						client.getWindow().getHandle(), x, y);
+//			});
+//
+//			try {
+//				Thread.sleep(1000);
+//			} catch (InterruptedException e) {
+//				LOGGER.warn("Interrupted");
+//			}
+//		}
 	}
 
 }
