@@ -1,9 +1,7 @@
-import time
 import threading
-from collections import deque
 from queue import Queue
 from dataclasses import dataclass, asdict, field
-from typing import List, Dict, Set
+from typing import Set
 
 import glfw
 import OpenGL.GL as gl
@@ -96,18 +94,18 @@ class MCioGUI:
         
     def key_callback(self, window, key, scancode, action, mods):
         """Handle keyboard input"""
-        print(f'KEY {key} action {action}')
+        #print(f'Key={key} action={action}')
         if action == glfw.PRESS:
             cmd = CmdPacket(keys_pressed={key})
             self.controller.cmd_queue.put(cmd)
         elif action == glfw.RELEASE:
             cmd = CmdPacket(keys_released={key})
             self.controller.cmd_queue.put(cmd)
-        # Skip action repeat.
+        # Skip action REPEAT.
 
     def cursor_position_callback(self, window, xpos, ypos):
         """Handle mouse movement"""
-        print(f'Mouse {xpos} {ypos}')
+        #print(f'Mouse {xpos} {ypos}')
         cmd = CmdPacket(mouse_pos_update=True, mouse_pos_x=xpos, mouse_pos_y=ypos)
         self.controller.cmd_queue.put(cmd)
         
@@ -147,7 +145,6 @@ class MCioGUI:
         self.controller.shutdown()
         glfw.terminate()
 
-# Example usage
 if __name__ == "__main__":
     app = MCioGUI()
     app.run()

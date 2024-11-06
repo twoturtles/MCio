@@ -84,8 +84,8 @@ public class MCioController {
     }
 
     private void stateThread() {
-        LOGGER.warn("State Thread Starting");
-        LOGGER.warn("State Thread Stopping");
+        LOGGER.info("State Thread Starting");
+        LOGGER.info("State Thread Stopping");
     }
 
     public void stop() {
@@ -168,7 +168,6 @@ class CommandHandler {
         }
 
         if (cmd.mouse_pos_update()) {
-            LOGGER.warn("MOUSE {} {}", cmd.mouse_pos_x(), cmd.mouse_pos_y());
             client.execute(() -> {
                 ((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
                         client.getWindow().getHandle(), cmd.mouse_pos_x(), cmd.mouse_pos_y());
