@@ -116,20 +116,16 @@ class StateHandler {
 
     private void stateThreadRun() {
         try {
-            processStatesLoop();
+            while (running.get()) {
+                try {
+                    processNextState();
+                } catch (ZMQException e) {
+                    handleZMQException(e);
+                    break;
+                }
+            }
         } finally {
             cleanupSocket();
-        }
-    }
-
-    private void processStatesLoop() {
-        while (running.get()) {
-            try {
-                processNextState();
-            } catch (ZMQException e) {
-                handleZMQException(e);
-                break;
-            }
         }
     }
 
@@ -184,24 +180,21 @@ class CommandHandler {
 
     private void commandThreadRun() {
         try {
-            processCommandsLoop();
+            while (running.get()) {
+                try {
+                    processNextCommand();
+                } catch (ZMQException e) {
+                    handleZMQException(e);
+                    break;
+                }
+            }
         } finally {
             cleanupSocket();
         }
     }
 
-    private void processCommandsLoop() {
-        while (running.get()) {
-            try {
-                processNextCommand();
-            } catch (ZMQException e) {
-                handleZMQException(e);
-                break;
-            }
-        }
-    }
-
     private void processNextCommand() {
+        // Block waiting for next command.
         byte[] pkt = cmdSocket.recv();
         Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
         if (packetOpt.isEmpty()) {

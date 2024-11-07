@@ -22,6 +22,10 @@ class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";
 }
 
+/* TODO
+ * - Ensure all calls to random come from the same seed?
+ */
+
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private final Logger LOGGER = LogUtils.getLogger();
