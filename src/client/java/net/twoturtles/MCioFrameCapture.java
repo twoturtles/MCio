@@ -5,28 +5,24 @@ import java.nio.ByteBuffer;
 
 public final class MCioFrameCapture {
     private static boolean enabled = false;
-    private static ByteBuffer pixelBuffer = null;
     private static int frameCount = 0;
+    private static ByteBuffer lastBuffer = null;
     public static final int CAPTURE_EVERY_N_FRAMES = 10;
+    public static final int BYTES_PER_PIXEL = 3;    // GL_RGB
 
     private MCioFrameCapture() {
         throw new AssertionError("Singleton: do not instantiate");
     }
 
-    public static void setEnabled(boolean enabled_val) {
-        enabled = enabled_val;
+    public static void setLastBuffer(ByteBuffer buf) {lastBuffer = buf;}
+    public static ByteBuffer getLastBuffer() {
+        ByteBuffer ret = lastBuffer;
+        lastBuffer = null;
+        return ret;
     }
 
-    public static boolean isEnabled() {
-        return enabled;
-    }
-
-    public static ByteBuffer getBuffer(int width, int height) {
-        if (pixelBuffer == null || pixelBuffer.capacity() != width * height * 4) {
-            pixelBuffer = BufferUtils.createByteBuffer(width * height * 4);
-        }
-        return pixelBuffer;
-    }
+    public static void setEnabled(boolean enabled_val) { enabled = enabled_val; }
+    public static boolean isEnabled() { return enabled; }
 
     public static void incrementFrameCount() { frameCount++; }
     public static int getFrameCount() { return frameCount; }

@@ -13,6 +13,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -130,6 +131,38 @@ class StateHandler {
     }
 
     private void processNextState() {
+        ByteBuffer pixelBuffer = MCioFrameCapture.getLastBuffer();
+        if (pixelBuffer != null) {
+            test(pixelBuffer);
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            LOGGER.warn("Interrupted");
+        }
+    }
+
+    private void test(ByteBuffer pixelBuffer) {
+        try {
+            java.io.File outputDir = new java.io.File("frame_captures");
+            if (!outputDir.exists()) {
+                outputDir.mkdir();
+            }
+
+            /* frameCount won't be accurate */
+            String fileName = String.format("frame_%d.raw", MCioFrameCapture.getFrameCount());
+            java.io.File outputFile = new java.io.File(outputDir, fileName);
+
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outputFile)) {
+                pixelBuffer.rewind();  // Make sure we're at the start of the buffer
+                byte[] bytes = new byte[pixelBuffer.remaining()];
+                pixelBuffer.get(bytes);
+                fos.write(bytes);
+            }
+        } catch (java.io.IOException e) {
+            System.err.println("Failed to write frame: " + e.getMessage());
+        }
     }
 
     private void handleZMQException(ZMQException e) {
