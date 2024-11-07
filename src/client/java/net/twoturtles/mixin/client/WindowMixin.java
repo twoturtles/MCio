@@ -22,6 +22,7 @@ public class WindowMixin {
         if (!MCioFrameCapture.shouldCaptureFrame()) {
             return;
         }
+        int frameCount = MCioFrameCapture.getFrameCount();
 
         Window window = (Window)(Object)this;
         int width = window.getFramebufferWidth();
@@ -30,13 +31,16 @@ public class WindowMixin {
         /* XXX ring buffer or swap frames */
         ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * MCioFrameCapture.BYTES_PER_PIXEL);
         pixelBuffer.clear(); // Reset position to 0
+        MCioFrameCapture.MCioFrame frame = new MCioFrameCapture.MCioFrame(
+                frameCount, width, height, MCioFrameCapture.BYTES_PER_PIXEL, pixelBuffer);
 
         glReadBuffer(GL_BACK);
         glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer);
 
         /* Bad synchronization. Once this is handed off, this thread won't touch it again. */
-        MCioFrameCapture.setLastBuffer(pixelBuffer);
+        MCioFrameCapture.setLastFrame(frame);
         pixelBuffer = null;
+        frame = null;
     }
 
 }

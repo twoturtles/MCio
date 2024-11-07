@@ -22,6 +22,7 @@ import net.twoturtles.mixin.client.MouseMixin;
 
 /* Definition of CmdPacket
  * Keep types simple to ease CBOR translation between python and java.
+ * XXX Everything is native order (little-endian).
  */
 record CmdPacket(
         int seq,				// sequence number
@@ -36,14 +37,10 @@ record CmdPacket(
         String message
 ) { }
 
-/* Serialize/deserialize CmdPacket */
-class CmdPacketParser {
+/* Deserialize CmdPacket */
+class CmdPacketUnpacker {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
-
-    public byte[] pack(CmdPacket cmd) throws IOException {
-        return CBOR_MAPPER.writeValueAsBytes(cmd);
-    }
 
     public static Optional<CmdPacket> unpack(byte[] data) {
         try {
@@ -52,6 +49,25 @@ class CmdPacketParser {
             LOGGER.error("Failed to unpack data", e);
             return Optional.empty();
         }
+    }
+}
+
+record StatePacket(
+        int seq,				// sequence number
+        int width,
+        int height,
+        int bytes_per_pixel,
+        ByteBuffer frame,
+        String message
+) { }
+
+/* Serialize StatePacket */
+class StatePacketPacker {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
+
+    public static byte[] pack(StatePacket state) throws IOException {
+        return CBOR_MAPPER.writeValueAsBytes(state);
     }
 }
 
@@ -99,19 +115,20 @@ class StateHandler {
     private final Thread stateThread;
     private final Logger LOGGER = LogUtils.getLogger();
 
-    public StateHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
+    public StateHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
         this.client = client;
         this.running = running;
 
         MCioFrameCapture.setEnabled(true);
 
         stateSocket = zCtx.createSocket(SocketType.PUB);  // Pub for sending state
-        stateSocket.bind("tcp://*:" + remote_port);
+        stateSocket.bind("tcp://*:" + listen_port);
 
         this.stateThread = new Thread(this::stateThreadRun, "MCio-StateThread");
     }
 
     public void start() {
+        LOGGER.warn("Thread start");
         stateThread.start();
     }
 
@@ -131,11 +148,20 @@ class StateHandler {
     }
 
     private void processNextState() {
-        ByteBuffer pixelBuffer = MCioFrameCapture.getLastBuffer();
-        if (pixelBuffer != null) {
-            test(pixelBuffer);
+        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastFrame();
+        if (frame != null && frame.frame() != null) {
+            //test(pixelBuffer);
+            StatePacket statePkt = new StatePacket(frame.frame_count(), frame.width(), frame.height(),
+                    frame.bytes_per_pixel(), frame.frame(), "hello...");
+            try {
+                byte[] pbytes = StatePacketPacker.pack(statePkt);
+                stateSocket.send(pbytes);
+            } catch (IOException e) {
+                LOGGER.warn("StatePacketPacker failed");
+            }
         }
 
+        /* XXX */
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -196,12 +222,12 @@ class CommandHandler {
     private final Logger LOGGER = LogUtils.getLogger();
 
     /* XXX Clear all commands if remote controller disconnects? */
-    public CommandHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
+    public CommandHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
         this.client = client;
         this.running = running;
 
         cmdSocket = zCtx.createSocket(SocketType.SUB);  // Sub socket for receiving commands
-        cmdSocket.connect("tcp://localhost:" + listen_port);
+        cmdSocket.connect("tcp://localhost:" + remote_port);
         cmdSocket.subscribe(new byte[0]); // Subscribe to everything
 
         this.cmdThread = new Thread(this::commandThreadRun, "MCio-CommandThread");
@@ -229,7 +255,7 @@ class CommandHandler {
     private void processNextCommand() {
         // Block waiting for next command.
         byte[] pkt = cmdSocket.recv();
-        Optional<CmdPacket> packetOpt = CmdPacketParser.unpack(pkt);
+        Optional<CmdPacket> packetOpt = CmdPacketUnpacker.unpack(pkt);
         if (packetOpt.isEmpty()) {
             LOGGER.warn("Received invalid command packet");
             return;
