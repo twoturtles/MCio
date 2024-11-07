@@ -5,7 +5,8 @@
 	"client": [
 		"MinecraftClientMixin",
 		"MouseMixin$OnCursorPosInvoker",
-		"MouseMixin$OnMouseButtonInvoker"
+		"MouseMixin$OnMouseButtonInvoker",
+		"WindowMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

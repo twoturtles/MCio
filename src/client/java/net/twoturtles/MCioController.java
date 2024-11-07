@@ -54,20 +54,19 @@ class CmdPacketParser {
     }
 }
 
-/* Spawns threads for receiving commands and sending state updates. */
+/* Top-level class. Runs on client thread.
+ * Spawns threads for receiving commands and sending state updates. */
 public class MCioController {
     private final Logger LOGGER = LogUtils.getLogger();
     private static final int PORT_CMD = 5556;  // For receiving commands
     private static final int PORT_STATE = 5557;    // For sending screen and other state.
     private final ZContext context;
-    private final ZMQ.Socket stateSocket;
 
     private final MinecraftClient client;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public MCioController() {
         this.context = new ZContext();
-        this.stateSocket = context.createSocket(SocketType.PUB);   // Pub for sending state
 
         this.client = MinecraftClient.getInstance();
     }
@@ -75,30 +74,88 @@ public class MCioController {
     public void start() {
         this.running.set(true);
 
-        stateSocket.bind("tcp://*:" + PORT_STATE);
-
         // Start threads
         CommandHandler cmd = new CommandHandler(client, context, PORT_CMD, running);
         cmd.start();
-        Thread stateThread = new Thread(this::stateThread, "MCio-StateThread");
-        stateThread.start();
-    }
 
-    private void stateThread() {
-        LOGGER.info("State Thread Starting");
-        LOGGER.info("State Thread Stopping");
+        StateHandler state = new StateHandler(client, context, PORT_STATE, running);
+        state.start();
     }
 
     public void stop() {
         running.set(false);
-        if (stateSocket != null) {
-            stateSocket.close();
-        }
         if (context != null) {
             context.close();
         }
     }
 }
+
+class StateHandler {
+    private final MinecraftClient client;
+    private final AtomicBoolean running;
+
+    private final ZMQ.Socket stateSocket;
+    private final Thread stateThread;
+    private final Logger LOGGER = LogUtils.getLogger();
+
+    public StateHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
+        this.client = client;
+        this.running = running;
+
+        MCioFrameCapture.setEnabled(true);
+
+        stateSocket = zCtx.createSocket(SocketType.PUB);  // Pub for sending state
+        stateSocket.bind("tcp://*:" + remote_port);
+
+        this.stateThread = new Thread(this::stateThreadRun, "MCio-StateThread");
+    }
+
+    public void start() {
+        stateThread.start();
+    }
+
+    private void stateThreadRun() {
+        try {
+            processStatesLoop();
+        } finally {
+            cleanupSocket();
+        }
+    }
+
+    private void processStatesLoop() {
+        while (running.get()) {
+            try {
+                processNextState();
+            } catch (ZMQException e) {
+                handleZMQException(e);
+                break;
+            }
+        }
+    }
+
+    private void processNextState() {
+    }
+
+    private void handleZMQException(ZMQException e) {
+        if (!running.get()) {
+            LOGGER.info("State thread shutting down");
+        } else {
+            LOGGER.error("ZMQ error in state thread", e);
+        }
+    }
+
+    private void cleanupSocket() {
+        LOGGER.info("State thread cleanup");
+        if (stateSocket != null) {
+            try {
+                stateSocket.close();
+            } catch (Exception e) {
+                LOGGER.error("Error closing state socket", e);
+            }
+        }
+    }
+}
+
 
 /* Handles incoming commands and passes to the client/render thread. Runs on own thread. */
 class CommandHandler {

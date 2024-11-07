@@ -1,13 +1,8 @@
 package net.twoturtles;
 
-import java.util.Optional;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import net.twoturtles.mixin.client.MouseMixin;
 import org.slf4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
@@ -30,7 +25,7 @@ class MCIO_CONST {
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private final Logger LOGGER = LogUtils.getLogger();
-	private final MCioFrameCapture fcap = new MCioFrameCapture();
+	private final MCioFrameSave fcap = new MCioFrameSave();
 	private final MCioKeys keys = new MCioKeys();
 	private MCioController mc_ctrl;
 
@@ -81,7 +76,7 @@ public class MCioClient implements ClientModInitializer {
 
 }
 
-class MCioFrameCapture {
+class MCioFrameSave {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private KeyBinding captureKey;
 	private int frameCount = 0;
@@ -91,7 +86,7 @@ class MCioFrameCapture {
 
 		// Register the keybinding (default to F8)
 		captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"MCioFrameCapture",
+				"MCioFrameSave",
 				GLFW.GLFW_KEY_F8,
 				MCIO_CONST.KEY_CATEGORY
 		));
@@ -147,7 +142,8 @@ class MCioKeys {
 			}
 			if (nextKey.wasPressed() && client.world != null) {
 				LOGGER.info("Next");
-				client.player.networkHandler.sendCommand("tick step");
+                assert client.player != null;
+                client.player.networkHandler.sendCommand("tick step");
 			}
 		});
 
