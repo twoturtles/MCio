@@ -22,14 +22,15 @@ public class WindowMixin {
         }
 
         Window window = (Window)(Object)this;
-        int width = window.getWidth();
-        int height = window.getHeight();
+        int width = window.getFramebufferWidth();
+        int height = window.getFramebufferHeight();
 
         ByteBuffer pixelBuffer = MCioFrameCapture.getBuffer(width, height);
         pixelBuffer.clear(); // Reset position to 0
 
         glReadBuffer(GL_BACK);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelBuffer);
+        // -rw-r--r--@ 1 joe  staff   6.3M Nov  7 13:47 frame_1731005240731.raw
 
         /* Add test code here to write frames to a file. */
         test(pixelBuffer);
