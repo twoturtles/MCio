@@ -178,7 +178,6 @@ class StateHandler {
             if (sendFPS.count()) {
                 LOGGER.warn("SEND FRAME {}", frame.frame_count());
             }
-            //test(pixelBuffer);
             StatePacket statePkt = new StatePacket(frame.frame_count(), frame.width(), frame.height(),
                     frame.bytes_per_pixel(), frame.frame(), "hello...");
             try {
@@ -187,28 +186,6 @@ class StateHandler {
             } catch (IOException e) {
                 LOGGER.warn("StatePacketPacker failed");
             }
-        }
-    }
-
-    private void test(ByteBuffer pixelBuffer) {
-        try {
-            java.io.File outputDir = new java.io.File("frame_captures");
-            if (!outputDir.exists()) {
-                outputDir.mkdir();
-            }
-
-            /* frameCount won't be accurate */
-            String fileName = String.format("frame_%d.raw", MCioFrameCapture.getFrameCount());
-            java.io.File outputFile = new java.io.File(outputDir, fileName);
-
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outputFile)) {
-                pixelBuffer.rewind();  // Make sure we're at the start of the buffer
-                byte[] bytes = new byte[pixelBuffer.remaining()];
-                pixelBuffer.get(bytes);
-                fos.write(bytes);
-            }
-        } catch (java.io.IOException e) {
-            System.err.println("Failed to write frame: " + e.getMessage());
         }
     }
 
