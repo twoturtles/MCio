@@ -27,6 +27,7 @@ class MCIO_CONST {
  * - Fake cursor for menus. Or maybe send cursor position and let python do it.
  * - Send frames as png
  * - step mode to allow stepping by ticks. Also allow above realtime speed.
+ * - Disable idle frame slowdown?
  */
 
 public class MCioClient implements ClientModInitializer {

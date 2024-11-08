@@ -3,6 +3,7 @@ package net.twoturtles;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.mojang.logging.LogUtils;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
 import org.lwjgl.glfw.GLFW;
@@ -17,6 +18,8 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+
 
 import net.twoturtles.mixin.client.MouseMixin;
 
@@ -110,6 +113,7 @@ public class MCioController {
 class StateHandler {
     private final MinecraftClient client;
     private final AtomicBoolean running;
+    private final SignalWithLatch signalHandler = new SignalWithLatch();
 
     private final ZMQ.Socket stateSocket;
     private final Thread stateThread;
@@ -125,6 +129,13 @@ class StateHandler {
         stateSocket.bind("tcp://*:" + listen_port);
 
         this.stateThread = new Thread(this::stateThreadRun, "MCio-StateThread");
+
+        /* Send state at the end of every tick */
+        ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
+            /* This will run on the client thread. */
+            LOGGER.warn("TICK signal");
+            signalHandler.sendSignal();
+        });
     }
 
     public void start() {
@@ -132,24 +143,38 @@ class StateHandler {
         stateThread.start();
     }
 
+    class SignalWithLatch {
+        private CountDownLatch latch = new CountDownLatch(1);
+
+        public void waitForSignal() {
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                LOGGER.warn("Interrupted");
+            }
+            latch = new CountDownLatch(1);  // Reset for next use
+        }
+
+        public void sendSignal() {
+            latch.countDown();
+        }
+    }
+
     private void stateThreadRun() {
         try {
             while (running.get()) {
-                try {
-                    processNextState();
-                } catch (ZMQException e) {
-                    handleZMQException(e);
-                    break;
-                }
+                signalHandler.waitForSignal();;
+                sendNextState();
             }
         } finally {
             cleanupSocket();
         }
     }
 
-    private void processNextState() {
+    private void sendNextState() {
         MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastFrame();
         if (frame != null && frame.frame() != null) {
+            LOGGER.warn("SEND FRAME {}", frame.frame_count());
             //test(pixelBuffer);
             StatePacket statePkt = new StatePacket(frame.frame_count(), frame.width(), frame.height(),
                     frame.bytes_per_pixel(), frame.frame(), "hello...");
@@ -159,13 +184,6 @@ class StateHandler {
             } catch (IOException e) {
                 LOGGER.warn("StatePacketPacker failed");
             }
-        }
-
-        /* XXX */
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            LOGGER.warn("Interrupted");
         }
     }
 

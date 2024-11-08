@@ -1,6 +1,5 @@
 package net.twoturtles;
 
-import org.lwjgl.BufferUtils;
 import java.nio.ByteBuffer;
 
 /* Interface and state storage for WindowMixin:beforeSwap */

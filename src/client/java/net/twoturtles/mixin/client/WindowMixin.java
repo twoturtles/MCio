@@ -1,12 +1,14 @@
 package net.twoturtles.mixin.client;
 
 import net.minecraft.client.util.Window;
-import org.lwjgl.BufferUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.nio.ByteBuffer;
+
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -14,15 +16,18 @@ import net.twoturtles.MCioFrameCapture;
 
 @Mixin(Window.class)
 public class WindowMixin {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
         if (!MCioFrameCapture.isEnabled()) return;
-
         MCioFrameCapture.incrementFrameCount();
+        LOGGER.warn("NEW FRAME {}", MCioFrameCapture.getFrameCount());
         if (!MCioFrameCapture.shouldCaptureFrame()) {
             return;
         }
         int frameCount = MCioFrameCapture.getFrameCount();
+        LOGGER.warn("FRAME CAP {}", MCioFrameCapture.getFrameCount());
 
         Window window = (Window)(Object)this;
         int width = window.getFramebufferWidth();
