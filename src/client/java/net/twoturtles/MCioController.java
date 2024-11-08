@@ -20,8 +20,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 
-
 import net.twoturtles.mixin.client.MouseMixin;
+import net.twoturtles.util.TrackFPS;
 
 /* Definition of CmdPacket
  * Keep types simple to ease CBOR translation between python and java.
@@ -118,6 +118,7 @@ class StateHandler {
     private final ZMQ.Socket stateSocket;
     private final Thread stateThread;
     private final Logger LOGGER = LogUtils.getLogger();
+    private static final TrackFPS sendFPS = new TrackFPS("SEND");
 
     public StateHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
         this.client = client;
@@ -133,7 +134,6 @@ class StateHandler {
         /* Send state at the end of every tick */
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             /* This will run on the client thread. */
-            LOGGER.warn("TICK signal");
             signalHandler.sendSignal();
         });
     }
@@ -172,9 +172,12 @@ class StateHandler {
     }
 
     private void sendNextState() {
-        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastFrame();
+        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastCapturedFrame();
         if (frame != null && frame.frame() != null) {
-            LOGGER.warn("SEND FRAME {}", frame.frame_count());
+            /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
+            if (sendFPS.count()) {
+                LOGGER.warn("SEND FRAME {}", frame.frame_count());
+            }
             //test(pixelBuffer);
             StatePacket statePkt = new StatePacket(frame.frame_count(), frame.width(), frame.height(),
                     frame.bytes_per_pixel(), frame.frame(), "hello...");

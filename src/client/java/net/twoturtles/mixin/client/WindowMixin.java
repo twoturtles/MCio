@@ -22,12 +22,10 @@ public class WindowMixin {
     private void beforeSwap(CallbackInfo ci) {
         if (!MCioFrameCapture.isEnabled()) return;
         MCioFrameCapture.incrementFrameCount();
-        LOGGER.warn("NEW FRAME {}", MCioFrameCapture.getFrameCount());
         if (!MCioFrameCapture.shouldCaptureFrame()) {
             return;
         }
         int frameCount = MCioFrameCapture.getFrameCount();
-        LOGGER.warn("FRAME CAP {}", MCioFrameCapture.getFrameCount());
 
         Window window = (Window)(Object)this;
         int width = window.getFramebufferWidth();
