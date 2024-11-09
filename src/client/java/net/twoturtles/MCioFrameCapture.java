@@ -4,15 +4,16 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.ScreenshotRecorder;
 import org.lwjgl.glfw.GLFW;
-import org.slf4j.Logger;
-
-import com.mojang.logging.LogUtils;
+import org.lwjgl.stb.STBImageWrite;
 
 import net.twoturtles.util.TrackFPS;
 
@@ -77,16 +78,19 @@ class MCioFrameSave {
                 MCIO_CONST.KEY_CATEGORY
         ));
 
-        // Register the tick event
+        // Register the tick event to pick up the key press.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (captureKey.wasPressed() && client.world != null) {
-                doCapture(client);
-                doCapture2(client);
+//                doCaptureMC(client);
+                doCapturePNG(client);
+//                doCaptureRaw(client);
             }
         });
     }
 
-    private void doCapture(MinecraftClient client) {
+    /* Write file using Minecraft's built-in screenshot writer, but without printing a message to the screen.
+     * These end up in the standard minecraft screenshots dir. */
+    private void doCaptureMC(MinecraftClient client) {
         String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
         String fileName = String.format("frame_%s_%d.png", timestamp, frameCount++);
         LOGGER.info("Captured frame: {}", fileName);
@@ -98,31 +102,46 @@ class MCioFrameSave {
                 client.getFramebuffer(),
                 (message) -> {}       // No message to the UI
         );
-
-        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastCapturedFrame();
     }
 
-    private void doCapture2(MinecraftClient client) {
-        try {
-            java.io.File outputDir = new java.io.File("frame_captures");
-            if (!outputDir.exists()) {
-                outputDir.mkdir();
-            }
+    /* Write png to frame_captures dir */
+    /* for 1280x1280 frames: PNG 1.2M, Raw 4.7M, PNG from PIL: 964K, Minecraft screenshot PNG: 1.4M */
+    private void doCapturePNG(MinecraftClient client) {
+        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastCapturedFrame();
+        frame.frame().rewind();  // Make sure we're at the start of the buffer
 
-            /* frameCount won't be accurate */
-            String fileName = String.format("frame_%d.raw", MCioFrameCapture.getFrameCount());
-            java.io.File outputFile = new java.io.File(outputDir, fileName);
+        java.io.File outputDir = new java.io.File("frame_captures");
+        if (!outputDir.exists()) {
+            outputDir.mkdir();
+        }
+        String fileName = String.format("frame_%d.png", frame.frame_count());
+        java.io.File outputFile = new java.io.File(outputDir, fileName);
 
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outputFile)) {
-                pixelBuffer.rewind();  // Make sure we're at the start of the buffer
-                byte[] bytes = new byte[pixelBuffer.remaining()];
-                pixelBuffer.get(bytes);
-                fos.write(bytes);
-            }
+        STBImageWrite.stbi_flip_vertically_on_write(true);
+        STBImageWrite.stbi_write_png(outputFile.getAbsolutePath(), frame.width(), frame.height(),
+                3, frame.frame(), frame.width() * 3);
+        LOGGER.info("Captured frame: {}", outputFile.getAbsolutePath());
+    }
+
+    /* Save raw pixels to file. The OpenGL origin is in the bottom left, so the frames will appear upside down. */
+    private void doCaptureRaw(MinecraftClient client) {
+        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastCapturedFrame();
+        frame.frame().rewind();  // Make sure we're at the start of the buffer
+
+        java.io.File outputDir = new java.io.File("frame_captures");
+        if (!outputDir.exists()) {
+            outputDir.mkdir();
+        }
+        String fileName = String.format("frame_%d.raw", frame.frame_count());
+        java.io.File outputFile = new java.io.File(outputDir, fileName);
+
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outputFile)) {
+            java.nio.channels.FileChannel channel = fos.getChannel();
+            channel.write(frame.frame());
+            LOGGER.info("Captured frame: {}", outputFile.getAbsolutePath());
         } catch (java.io.IOException e) {
             System.err.println("Failed to write frame: " + e.getMessage());
         }
     }
-
 }
 
