@@ -18,18 +18,10 @@ class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";
 }
 
-/* TODO
- * - Ensure all calls to random come from the same seed?
- * - Fake cursor for menus. Or maybe send cursor position and let python do it.
- * - Send frames as png
- * - step mode to allow stepping by ticks. Also allow above realtime speed.
- * - Disable idle frame slowdown?
- */
-
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private final Logger LOGGER = LogUtils.getLogger();
-	private final MCioFrameSave fcap = new MCioFrameSave();
+	private final MCioFrameSave fsave = new MCioFrameSave();
 	private final MCioKeys keys = new MCioKeys();
 	private MCioController mc_ctrl;
 
@@ -41,7 +33,7 @@ public class MCioClient implements ClientModInitializer {
 
 		mc_ctrl = new MCioController();
 		mc_ctrl.start();
-		fcap.initialize();
+		fsave.initialize();
 		keys.initialize();
 
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
@@ -50,34 +42,7 @@ public class MCioClient implements ClientModInitializer {
 				mc_ctrl.stop();
 			}
 		});
-
-//		Thread stateThread = new Thread(this::testThread, "MCio-TestThread");
-//		stateThread.start();
 	}
-
-	private void testThread() {
-		LOGGER.info("Test Thread Starting");
-		int count = 0;
-		final MinecraftClient client = MinecraftClient.getInstance();
-
-//		while (true) {
-//			double x = ((Math.sin((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
-//			double y = ((Math.cos((count * 2 * Math.PI) / 100) + 1) / 2) * 1000;
-//			count++;
-//
-//			client.execute(() -> {
-//				((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-//						client.getWindow().getHandle(), x, y);
-//			});
-//
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				LOGGER.warn("Interrupted");
-//			}
-//		}
-	}
-
 }
 
 class MCioKeys {
