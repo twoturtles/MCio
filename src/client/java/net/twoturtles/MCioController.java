@@ -57,10 +57,7 @@ class CmdPacketUnpacker {
 
 record StatePacket(
         int seq,				// sequence number
-        int width,
-        int height,
-        int bytes_per_pixel,
-        ByteBuffer frame,
+        ByteBuffer frame_png,
         String message
 ) { }
 
@@ -79,6 +76,7 @@ class StatePacketPacker {
  * - Ensure all calls to random come from the same seed?
  * - Fake cursor for menus. Or maybe send cursor position and let python do it.
  * - Send frames as png
+ * - Other state
  * - step mode to allow stepping by ticks. Also allow above realtime speed.
  * - Disable idle frame slowdown?
  */
@@ -142,7 +140,10 @@ class StateHandler {
 
         /* Send state at the end of every tick */
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
-            /* This will run on the client thread. */
+             /* This will run on the client thread. When the tick ends, signal the state thread to send an update.
+              * The server state is only updated once per tick so it makes the most sense to send an update
+              * after that. */
+            /* XXX Should it be the server that sends the signal? */
             signalHandler.sendSignal();
         });
     }
@@ -152,18 +153,19 @@ class StateHandler {
         stateThread.start();
     }
 
+    /* Used to signal between the render thread capturing frames and the state thread sending
+     * frames and state to the agent. */
     class SignalWithLatch {
         private CountDownLatch latch = new CountDownLatch(1);
-
         public void waitForSignal() {
             try {
+                /* Waits until the latch goes to 0. */
                 latch.await();
             } catch (InterruptedException e) {
                 LOGGER.warn("Interrupted");
             }
             latch = new CountDownLatch(1);  // Reset for next use
         }
-
         public void sendSignal() {
             latch.countDown();
         }
@@ -187,11 +189,11 @@ class StateHandler {
             if (sendFPS.count()) {
                 LOGGER.warn("SEND FRAME {}", frame.frame_count());
             }
-            StatePacket statePkt = new StatePacket(frame.frame_count(), frame.width(), frame.height(),
-                    frame.bytes_per_pixel(), frame.frame(), "hello...");
+            ByteBuffer pngBuf = MCioFrameCapture.getFramePNG(frame);
+            StatePacket statePkt = new StatePacket(frame.frame_count(), pngBuf, "hello...");
             try {
-                byte[] pbytes = StatePacketPacker.pack(statePkt);
-                stateSocket.send(pbytes);
+                byte[] pBytes = StatePacketPacker.pack(statePkt);
+                stateSocket.send(pBytes);
             } catch (IOException e) {
                 LOGGER.warn("StatePacketPacker failed");
             }

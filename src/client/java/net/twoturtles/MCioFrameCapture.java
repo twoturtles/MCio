@@ -64,12 +64,8 @@ public final class MCioFrameCapture {
 
     public static MCioFrame getLastCapturedFrame() { return lastCapturedFrame; }
 
-    /* Return last frame as PNG */
-    public static ByteBuffer getLastCapturedFramePNG() {
-        MCioFrame frame = lastCapturedFrame;
-        if (frame == null) {
-            return null;
-        }
+    /* Convert the pixels in the frame to a PNG */
+    public static ByteBuffer getFramePNG(MCioFrame frame) {
         frame.frame().rewind();  // Make sure we're at the start of the buffer
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -78,6 +74,8 @@ public final class MCioFrameCapture {
             MemoryUtil.memByteBuffer(data, size).get(bytes);
             outputStream.write(bytes, 0, size);
         })) {
+            /* Flip the OpenGL frame */
+            STBImageWrite.stbi_flip_vertically_on_write(true);
             boolean success = STBImageWrite.stbi_write_png_to_func(callback, 0L,
                     frame.width(), frame.height(), BYTES_PER_PIXEL, frame.frame(),
                     frame.width() * BYTES_PER_PIXEL
