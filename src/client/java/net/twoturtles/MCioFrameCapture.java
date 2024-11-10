@@ -3,6 +3,7 @@ package net.twoturtles;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.io.ByteArrayOutputStream;
 
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -12,8 +13,12 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.ScreenshotRecorder;
+
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.stb.STBImageWrite;
+import org.lwjgl.stb.STBIWriteCallback;
+
 
 import net.twoturtles.util.TrackFPS;
 
@@ -46,19 +51,45 @@ public final class MCioFrameCapture {
         captureFPS.count();
         lastCapturedFrame = frame;
     }
-    public static MCioFrame getLastCapturedFrame() {
-        return lastCapturedFrame;
-    }
 
     public static void setEnabled(boolean enabled_val) { enabled = enabled_val; }
     public static boolean isEnabled() { return enabled; }
-
     public static void incrementFrameCount() { frameCount++; }
     public static int getFrameCount() { return frameCount; }
 
     public static boolean shouldCaptureFrame() {
         frameFPS.count();
         return frameCount % CAPTURE_EVERY_N_FRAMES == 0;
+    }
+
+    public static MCioFrame getLastCapturedFrame() { return lastCapturedFrame; }
+
+    /* Return last frame as PNG */
+    public static ByteBuffer getLastCapturedFramePNG() {
+        MCioFrame frame = lastCapturedFrame;
+        if (frame == null) {
+            return null;
+        }
+        frame.frame().rewind();  // Make sure we're at the start of the buffer
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (STBIWriteCallback callback = STBIWriteCallback.create((context, data, size) -> {
+            byte[] bytes = new byte[size];
+            MemoryUtil.memByteBuffer(data, size).get(bytes);
+            outputStream.write(bytes, 0, size);
+        })) {
+            boolean success = STBImageWrite.stbi_write_png_to_func(callback, 0L,
+                    frame.width(), frame.height(), BYTES_PER_PIXEL, frame.frame(),
+                    frame.width() * BYTES_PER_PIXEL
+            );
+            if (!success) {
+                throw new RuntimeException("Failed to write PNG");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error writing PNG: " + e.getMessage(), e);
+        }
+
+        return ByteBuffer.wrap(outputStream.toByteArray());
     }
 }
 
