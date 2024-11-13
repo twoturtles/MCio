@@ -5,6 +5,12 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+
 
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -15,6 +21,8 @@ import org.zeromq.ZMQException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,55 +30,6 @@ import java.util.concurrent.CountDownLatch;
 
 import net.twoturtles.mixin.client.MouseMixin;
 import net.twoturtles.util.TrackFPS;
-
-/* Definition of CmdPacket
- * Keep types simple to ease CBOR translation between python and java.
- * XXX Everything is native order (little-endian).
- */
-record CmdPacket(
-        int seq,				// sequence number
-        Set<Integer> keys_pressed,
-        Set<Integer> keys_released,
-        Set<Integer> mouse_buttons_pressed,
-        Set<Integer> mouse_buttons_released,
-        boolean mouse_pos_update,
-        int mouse_pos_x,
-        int mouse_pos_y,
-        boolean key_reset,          // clear all pressed keys (useful for crashed controller).
-        String message
-) { }
-
-/* Deserialize CmdPacket */
-class CmdPacketUnpacker {
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
-
-    public static Optional<CmdPacket> unpack(byte[] data) {
-        try {
-            return Optional.of(CBOR_MAPPER.readValue(data, CmdPacket.class));
-        } catch (IOException e) {
-            LOGGER.error("Failed to unpack data", e);
-            return Optional.empty();
-        }
-    }
-}
-
-record StatePacket(
-        int seq,				// sequence number
-        ByteBuffer frame_png,
-        String message
-) { }
-
-/* Serialize StatePacket */
-class StatePacketPacker {
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
-
-    public static byte[] pack(StatePacket state) throws IOException {
-        return CBOR_MAPPER.writeValueAsBytes(state);
-    }
-}
-
 
 /* TODO
  * - Ensure all calls to random come from the same seed?
@@ -183,21 +142,96 @@ class StateHandler {
     }
 
     private void sendNextState() {
+        FrameRV frameRV = getFrame();
+        InventoriesRV inventoriesRV = getInventories();
+
+        StatePacket statePkt = new StatePacket(frameRV.frame_count(), frameRV.frame_png,
+                inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand, "Hello..");
+
+        try {
+            byte[] pBytes = StatePacketPacker.pack(statePkt);
+            stateSocket.send(pBytes);
+        } catch (IOException e) {
+            LOGGER.warn("StatePacketPacker failed");
+        }
+
+        // TODO
+        // float health = player.getHealth();
+        // import net.minecraft.entity.damage.DamageSource;
+        // Coordinates
+        // Direction
+        // Experience
+        // Enchantments
+        // Status effects
+    }
+
+    /* Return type for getFrame */
+    record FrameRV(
+            int frame_count,
+            ByteBuffer frame_png
+    ){
+        public static FrameRV empty() {
+            return new FrameRV(
+                    0,  // Maybe make this -1 to signify empty
+                    ByteBuffer.allocate(0)  // empty ByteBuffer
+            );
+        }
+    }
+    private FrameRV getFrame() {
         MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastCapturedFrame();
-        if (frame != null && frame.frame() != null) {
-            /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
-            if (sendFPS.count()) {
-                LOGGER.warn("SEND FRAME {}", frame.frame_count());
-            }
-            ByteBuffer pngBuf = MCioFrameCapture.getFramePNG(frame);
-            StatePacket statePkt = new StatePacket(frame.frame_count(), pngBuf, "hello...");
-            try {
-                byte[] pBytes = StatePacketPacker.pack(statePkt);
-                stateSocket.send(pBytes);
-            } catch (IOException e) {
-                LOGGER.warn("StatePacketPacker failed");
+        if (frame == null || frame.frame() == null) {
+            return FrameRV.empty();
+        }
+
+        /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
+        if (sendFPS.count()) {
+            LOGGER.warn("SEND FRAME {}", frame.frame_count());
+        }
+        ByteBuffer pngBuf = MCioFrameCapture.getFramePNG(frame);
+        return new FrameRV(frame.frame_count(), pngBuf);
+    }
+
+    /* Return type for getInventoriesRV() */
+    record InventoriesRV(
+            ArrayList<InventorySlot> main,
+            ArrayList<InventorySlot> armor,
+            // Even though it's only one item, use array for consistency.
+            ArrayList<InventorySlot> offHand
+    ) {
+        public static InventoriesRV empty() {
+            return new InventoriesRV(
+                    new ArrayList<>(),
+                    new ArrayList<>(),
+                    new ArrayList<>()
+            );
+        }
+    }
+    private InventoriesRV getInventories() {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null) {
+            return InventoriesRV.empty();
+        }
+
+        PlayerInventory inventory = player.getInventory();
+        // main includes hotBar (0-8) and regular inventory (9-35). Split these?
+        ArrayList<InventorySlot> main = readInventory(inventory.main);
+        ArrayList<InventorySlot> armor = readInventory(inventory.armor);
+        ArrayList<InventorySlot> offHand = readInventory(inventory.offHand);
+        return new InventoriesRV(main, armor, offHand);
+    }
+
+    private ArrayList<InventorySlot> readInventory(List<ItemStack> inventoryList) {
+        ArrayList<InventorySlot> slots = new ArrayList<>();
+        for (int slot_num = 0; slot_num < inventoryList.size(); slot_num++) {
+            ItemStack stack = inventoryList.get(slot_num);
+            if (!stack.isEmpty()) {
+                InventorySlot inventorySlot = new InventorySlot(
+                        slot_num, Registries.ITEM.getId(stack.getItem()).toString(), stack.getCount()
+                );
+                slots.add(inventorySlot);
             }
         }
+        return slots;
     }
 
     private void cleanupSocket() {
@@ -211,7 +245,6 @@ class StateHandler {
         }
     }
 }
-
 
 /* Handles incoming commands and passes to the client/render thread. Runs on own thread. */
 class CommandHandler {
