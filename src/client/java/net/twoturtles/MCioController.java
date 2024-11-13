@@ -308,7 +308,7 @@ class ActionHandler {
         }
 
         ActionPacket action = packetOpt.get();
-        LOGGER.info("ACTION {}", action);
+        //LOGGER.info("ACTION {}", action);
 
         /* Keyboard handlers */
         for (int key : action.keys_pressed()) {

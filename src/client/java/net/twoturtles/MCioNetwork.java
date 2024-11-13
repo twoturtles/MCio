@@ -1,15 +1,18 @@
 package net.twoturtles;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import com.mojang.logging.LogUtils;
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
+
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /* Networking interface for communicating with the agent. */
 
@@ -59,22 +62,39 @@ record ActionPacket(
         boolean mouse_pos_update,
         int mouse_pos_x,
         int mouse_pos_y,
-        boolean key_reset,          // clear all pressed keys (useful for crashed controller).
-        String message
+        boolean key_reset          // TODO clear all pressed keys (useful for crashed controller).
 ) {}
 
 /* Deserialize ActionPacket */
 class ActionPacketUnpacker {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
+    private static final ObjectMapper DEBUG_MAPPER = new ObjectMapper().enable(
+            SerializationFeature.INDENT_OUTPUT);
 
     public static Optional<ActionPacket> unpack(byte[] data) {
         try {
             return Optional.of(CBOR_MAPPER.readValue(data, ActionPacket.class));
         } catch (IOException e) {
-            LOGGER.error("Failed to unpack data", e);
+            String debugInfo = debugPacket(data);
+            LOGGER.error("Failed to unpack data: {}.\nRaw packet: {}", e.getMessage(), debugInfo);
             return Optional.empty();
         }
     }
+
+    public static String debugPacket(byte[] data) {
+        try {
+            JsonNode node = CBOR_MAPPER.readTree(data);
+            return DEBUG_MAPPER.writeValueAsString(node);
+        } catch (IOException e) {
+            // If we can't even parse as JSON tree, show hex dump
+            StringBuilder hex = new StringBuilder("Unparseable CBOR bytes: ");
+            for (byte b : data) {
+                hex.append(String.format("%02X ", b));
+            }
+            return hex.toString();
+        }
+    }
+
 }
 
