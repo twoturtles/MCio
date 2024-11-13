@@ -34,10 +34,13 @@ import net.twoturtles.util.TrackFPS;
 /* TODO
  * - Ensure all calls to random come from the same seed?
  * - Fake cursor for menus. Or maybe send cursor position and let python do it.
- * - Send frames as png
  * - Other state
  * - step mode to allow stepping by ticks. Also allow above realtime speed.
  * - Disable idle frame slowdown?
+ * - shared config file, override with env/command line option
+ * - Command line args / config to start in paused state
+ * - minerl compatible mode - find out other features to make it useful
+ * - gymnasium
  */
 
 /* Top-level class. Runs on client thread.
