@@ -11,14 +11,21 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 
-/* Networking definitions for communicating with the agent. */
+/* Networking interface for communicating with the agent. */
 
-/* CmdPacket sent by agent to Minecraft
+class NetworkDefines {
+    private NetworkDefines() {}
+    public static final int MCIO_PROTOCOL_VERSION = 0;
+}
+
+
+/* ActionPacket sent by agent to Minecraft
  * Keep types simple to ease CBOR translation between python and java.
  * XXX Everything is native order (little-endian).
  */
-record CmdPacket(
-        int seq,				// sequence number
+record ActionPacket(
+        int version,    // MCIO_PROTOCOL_VERSION
+        int sequence,
         Set<Integer> keys_pressed,
         Set<Integer> keys_released,
         Set<Integer> mouse_buttons_pressed,
@@ -28,16 +35,16 @@ record CmdPacket(
         int mouse_pos_y,
         boolean key_reset,          // clear all pressed keys (useful for crashed controller).
         String message
-) { }
+) {}
 
-/* Deserialize CmdPacket */
-class CmdPacketUnpacker {
+/* Deserialize ActionPacket */
+class ActionPacketUnpacker {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
 
-    public static Optional<CmdPacket> unpack(byte[] data) {
+    public static Optional<ActionPacket> unpack(byte[] data) {
         try {
-            return Optional.of(CBOR_MAPPER.readValue(data, CmdPacket.class));
+            return Optional.of(CBOR_MAPPER.readValue(data, ActionPacket.class));
         } catch (IOException e) {
             LOGGER.error("Failed to unpack data", e);
             return Optional.empty();
@@ -47,12 +54,13 @@ class CmdPacketUnpacker {
 
 /* State packets sent to agent */
 record StatePacket(
-        int seq,                // sequence number
+        int version,    // MCIO_PROTOCOL_VERSION
+        int sequence,
         ByteBuffer frame_png,
+        float health,
         ArrayList<InventorySlot> inventory_main,
         ArrayList<InventorySlot> inventory_armor,
-        ArrayList<InventorySlot> inventory_offhand,
-        String message
+        ArrayList<InventorySlot> inventory_offhand
 ) {}
 
 record InventorySlot(

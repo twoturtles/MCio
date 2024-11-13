@@ -1,14 +1,11 @@
 package net.twoturtles;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 
 
@@ -24,7 +21,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 
@@ -41,13 +37,15 @@ import net.twoturtles.util.TrackFPS;
  * - Command line args / config to start in paused state
  * - minerl compatible mode - find out other features to make it useful
  * - gymnasium
+ * - protocol version
+ * - retina scaling
  */
 
 /* Top-level class. Runs on client thread.
- * Spawns threads for receiving commands and sending state updates. */
+ * Spawns threads for receiving actions and sending state updates. */
 public class MCioController {
     private final Logger LOGGER = LogUtils.getLogger();
-    private static final int PORT_CMD = 5556;  // For receiving commands
+    private static final int PORT_ACTION = 5556;  // For receiving actions
     private static final int PORT_STATE = 5557;    // For sending screen and other state.
     private final ZContext context;
 
@@ -64,8 +62,8 @@ public class MCioController {
         this.running.set(true);
 
         // Start threads
-        CommandHandler cmd = new CommandHandler(client, context, PORT_CMD, running);
-        cmd.start();
+        ActionHandler action = new ActionHandler(client, context, PORT_ACTION, running);
+        action.start();
 
         StateHandler state = new StateHandler(client, context, PORT_STATE, running);
         state.start();
@@ -144,13 +142,23 @@ class StateHandler {
         }
     }
 
+    /* Send state to agent */
     private void sendNextState() {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null) {
+            return;
+        }
+
+        /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
 
-        StatePacket statePkt = new StatePacket(frameRV.frame_count(), frameRV.frame_png,
-                inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand, "Hello..");
+        /* Create packet */
+        StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
+                frameRV.frame_count(), frameRV.frame_png, player.getHealth(),
+                inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
 
+        /* Send */
         try {
             byte[] pBytes = StatePacketPacker.pack(statePkt);
             stateSocket.send(pBytes);
@@ -160,6 +168,7 @@ class StateHandler {
 
         // TODO
         // float health = player.getHealth();
+        // cursor position
         // import net.minecraft.entity.damage.DamageSource;
         // Coordinates
         // Direction
@@ -249,36 +258,36 @@ class StateHandler {
     }
 }
 
-/* Handles incoming commands and passes to the client/render thread. Runs on own thread. */
-class CommandHandler {
+/* Handles incoming actions and passes to the client/render thread. Runs on own thread. */
+class ActionHandler {
     private final MinecraftClient client;
     private final AtomicBoolean running;
 
-    private final ZMQ.Socket cmdSocket;
-    private final Thread cmdThread;
+    private final ZMQ.Socket actionSocket;
+    private final Thread actionThread;
     private final Logger LOGGER = LogUtils.getLogger();
 
-    /* XXX Clear all commands if remote controller disconnects? */
-    public CommandHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
+    /* XXX Clear all actions if remote controller disconnects? */
+    public ActionHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
         this.client = client;
         this.running = running;
 
-        cmdSocket = zCtx.createSocket(SocketType.SUB);  // Sub socket for receiving commands
-        cmdSocket.connect("tcp://localhost:" + remote_port);
-        cmdSocket.subscribe(new byte[0]); // Subscribe to everything
+        actionSocket = zCtx.createSocket(SocketType.SUB);  // Sub socket for receiving actions
+        actionSocket.connect("tcp://localhost:" + remote_port);
+        actionSocket.subscribe(new byte[0]); // Subscribe to everything
 
-        this.cmdThread = new Thread(this::commandThreadRun, "MCio-CommandThread");
+        this.actionThread = new Thread(this::actionThreadRun, "MCio-ActionThread");
     }
 
     public void start() {
-        cmdThread.start();
+        actionThread.start();
     }
 
-    private void commandThreadRun() {
+    private void actionThreadRun() {
         try {
             while (running.get()) {
                 try {
-                    processNextCommand();
+                    processNextAction();
                 } catch (ZMQException e) {
                     handleZMQException(e);
                     break;
@@ -289,26 +298,26 @@ class CommandHandler {
         }
     }
 
-    private void processNextCommand() {
-        // Block waiting for next command.
-        byte[] pkt = cmdSocket.recv();
-        Optional<CmdPacket> packetOpt = CmdPacketUnpacker.unpack(pkt);
+    private void processNextAction() {
+        // Block waiting for next action.
+        byte[] pkt = actionSocket.recv();
+        Optional<ActionPacket> packetOpt = ActionPacketUnpacker.unpack(pkt);
         if (packetOpt.isEmpty()) {
-            LOGGER.warn("Received invalid command packet");
+            LOGGER.warn("Received invalid action packet");
             return;
         }
 
-        CmdPacket cmd = packetOpt.get();
-        LOGGER.info("CMD {}", cmd);
+        ActionPacket action = packetOpt.get();
+        LOGGER.info("ACTION {}", action);
 
         /* Keyboard handlers */
-        for (int key : cmd.keys_pressed()) {
+        for (int key : action.keys_pressed()) {
             client.execute(() -> {
                 client.keyboard.onKey(client.getWindow().getHandle(),
                         key, 0, GLFW.GLFW_PRESS, 0);
             });
         }
-        for (int key : cmd.keys_released()) {
+        for (int key : action.keys_released()) {
             client.execute(() -> {
                 client.keyboard.onKey(client.getWindow().getHandle(),
                         key, 0, GLFW.GLFW_RELEASE, 0);
@@ -316,19 +325,19 @@ class CommandHandler {
         }
 
         /* Mouse handlers */
-        if (cmd.mouse_pos_update()) {
+        if (action.mouse_pos_update()) {
             client.execute(() -> {
                 ((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-                        client.getWindow().getHandle(), cmd.mouse_pos_x(), cmd.mouse_pos_y());
+                        client.getWindow().getHandle(), action.mouse_pos_x(), action.mouse_pos_y());
             });
         }
-        for (int button : cmd.mouse_buttons_pressed()) {
+        for (int button : action.mouse_buttons_pressed()) {
             client.execute(() -> {
                 ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
                         client.getWindow().getHandle(), button, GLFW.GLFW_PRESS, 0);
             });
         }
-        for (int button : cmd.mouse_buttons_released()) {
+        for (int button : action.mouse_buttons_released()) {
             client.execute(() -> {
                 ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
                         client.getWindow().getHandle(), button, GLFW.GLFW_RELEASE, 0);
@@ -338,19 +347,19 @@ class CommandHandler {
 
     private void handleZMQException(ZMQException e) {
         if (!running.get()) {
-            LOGGER.info("Command thread shutting down");
+            LOGGER.info("Action thread shutting down");
         } else {
-            LOGGER.error("ZMQ error in command thread", e);
+            LOGGER.error("ZMQ error in action thread", e);
         }
     }
 
     private void cleanupSocket() {
-        LOGGER.info("Command thread cleanup");
-        if (cmdSocket != null) {
+        LOGGER.info("Action thread cleanup");
+        if (actionSocket != null) {
             try {
-                cmdSocket.close();
+                actionSocket.close();
             } catch (Exception e) {
-                LOGGER.error("Error closing command socket", e);
+                LOGGER.error("Error closing action socket", e);
             }
         }
     }
