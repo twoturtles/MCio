@@ -18,6 +18,32 @@ class NetworkDefines {
     public static final int MCIO_PROTOCOL_VERSION = 0;
 }
 
+/* State packets sent to agent */
+record StatePacket(
+        int version,    // MCIO_PROTOCOL_VERSION
+        int sequence,
+        ByteBuffer frame_png,
+        float health,
+        ArrayList<InventorySlot> inventory_main,
+        ArrayList<InventorySlot> inventory_armor,
+        ArrayList<InventorySlot> inventory_offhand
+) {}
+
+record InventorySlot(
+        int slot,
+        String id,
+        int count
+) {}
+
+/* Serialize StatePacket */
+class StatePacketPacker {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
+
+    public static byte[] pack(StatePacket state) throws IOException {
+        return CBOR_MAPPER.writeValueAsBytes(state);
+    }
+}
 
 /* ActionPacket sent by agent to Minecraft
  * Keep types simple to ease CBOR translation between python and java.
@@ -51,32 +77,4 @@ class ActionPacketUnpacker {
         }
     }
 }
-
-/* State packets sent to agent */
-record StatePacket(
-        int version,    // MCIO_PROTOCOL_VERSION
-        int sequence,
-        ByteBuffer frame_png,
-        float health,
-        ArrayList<InventorySlot> inventory_main,
-        ArrayList<InventorySlot> inventory_armor,
-        ArrayList<InventorySlot> inventory_offhand
-) {}
-
-record InventorySlot(
-        int slot,
-        String id,
-        int count
-) {}
-
-/* Serialize StatePacket */
-class StatePacketPacker {
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
-
-    public static byte[] pack(StatePacket state) throws IOException {
-        return CBOR_MAPPER.writeValueAsBytes(state);
-    }
-}
-
 
