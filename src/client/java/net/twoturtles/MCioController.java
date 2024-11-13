@@ -1,21 +1,5 @@
 package net.twoturtles;
 
-import com.mojang.logging.LogUtils;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-
-
-import org.lwjgl.glfw.GLFW;
-import org.slf4j.Logger;
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQException;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -23,6 +7,23 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
+
+import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.client.util.Window;
+
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+
+import org.lwjgl.glfw.GLFW;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
 import net.twoturtles.mixin.client.MouseMixin;
 import net.twoturtles.util.TrackFPS;
@@ -113,6 +114,17 @@ class StateHandler {
         stateThread.start();
     }
 
+    private void cleanupSocket() {
+        LOGGER.info("State thread cleanup");
+        if (stateSocket != null) {
+            try {
+                stateSocket.close();
+            } catch (Exception e) {
+                LOGGER.error("Error closing state socket", e);
+            }
+        }
+    }
+
     /* Used to signal between the render thread capturing frames and the state thread sending
      * frames and state to the agent. */
     class SignalWithLatch {
@@ -152,6 +164,7 @@ class StateHandler {
         /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
+        getCursorPos(client);
 
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
@@ -167,15 +180,18 @@ class StateHandler {
         }
 
         // TODO
-        // float health = player.getHealth();
         // cursor position
-        // import net.minecraft.entity.damage.DamageSource;
+        // damage?
         // Coordinates
         // Direction
         // Experience
         // Enchantments
         // Status effects
     }
+
+    /*
+     * Methods for collecting state data from Minecraft
+     */
 
     /* Return type for getFrame */
     record FrameRV(
@@ -246,15 +262,41 @@ class StateHandler {
         return slots;
     }
 
-    private void cleanupSocket() {
-        LOGGER.info("State thread cleanup");
-        if (stateSocket != null) {
-            try {
-                stateSocket.close();
-            } catch (Exception e) {
-                LOGGER.error("Error closing state socket", e);
-            }
+    private static String f2(double value) {
+        return String.format("%.2f", value);
+    }
+
+    private void getCursorPos(MinecraftClient client) {
+        Window window = client.getWindow();
+        if (window == null) {
+            return;
         }
+
+        double[] xPos = new double[1];
+        double[] yPos = new double[1];
+        // Mouse position relative to the window.
+        GLFW.glfwGetCursorPos(window.getHandle(), xPos, yPos);
+
+        double scaledMouseX = xPos[0] * (double)window.getScaledWidth() / window.getWidth();
+        long winHandle = client.getWindow().getHandle();
+        float[] xscale = new float[1];
+        float[] yscale = new float[1];
+        GLFW.glfwGetWindowContentScale(winHandle, xscale, yscale);
+
+        double scaledMouseY = yPos[0] * (double)window.getScaledHeight() / window.getHeight();
+        double frameMouseX = xPos[0] * (double)window.getFramebufferWidth() / window.getWidth();
+        double frameMouseY = yPos[0] * (double)window.getFramebufferHeight() / window.getHeight();
+
+        LOGGER.warn("pos={},{} scaledPos={},{} framePos={},{} window=={},{} frameBuf={},{} scaledWindow={},{} windowScale={} glfwScale={},{}",
+                f2(xPos[0]), f2(yPos[0]),
+                f2(scaledMouseX), f2(scaledMouseY),
+                f2(frameMouseX), f2(frameMouseY),
+                window.getWidth(), window.getHeight(),
+                window.getFramebufferWidth(), window.getFramebufferHeight(),
+                window.getScaledWidth(), window.getScaledHeight(),
+                window.getScaleFactor(),
+                xscale[0], yscale[0]
+                );
     }
 }
 
