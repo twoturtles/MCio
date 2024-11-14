@@ -271,61 +271,23 @@ class StateHandler {
             return;
         }
 
-        // For reading from glfw
+        // Mouse position - these are relative to the window.
         double[] dReadX = new double[1];
         double[] dReadY = new double[1];
-        float[] fReadX = new float[1];
-        float[] fReadY = new float[1];
-        int[] iReadW = new int[1];
-        int[] iReadH = new int[1];
-
-        // Mouse position - these are relative to the window.
         GLFW.glfwGetCursorPos(window.getHandle(), dReadX, dReadY);
         double mouseX = dReadX[0];
         double mouseY = dReadY[0];
 
-        // Window scale factor
-        double winScale = window.getScaleFactor();
-
-        // GLFW scale factor
-        long winHandle = client.getWindow().getHandle();
-        GLFW.glfwGetWindowContentScale(winHandle, fReadX, fReadY);
-        float glScaleX = fReadX[0];
-        float glScaleY = fReadY[0];
-
-        // Window sizes
+        // Scale mouse position to frame.
+        // This only matters for high DPI displays (Retina), but doing this works either way.
         long winWidth = window.getWidth();
         long winHeight = window.getHeight();
-        long winScaledWidth = window.getScaledWidth();
-        long winScaledHeight = window.getScaledHeight();
         int winFrameWidth = window.getFramebufferWidth();
         int winFrameHeight = window.getFramebufferHeight();
-
-        GLFW.glfwGetFramebufferSize(winHandle, iReadW, iReadH);
-        int glFrameWidth = iReadW[0];
-        int glFrameHeight = iReadH[0];
-
-        double scaledMouseX = mouseX * (double)winScaledWidth / winWidth;
-        double scaledMouseY = mouseY * (double)winScaledHeight / winHeight;
         double frameMouseX = mouseX * (double)winFrameWidth / winWidth;
         double frameMouseY = mouseY * (double)winFrameHeight / winHeight;
 
-        // [14:40:12] [MCio-ActionThread/INFO] (ActionHandler) ACTION ActionPacket[version=0, sequence=0, keys_pressed=[], keys_released=[], mouse_buttons_pressed=[], mouse_buttons_released=[], mouse_pos_update=true, mouse_pos_x=631, mouse_pos_y=474, key_reset=false]
-        //[14:40:12] [MCio-StateThread/WARN] (StateHandler) pos=320.00,240.00 scaledPos=160.00,120.00 framePos=320.00,240.00 window==640,480 frameBuf=640,480 scaledWindow=320,240 windowScale=2.0 glfwScale=1.0,1.0
-        // scale position, gui move at edge, gui scale input position
-
-        LOGGER.warn(" ");
-        LOGGER.warn("1) mouse={},{} frameMouse={},{} scaledMouse={},{}",
-                f1(mouseX), f1(mouseY),
-                f1(frameMouseX), f1(frameMouseY),
-                f1(scaledMouseX), f1(scaledMouseY));
-        LOGGER.warn("2) window={},{} glFrame={},{} winFrame={},{} winScaled={},{}",
-                winWidth, winHeight,
-                glFrameWidth, glFrameHeight,
-                winFrameWidth, winFrameHeight,
-                winScaledWidth, winScaledHeight);
-        LOGGER.warn("3) glScale={},{} winScale={}",
-                glScaleX, glScaleY, winScale);
+        LOGGER.warn("MOUSE {},{}", frameMouseX, frameMouseY);
     }
 }
 

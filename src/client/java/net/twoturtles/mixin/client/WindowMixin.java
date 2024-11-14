@@ -28,6 +28,8 @@ public class WindowMixin {
     private static final Logger LOGGER = LogUtils.getLogger();
     @Unique
     private static boolean checkFrameSize = true;
+    @Unique
+    private static boolean doRetinaHack = true;
 
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
@@ -61,6 +63,9 @@ public class WindowMixin {
     @Redirect(at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwDefaultWindowHints()V"),
             method = "<init>", remap = false)
     private void onDefaultWindowHints() {
+        if (!doRetinaHack) {
+            return;
+        }
         GLFW.glfwDefaultWindowHints();
         if (MinecraftClient.IS_SYSTEM_MAC) {
             LOGGER.info("RETINA-FRAME-BUFFER-DISABLE");
@@ -93,6 +98,6 @@ public class WindowMixin {
                 checkFrameSize = false;
             }
         });
-
     }
+
 }
