@@ -163,11 +163,12 @@ class StateHandler {
         /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
-        getCursorPos(client);
+        getCursorPosRV posRV = getCursorPos(client);
 
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
                 frameRV.frame_count(), frameRV.frame_png, player.getHealth(),
+                new int[] {posRV.x(), posRV.y()},
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
 
         /* Send */
@@ -261,10 +262,14 @@ class StateHandler {
         return slots;
     }
 
-    private void getCursorPos(MinecraftClient client) {
+    record getCursorPosRV(
+            int x,
+            int y
+    ){}
+    private getCursorPosRV getCursorPos(MinecraftClient client) {
         Window window = client.getWindow();
         if (window == null) {
-            return;
+            return new getCursorPosRV(0, 0);
         }
 
         // Mouse position - these are relative to the window.
@@ -283,7 +288,7 @@ class StateHandler {
         int frameMouseX = (int) (mouseX * (double)winFrameWidth / winWidth);
         int frameMouseY = (int) (mouseY * (double)winFrameHeight / winHeight);
 
-        LOGGER.warn("MOUSE {},{}", frameMouseX, frameMouseY);
+        return new getCursorPosRV(frameMouseX, frameMouseY);
     }
 }
 

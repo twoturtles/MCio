@@ -27,10 +27,17 @@ record StatePacket(
         int sequence,
         ByteBuffer frame_png,
         float health,
+        int[] mousePos,
         ArrayList<InventorySlot> inventory_main,
         ArrayList<InventorySlot> inventory_armor,
         ArrayList<InventorySlot> inventory_offhand
-) {}
+) {
+    StatePacket {
+        if (mousePos.length != 2) {
+            throw new IllegalArgumentException("mousePos must be an array of length 2");
+        }
+    }
+}
 
 record InventorySlot(
         int slot,
