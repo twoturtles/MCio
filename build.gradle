@@ -96,8 +96,8 @@ loom {
 	runs {
 		client {
 			programArgs (
-					'--width', '500',
-					'--height', '200',
+					'--width', '640',
+					'--height', '480',
 					'--quickPlaySingleplayer', 'New World',
 					//'--fullscreen'
 			)

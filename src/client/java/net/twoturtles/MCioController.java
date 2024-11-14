@@ -38,8 +38,7 @@ import net.twoturtles.util.TrackFPS;
  * - Command line args / config to start in paused state
  * - minerl compatible mode - find out other features to make it useful
  * - gymnasium
- * - protocol version
- * - retina scaling
+ * - tests - java and python
  */
 
 /* Top-level class. Runs on client thread.
@@ -262,8 +261,8 @@ class StateHandler {
         return slots;
     }
 
-    private static String f2(double value) {
-        return String.format("%.2f", value);
+    private static String f1(double value) {
+        return String.format("%.1f", value);
     }
 
     private void getCursorPos(MinecraftClient client) {
@@ -272,31 +271,61 @@ class StateHandler {
             return;
         }
 
-        double[] xPos = new double[1];
-        double[] yPos = new double[1];
-        // Mouse position relative to the window.
-        GLFW.glfwGetCursorPos(window.getHandle(), xPos, yPos);
+        // For reading from glfw
+        double[] dReadX = new double[1];
+        double[] dReadY = new double[1];
+        float[] fReadX = new float[1];
+        float[] fReadY = new float[1];
+        int[] iReadW = new int[1];
+        int[] iReadH = new int[1];
 
-        double scaledMouseX = xPos[0] * (double)window.getScaledWidth() / window.getWidth();
+        // Mouse position - these are relative to the window.
+        GLFW.glfwGetCursorPos(window.getHandle(), dReadX, dReadY);
+        double mouseX = dReadX[0];
+        double mouseY = dReadY[0];
+
+        // Window scale factor
+        double winScale = window.getScaleFactor();
+
+        // GLFW scale factor
         long winHandle = client.getWindow().getHandle();
-        float[] xscale = new float[1];
-        float[] yscale = new float[1];
-        GLFW.glfwGetWindowContentScale(winHandle, xscale, yscale);
+        GLFW.glfwGetWindowContentScale(winHandle, fReadX, fReadY);
+        float glScaleX = fReadX[0];
+        float glScaleY = fReadY[0];
 
-        double scaledMouseY = yPos[0] * (double)window.getScaledHeight() / window.getHeight();
-        double frameMouseX = xPos[0] * (double)window.getFramebufferWidth() / window.getWidth();
-        double frameMouseY = yPos[0] * (double)window.getFramebufferHeight() / window.getHeight();
+        // Window sizes
+        long winWidth = window.getWidth();
+        long winHeight = window.getHeight();
+        long winScaledWidth = window.getScaledWidth();
+        long winScaledHeight = window.getScaledHeight();
+        int winFrameWidth = window.getFramebufferWidth();
+        int winFrameHeight = window.getFramebufferHeight();
 
-        LOGGER.warn("pos={},{} scaledPos={},{} framePos={},{} window=={},{} frameBuf={},{} scaledWindow={},{} windowScale={} glfwScale={},{}",
-                f2(xPos[0]), f2(yPos[0]),
-                f2(scaledMouseX), f2(scaledMouseY),
-                f2(frameMouseX), f2(frameMouseY),
-                window.getWidth(), window.getHeight(),
-                window.getFramebufferWidth(), window.getFramebufferHeight(),
-                window.getScaledWidth(), window.getScaledHeight(),
-                window.getScaleFactor(),
-                xscale[0], yscale[0]
-                );
+        GLFW.glfwGetFramebufferSize(winHandle, iReadW, iReadH);
+        int glFrameWidth = iReadW[0];
+        int glFrameHeight = iReadH[0];
+
+        double scaledMouseX = mouseX * (double)winScaledWidth / winWidth;
+        double scaledMouseY = mouseY * (double)winScaledHeight / winHeight;
+        double frameMouseX = mouseX * (double)winFrameWidth / winWidth;
+        double frameMouseY = mouseY * (double)winFrameHeight / winHeight;
+
+        // [14:40:12] [MCio-ActionThread/INFO] (ActionHandler) ACTION ActionPacket[version=0, sequence=0, keys_pressed=[], keys_released=[], mouse_buttons_pressed=[], mouse_buttons_released=[], mouse_pos_update=true, mouse_pos_x=631, mouse_pos_y=474, key_reset=false]
+        //[14:40:12] [MCio-StateThread/WARN] (StateHandler) pos=320.00,240.00 scaledPos=160.00,120.00 framePos=320.00,240.00 window==640,480 frameBuf=640,480 scaledWindow=320,240 windowScale=2.0 glfwScale=1.0,1.0
+        // scale position, gui move at edge, gui scale input position
+
+        LOGGER.warn(" ");
+        LOGGER.warn("1) mouse={},{} frameMouse={},{} scaledMouse={},{}",
+                f1(mouseX), f1(mouseY),
+                f1(frameMouseX), f1(frameMouseY),
+                f1(scaledMouseX), f1(scaledMouseY));
+        LOGGER.warn("2) window={},{} glFrame={},{} winFrame={},{} winScaled={},{}",
+                winWidth, winHeight,
+                glFrameWidth, glFrameHeight,
+                winFrameWidth, winFrameHeight,
+                winScaledWidth, winScaledHeight);
+        LOGGER.warn("3) glScale={},{} winScale={}",
+                glScaleX, glScaleY, winScale);
     }
 }
 
@@ -350,7 +379,7 @@ class ActionHandler {
         }
 
         ActionPacket action = packetOpt.get();
-        //LOGGER.info("ACTION {}", action);
+        LOGGER.info("ACTION {}", action);
 
         /* Keyboard handlers */
         for (int key : action.keys_pressed()) {
