@@ -18,6 +18,8 @@ import net.minecraft.client.util.Window;
 import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.opengl.GL11.*;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+
 import net.twoturtles.MCioFrameCapture;
 
 @Mixin(Window.class)
@@ -55,6 +57,7 @@ public class WindowMixin {
 
     // Based on https://github.com/FlashyReese/sodium-extra-fabric/blob/1.21/dev/common/src/main/java/me/flashyreese/mods/sodiumextra/mixin/reduce_resolution_on_mac/MixinWindow.java
     // Disable double sized frame buffer on retina displays.
+    @Shadow @Final private long handle;
     @Redirect(at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwDefaultWindowHints()V"),
             method = "<init>", remap = false)
     private void onDefaultWindowHints() {
@@ -64,39 +67,32 @@ public class WindowMixin {
             // 143361
             GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW.GLFW_FALSE);
         }
-    }
 
-    // The retina flag above doesn't quite work. The frame buffer ends up being twice the size of the window.
-    // I noticed that resizing the window fixes this. This hack does little resizes to the window until
-    // the frame buffer matches. It seems to take two calls, so do it until it works.
-    // This has to be done late enough in initialization that the frame buffer exists. Injecting at
-    // setTitle which seems to come late enough.
-    // Possibly related to this https://github.com/glfw/glfw/issues/1968
-    @Shadow @Final private long handle;
-    @Inject(method = "setTitle(Ljava/lang/String;)V", at = @At("TAIL"))
-    private void setTitleInject(String title, CallbackInfo ci) {
-        if (MinecraftClient.IS_SYSTEM_MAC && checkFrameSize) {
+        // The retina flag above doesn't quite work. The frame buffer ends up being twice the size of the window.
+        // I noticed that resizing the window fixes this. This hack does little resizes to the window until
+        // the frame buffer matches. It seems to take multiple calls, so do it until it works. Maybe some
+        // timing issue. This has to be done late enough in initialization that the frame buffer exists.
+        // Triggering off client ticks seems safe.
+        // Possibly related to this https://github.com/glfw/glfw/issues/1968
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!checkFrameSize) {
+                return;
+            }
             int[] winWidth = new int[1];
             int[] winHeight = new int[1];
             int[] frameWidth = new int[1];
             int[] frameHeight = new int[1];
 
-            // Get initial sizes and bump window size.
             GLFW.glfwGetFramebufferSize(handle, frameWidth, frameHeight);
             GLFW.glfwGetWindowSize(handle, winWidth, winHeight);
-            LOGGER.info("RETINA-HACK-BEFORE frame={},{} win={},{}", frameWidth[0], frameHeight[0], winWidth[0], winHeight[0]);
+            LOGGER.info("RETINA-HACK frame={},{} win={},{}", frameWidth[0], frameHeight[0], winWidth[0], winHeight[0]);
             GLFW.glfwSetWindowSize(handle, winWidth[0] - 1, winHeight[0] - 1);
             GLFW.glfwSetWindowSize(handle, winWidth[0], winHeight[0]);
-
-            // Check if we match.
-            GLFW.glfwGetFramebufferSize(handle, frameWidth, frameHeight);
-            GLFW.glfwGetWindowSize(handle, winWidth, winHeight);
-            LOGGER.info("RETINA-HACK-AFTER frame={},{} win={},{}", frameWidth[0], frameHeight[0], winWidth[0], winHeight[0]);
-            if (frameWidth[0] == winWidth[0] && frameHeight[0] == winHeight[0]) {
+            if (frameWidth[0] == winWidth[0] || frameHeight[0] == winHeight[0]) {
                 LOGGER.info("RETINA-HACK-SUCCESS");
                 checkFrameSize = false;
             }
-        }
-    }
+        });
 
+    }
 }
