@@ -261,10 +261,6 @@ class StateHandler {
         return slots;
     }
 
-    private static String f1(double value) {
-        return String.format("%.1f", value);
-    }
-
     private void getCursorPos(MinecraftClient client) {
         Window window = client.getWindow();
         if (window == null) {
@@ -284,8 +280,8 @@ class StateHandler {
         long winHeight = window.getHeight();
         int winFrameWidth = window.getFramebufferWidth();
         int winFrameHeight = window.getFramebufferHeight();
-        double frameMouseX = mouseX * (double)winFrameWidth / winWidth;
-        double frameMouseY = mouseY * (double)winFrameHeight / winHeight;
+        int frameMouseX = (int) (mouseX * (double)winFrameWidth / winWidth);
+        int frameMouseY = (int) (mouseY * (double)winFrameHeight / winHeight);
 
         LOGGER.warn("MOUSE {},{}", frameMouseX, frameMouseY);
     }
