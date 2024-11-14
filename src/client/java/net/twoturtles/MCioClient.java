@@ -78,7 +78,7 @@ class MCioKeys {
 			}
 		});
 
-		ClientTickEvents.END_CLIENT_TICK.register(server -> {
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			client_timer.end();
 		});
 	}
