@@ -16,7 +16,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.client.util.Window;
-import net.minecraft.client.Mouse;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
@@ -55,7 +54,6 @@ public class MCioController {
 
     public MCioController() {
         this.context = new ZContext();
-
         this.client = MinecraftClient.getInstance();
     }
 
@@ -79,7 +77,6 @@ public class MCioController {
 }
 
 class StateHandler {
-    static StateHandler instance;   // XXX make sure only one
     private final MinecraftClient client;
     private final AtomicBoolean running;
     private final SignalWithLatch signalHandler = new SignalWithLatch();
@@ -93,7 +90,6 @@ class StateHandler {
     public int lastActionPosY = 0;
 
     public StateHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
-        instance = this;
         this.client = client;
         this.running = running;
 
@@ -313,7 +309,6 @@ class StateHandler {
 
 /* Handles incoming actions and passes to the client/render thread. Runs on own thread. */
 class ActionHandler {
-    static ActionHandler instance;   // XXX make sure only one
     private final MinecraftClient client;
     private final AtomicBoolean running;
 
@@ -323,7 +318,6 @@ class ActionHandler {
 
     /* XXX Clear all actions if remote controller disconnects? */
     public ActionHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
-        instance = this;
         this.client = client;
         this.running = running;
 
@@ -381,9 +375,6 @@ class ActionHandler {
 
         /* Mouse handlers */
         if (action.mouse_pos_update()) {
-            StateHandler.instance.lastActionPosX = action.mouse_pos_x();
-            StateHandler.instance.lastActionPosY = action.mouse_pos_y();
-
             client.execute(() -> {
                 ((MouseMixinInterface) client.mouse).onCursorPosAgent(client.getWindow().getHandle(),
                         action.mouse_pos_x(), action.mouse_pos_y());
