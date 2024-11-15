@@ -16,6 +16,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.client.util.Window;
+import net.minecraft.client.Mouse;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
@@ -78,6 +79,7 @@ public class MCioController {
 }
 
 class StateHandler {
+    static StateHandler instance;   // XXX make sure only one
     private final MinecraftClient client;
     private final AtomicBoolean running;
     private final SignalWithLatch signalHandler = new SignalWithLatch();
@@ -87,7 +89,11 @@ class StateHandler {
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackFPS sendFPS = new TrackFPS("SEND");
 
+    public int lastActionPosX = 0;
+    public int lastActionPosY = 0;
+
     public StateHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
+        instance = this;
         this.client = client;
         this.running = running;
 
@@ -167,6 +173,14 @@ class StateHandler {
         InventoriesRV inventoriesRV = getInventories();
         getCursorPosRV posRV = getCursorPos(client);
 
+        int x = (int) ((MouseMixin.MouseAccessor) client.mouse).getX();
+        int y = (int) ((MouseMixin.MouseAccessor) client.mouse).getY();
+
+        LOGGER.warn("");
+        LOGGER.warn("posMouse {},{}", x, y);
+        LOGGER.warn("posGL {},{}", posRV.x(), posRV.y());
+        LOGGER.warn("posAction {},{}", lastActionPosX, lastActionPosY);
+
         int cursorMode = GLFW.glfwGetInputMode(window.getHandle(), GLFW.GLFW_CURSOR);
         // There are other modes, but I believe these are the two used by Minecraft.
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
@@ -174,7 +188,7 @@ class StateHandler {
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
                 frameRV.frame_count(), frameRV.frame_png, player.getHealth(),
-                cursorMode, new int[] {posRV.x(), posRV.y()},
+                cursorMode, new int[] {x, y},
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
 
         /* Send */
@@ -299,6 +313,7 @@ class StateHandler {
 
 /* Handles incoming actions and passes to the client/render thread. Runs on own thread. */
 class ActionHandler {
+    static ActionHandler instance;   // XXX make sure only one
     private final MinecraftClient client;
     private final AtomicBoolean running;
 
@@ -308,6 +323,7 @@ class ActionHandler {
 
     /* XXX Clear all actions if remote controller disconnects? */
     public ActionHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
+        instance = this;
         this.client = client;
         this.running = running;
 
@@ -365,9 +381,12 @@ class ActionHandler {
 
         /* Mouse handlers */
         if (action.mouse_pos_update()) {
+            StateHandler.instance.lastActionPosX = action.mouse_pos_x();
+            StateHandler.instance.lastActionPosY = action.mouse_pos_y();
+
             client.execute(() -> {
-                ((MouseMixin.OnCursorPosInvoker) client.mouse).invokeOnCursorPos(
-                        client.getWindow().getHandle(), action.mouse_pos_x(), action.mouse_pos_y());
+                ((MouseMixinInterface) client.mouse).onCursorPosAgent(client.getWindow().getHandle(),
+                        action.mouse_pos_x(), action.mouse_pos_y());
             });
         }
         for (int button : action.mouse_buttons_pressed()) {

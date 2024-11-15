@@ -36,8 +36,14 @@ public class MCioClient implements ClientModInitializer {
 		fsave.initialize();
 		keys.initialize();
 
+		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+			LOGGER.info("Client Started");
+			// Disable pauseOnLostFocus automatically
+			client.options.pauseOnLostFocus = false;
+		});
+
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
-			LOGGER.info("Client Shutdown");
+			LOGGER.info("Client Stopping");
 			if (mc_ctrl != null) {
 				mc_ctrl.stop();
 			}
@@ -45,6 +51,7 @@ public class MCioClient implements ClientModInitializer {
 	}
 }
 
+// Handler for miscellaneous keyboard shortcuts
 class MCioKeys {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private KeyBinding breakKey, nextKey;
