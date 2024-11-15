@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.mojang.logging.LogUtils;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,21 +22,32 @@ class NetworkDefines {
     public static final int MCIO_PROTOCOL_VERSION = 0;
 }
 
+class Validate {
+    static void check(boolean condition, String message) {
+        if (!condition) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+}
+
+
 /* State packets sent to agent */
 record StatePacket(
         int version,    // MCIO_PROTOCOL_VERSION
         int sequence,
         ByteBuffer frame_png,
         float health,
-        int[] mousePos,
+        int cursor_mode,
+        int[] mouse_pos,
         ArrayList<InventorySlot> inventory_main,
         ArrayList<InventorySlot> inventory_armor,
         ArrayList<InventorySlot> inventory_offhand
 ) {
     StatePacket {
-        if (mousePos.length != 2) {
-            throw new IllegalArgumentException("mousePos must be an array of length 2");
-        }
+        Validate.check(version == NetworkDefines.MCIO_PROTOCOL_VERSION, "Invalid version");
+        Validate.check(mouse_pos.length == 2, "Invalid mouse_pos");
+        Validate.check(cursor_mode == GLFW.GLFW_CURSOR_DISABLED ||
+                cursor_mode == GLFW.GLFW_CURSOR_NORMAL, "Invalid cursorMode");
     }
 }
 

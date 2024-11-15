@@ -155,20 +155,26 @@ class StateHandler {
 
     /* Send state to agent */
     private void sendNextState() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        MinecraftClient mcClient = MinecraftClient.getInstance();
+        ClientPlayerEntity player = mcClient.player;
         if (player == null) {
             return;
         }
+        Window window = client.getWindow();
 
         /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
         getCursorPosRV posRV = getCursorPos(client);
 
+        int cursorMode = GLFW.glfwGetInputMode(window.getHandle(), GLFW.GLFW_CURSOR);
+        // There are other modes, but I believe these are the two used by Minecraft.
+        cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
+
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
                 frameRV.frame_count(), frameRV.frame_png, player.getHealth(),
-                new int[] {posRV.x(), posRV.y()},
+                cursorMode, new int[] {posRV.x(), posRV.y()},
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
 
         /* Send */
@@ -180,7 +186,6 @@ class StateHandler {
         }
 
         // TODO
-        // cursor position
         // damage?
         // Coordinates
         // Direction
