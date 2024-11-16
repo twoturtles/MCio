@@ -31,17 +31,15 @@ import net.twoturtles.util.TrackFPS;
 
 /* TODO
  * - Ensure all calls to random come from the same seed?
- * - Fake cursor for menus. Or maybe send cursor position and let python do it.
- * - Other state
  * - step mode to allow stepping by ticks. Also allow above realtime speed.
  * - Disable idle frame slowdown?
+ *      client.getInactivityFpsLimiter()
  * - shared config file, override with env/command line option
  * - separate logging with level config
  * - Command line args / config to start in paused state
  * - minerl compatible mode - find out other features to make it useful
  * - gymnasium
  * - tests - java and python
- * - Clean up action packets.
  * - Save, and replay scripts
  * - Asynchronous and synchronous modes
  * - Everything in client, so server could be run separately
@@ -50,6 +48,9 @@ import net.twoturtles.util.TrackFPS;
 /* Top-level class. Runs on client thread.
  * Spawns threads for receiving actions and sending state updates. */
 public class MCioController {
+    static MCioController instance;
+    public static boolean windowFocused;
+
     private final Logger LOGGER = LogUtils.getLogger();
     private static final int PORT_ACTION = 5556;  // For receiving actions
     private static final int PORT_STATE = 5557;    // For sending screen and other state.
@@ -58,7 +59,9 @@ public class MCioController {
     private final MinecraftClient client;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
+
     public MCioController() {
+        instance = this;
         this.context = new ZContext();
         this.client = MinecraftClient.getInstance();
     }
@@ -157,6 +160,11 @@ class StateHandler {
         }
     }
 
+    // TODO - more things in the state packet
+    // Experience
+    // Enchantments
+    // Status effects
+
     /* Send state to agent */
     private void sendNextState() {
         MinecraftClient mcClient = MinecraftClient.getInstance();
@@ -192,14 +200,6 @@ class StateHandler {
         } catch (IOException e) {
             LOGGER.warn("StatePacketPacker failed");
         }
-
-        // TODO
-        // damage?
-        // Coordinates
-        // Direction
-        // Experience
-        // Enchantments
-        // Status effects
     }
 
     /*
@@ -352,7 +352,7 @@ class ActionHandler {
         }
 
         ActionPacket action = packetOpt.get();
-        LOGGER.info("ACTION {}", action);
+        LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
 
         /* Keyboard handler */
         for (int[] tuple : action.keys()) {
@@ -375,6 +375,7 @@ class ActionHandler {
                         client.getWindow().getHandle(), tuple[0], tuple[1]);
             });
         }
+
     }
 
     private void handleZMQException(ZMQException e) {
