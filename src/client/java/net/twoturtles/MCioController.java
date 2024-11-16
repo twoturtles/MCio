@@ -35,10 +35,15 @@ import net.twoturtles.util.TrackFPS;
  * - step mode to allow stepping by ticks. Also allow above realtime speed.
  * - Disable idle frame slowdown?
  * - shared config file, override with env/command line option
+ * - separate logging with level config
  * - Command line args / config to start in paused state
  * - minerl compatible mode - find out other features to make it useful
  * - gymnasium
  * - tests - java and python
+ * - Clean up action packets.
+ * - Save, and replay scripts
+ * - Asynchronous and synchronous modes
+ * - Everything in client, so server could be run separately
  */
 
 /* Top-level class. Runs on client thread.
@@ -86,9 +91,6 @@ class StateHandler {
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackFPS sendFPS = new TrackFPS("SEND");
 
-    public int lastActionPosX = 0;
-    public int lastActionPosY = 0;
-
     public StateHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
         this.client = client;
         this.running = running;
@@ -105,7 +107,6 @@ class StateHandler {
              /* This will run on the client thread. When the tick ends, signal the state thread to send an update.
               * The server state is only updated once per tick so it makes the most sense to send an update
               * after that. */
-            /* XXX Should it be the server that sends the signal? */
             signalHandler.sendSignal();
         });
     }
@@ -169,14 +170,6 @@ class StateHandler {
         InventoriesRV inventoriesRV = getInventories();
         getCursorPosRV posRV = getCursorPos(client);
 
-        int x = (int) ((MouseMixin.MouseAccessor) client.mouse).getX();
-        int y = (int) ((MouseMixin.MouseAccessor) client.mouse).getY();
-
-        LOGGER.warn("");
-        LOGGER.warn("posMouse {},{}", x, y);
-        LOGGER.warn("posGL {},{}", posRV.x(), posRV.y());
-        LOGGER.warn("posAction {},{}", lastActionPosX, lastActionPosY);
-
         int cursorMode = GLFW.glfwGetInputMode(window.getHandle(), GLFW.GLFW_CURSOR);
         // There are other modes, but I believe these are the two used by Minecraft.
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
@@ -184,7 +177,7 @@ class StateHandler {
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
                 frameRV.frame_count(), frameRV.frame_png, player.getHealth(),
-                cursorMode, new int[] {x, y},
+                cursorMode, new int[] {posRV.x(), posRV.y()},
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
 
         /* Send */
@@ -288,11 +281,8 @@ class StateHandler {
         }
 
         // Mouse position - these are relative to the window.
-        double[] dReadX = new double[1];
-        double[] dReadY = new double[1];
-        GLFW.glfwGetCursorPos(window.getHandle(), dReadX, dReadY);
-        double mouseX = dReadX[0];
-        double mouseY = dReadY[0];
+        int mouseX = (int) ((MouseMixin.MouseAccessor) client.mouse).getX();
+        int mouseY = (int) ((MouseMixin.MouseAccessor) client.mouse).getY();
 
         // Scale mouse position to frame.
         // This only matters for high DPI displays (Retina), but doing this works either way.
