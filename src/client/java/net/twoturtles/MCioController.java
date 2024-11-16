@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 
+import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
@@ -168,7 +169,10 @@ class StateHandler {
         /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
-        getCursorPosRV posRV = getCursorPos(client);
+        getCursorPosRV cursorPosRV = getCursorPos(client);
+
+        Vec3d playerPos =  player.getPos();
+        float[] fPlayerPos = new float[] {(float) playerPos.x, (float) playerPos.y, (float) playerPos.z};
 
         int cursorMode = GLFW.glfwGetInputMode(window.getHandle(), GLFW.GLFW_CURSOR);
         // There are other modes, but I believe these are the two used by Minecraft.
@@ -177,7 +181,8 @@ class StateHandler {
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
                 frameRV.frame_count(), frameRV.frame_png, player.getHealth(),
-                cursorMode, new int[] {posRV.x(), posRV.y()},
+                cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
+                fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
 
         /* Send */

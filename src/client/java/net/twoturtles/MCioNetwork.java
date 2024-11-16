@@ -38,16 +38,20 @@ record StatePacket(
         ByteBuffer frame_png,
         float health,
         int cursor_mode,
-        int[] mouse_pos,
+        int[] cursor_pos,    // [x, y]
+        float[] player_pos,   // [x, y, z]
+        float player_pitch,
+        float player_yaw,
         ArrayList<InventorySlot> inventory_main,
         ArrayList<InventorySlot> inventory_armor,
         ArrayList<InventorySlot> inventory_offhand
 ) {
     StatePacket {
         Validate.check(version == NetworkDefines.MCIO_PROTOCOL_VERSION, "Invalid version");
-        Validate.check(mouse_pos.length == 2, "Invalid mouse_pos");
+        Validate.check(cursor_pos.length == 2, "Invalid cursor_pos");
         Validate.check(cursor_mode == GLFW.GLFW_CURSOR_DISABLED ||
                 cursor_mode == GLFW.GLFW_CURSOR_NORMAL, "Invalid cursorMode");
+        Validate.check(player_pos.length == 3, "Invalid player_pos");
     }
 }
 
