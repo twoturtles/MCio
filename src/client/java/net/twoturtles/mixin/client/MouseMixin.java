@@ -61,7 +61,7 @@ public class MouseMixin implements MouseMixinInterface {
     // This implements a method in MouseMixinInterface. You can't create a new method in a Mixin,
     // but adding it via an interface works.
     @Override
-    public void onCursorPosAgent(long window, double x, double y) {
+    public void onCursorPosAgent$Mixin(long window, double x, double y) {
         LOGGER.warn("onCursorPosAgent");
         isAgentMovement = true;
         try {

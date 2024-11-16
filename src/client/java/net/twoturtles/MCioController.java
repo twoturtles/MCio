@@ -371,7 +371,7 @@ class ActionHandler {
         }
         for (int[] tuple : action.mouse_pos()) {
             client.execute(() -> {
-                ((MouseMixinInterface) client.mouse).onCursorPosAgent(
+                ((MouseMixinInterface) client.mouse).onCursorPosAgent$Mixin(
                         client.getWindow().getHandle(), tuple[0], tuple[1]);
             });
         }
