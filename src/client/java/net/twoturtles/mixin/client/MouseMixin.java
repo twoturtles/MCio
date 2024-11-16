@@ -62,7 +62,6 @@ public class MouseMixin implements MouseMixinInterface {
     // but adding it via an interface works.
     @Override
     public void onCursorPosAgent$Mixin(long window, double x, double y) {
-        LOGGER.warn("onCursorPosAgent");
         isAgentMovement = true;
         try {
             ((OnCursorPosInvoker) this).invokeOnCursorPos(window, x, y);

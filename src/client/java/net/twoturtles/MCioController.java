@@ -352,7 +352,7 @@ class ActionHandler {
         }
 
         ActionPacket action = packetOpt.get();
-        LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
+        //LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
 
         /* Keyboard handler */
         for (int[] tuple : action.keys()) {
