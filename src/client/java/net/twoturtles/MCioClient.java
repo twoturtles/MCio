@@ -38,8 +38,6 @@ public class MCioClient implements ClientModInitializer {
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
 			LOGGER.info("Client Started");
-			// Disable pauseOnLostFocus automatically
-			client.options.pauseOnLostFocus = false;
 		});
 
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
