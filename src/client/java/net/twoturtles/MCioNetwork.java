@@ -3,6 +3,7 @@ package net.twoturtles;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
@@ -76,17 +77,21 @@ class StatePacketPacker {
  * XXX Everything is native order (little-endian).
  */
 record ActionPacket(
+        // Control
         int version,    // MCIO_PROTOCOL_VERSION
         int sequence,
-        Set<Integer> keys_pressed,
-        Set<Integer> keys_released,
-        Set<Integer> mouse_buttons_pressed,
-        Set<Integer> mouse_buttons_released,
-        boolean mouse_pos_update,
-        int mouse_pos_x,
-        int mouse_pos_y,
-        boolean key_reset          // TODO clear all pressed keys (useful for crashed controller).
-) {}
+        boolean key_reset,          // TODO clear all pressed keys (useful for crashed controller).
+
+        // Action
+        int[][] keys,
+        int[][] mouse_buttons,
+        int[][] mouse_pos
+) {
+    // Helper for debugging to print the double arrays nicely
+    public String arrayToString(int[][] array) {
+        return Arrays.deepToString(array);
+    }
+}
 
 /* Deserialize ActionPacket */
 class ActionPacketUnpacker {

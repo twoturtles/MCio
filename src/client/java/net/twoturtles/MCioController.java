@@ -354,37 +354,25 @@ class ActionHandler {
         ActionPacket action = packetOpt.get();
         LOGGER.info("ACTION {}", action);
 
-        /* Keyboard handlers */
-        for (int key : action.keys_pressed()) {
+        /* Keyboard handler */
+        for (int[] tuple : action.keys()) {
             client.execute(() -> {
                 client.keyboard.onKey(client.getWindow().getHandle(),
-                        key, 0, GLFW.GLFW_PRESS, 0);
-            });
-        }
-        for (int key : action.keys_released()) {
-            client.execute(() -> {
-                client.keyboard.onKey(client.getWindow().getHandle(),
-                        key, 0, GLFW.GLFW_RELEASE, 0);
+                        tuple[0], 0, tuple[1], 0);
             });
         }
 
-        /* Mouse handlers */
-        if (action.mouse_pos_update()) {
-            client.execute(() -> {
-                ((MouseMixinInterface) client.mouse).onCursorPosAgent(client.getWindow().getHandle(),
-                        action.mouse_pos_x(), action.mouse_pos_y());
-            });
-        }
-        for (int button : action.mouse_buttons_pressed()) {
+        /* Mouse handler */
+        for (int[] tuple : action.mouse_buttons()) {
             client.execute(() -> {
                 ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
-                        client.getWindow().getHandle(), button, GLFW.GLFW_PRESS, 0);
+                        client.getWindow().getHandle(), tuple[0], tuple[1], 0);
             });
         }
-        for (int button : action.mouse_buttons_released()) {
+        for (int[] tuple : action.mouse_pos()) {
             client.execute(() -> {
-                ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
-                        client.getWindow().getHandle(), button, GLFW.GLFW_RELEASE, 0);
+                ((MouseMixinInterface) client.mouse).onCursorPosAgent(
+                        client.getWindow().getHandle(), tuple[0], tuple[1]);
             });
         }
     }
