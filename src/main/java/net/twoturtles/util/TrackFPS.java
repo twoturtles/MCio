@@ -9,7 +9,7 @@ public class TrackFPS {
     private static final double A_BILLION = 1_000_000_000.0;
     private double start = System.nanoTime() / A_BILLION;
     private int pkt_count = 0;
-    private double log_time = 1.0;
+    private double log_time = 10.0;
     private String name = "";
 
     public TrackFPS(String name) { this.name = name; }

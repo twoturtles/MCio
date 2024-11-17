@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -12,7 +11,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 
-import net.twoturtles.util.tickTimer;
+import net.twoturtles.util.TickTimer;
 
 class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";
@@ -29,7 +28,7 @@ public class MCioClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
 		LOGGER.info("Client Init");
-		tickTimer.do_log = false;
+		TickTimer.do_log = true;
 
 		mc_ctrl = new MCioController();
 		mc_ctrl.start();
@@ -53,7 +52,7 @@ public class MCioClient implements ClientModInitializer {
 class MCioKeys {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private KeyBinding breakKey, nextKey;
-	private final tickTimer client_timer = new tickTimer("Client");
+	private final TickTimer client_timer = new TickTimer("Client");
 
 	public void initialize() {
 		LOGGER.info("Init");
@@ -74,7 +73,7 @@ class MCioKeys {
 			if (breakKey.wasPressed() && client.world != null) {
 				LOGGER.info("Break-Toggle");
 				/* Tell server */
-				MCio.isFrozen.set(!MCio.isFrozen.get());
+				MCioServer.isFrozen.set(!MCioServer.isFrozen.get());
 			}
 			if (nextKey.wasPressed() && client.world != null) {
 				LOGGER.info("Next");

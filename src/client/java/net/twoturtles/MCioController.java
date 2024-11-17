@@ -43,9 +43,10 @@ import net.twoturtles.util.TrackFPS;
  * - Save and replay scripts
  * - Asynchronous and synchronous modes
  * - Everything in client, so server could be run separately
+ * - Bind both sockets in minecraft? Would this fix zmq slow joiner?
  */
 
-/* Top-level class. Runs on client thread.
+/* Top-level class. Starts on the client thread.
  * Spawns threads for receiving actions and sending state updates. */
 public class MCioController {
     static MCioController instance;
@@ -191,9 +192,9 @@ class StateHandler {
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
         /* Create packet */
-        LOGGER.info("SEQ {}", sequence);
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
-                sequence++, frameRV.frame_png, player.getHealth(),
+                sequence++, 0 /* XXX */,
+                frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
@@ -230,9 +231,7 @@ class StateHandler {
         }
 
         /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
-        if (sendFPS.count()) {
-            LOGGER.warn("SEND FRAME {}", frame.frame_count());
-        }
+        sendFPS.count();
         ByteBuffer pngBuf = MCioFrameCapture.getFramePNG(frame);
         return new FrameRV(frame.frame_count(), pngBuf);
     }
@@ -357,7 +356,7 @@ class ActionHandler {
         }
 
         ActionPacket action = packetOpt.get();
-        LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
+        //LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
 
         /* Keyboard handler */
         for (int[] tuple : action.keys()) {

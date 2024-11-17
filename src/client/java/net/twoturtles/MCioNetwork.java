@@ -34,8 +34,12 @@ class Validate {
 
 /* State packets sent to agent */
 record StatePacket(
+        // Control
         int version,    // MCIO_PROTOCOL_VERSION
         int sequence,
+        int last_action_sequence,
+
+        // State
         ByteBuffer frame_png,
         float health,
         int cursor_mode,

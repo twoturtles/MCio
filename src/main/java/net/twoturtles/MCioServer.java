@@ -9,14 +9,14 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
 import org.slf4j.Logger;
 
-import net.twoturtles.util.tickTimer;
+import net.twoturtles.util.TickTimer;
 
-public class MCio implements ModInitializer {
+public class MCioServer implements ModInitializer {
 	public static AtomicBoolean isFrozen = new AtomicBoolean(false);
 
 	private final Logger LOGGER = LogUtils.getLogger();
-	private final tickTimer server_timer = new tickTimer("Server");
-	private final tickTimer world_timer = new tickTimer("World");
+	private final TickTimer server_timer = new TickTimer("Server");
+	private final TickTimer world_timer = new TickTimer("World");
 
 	@Override
 	public void onInitialize() {

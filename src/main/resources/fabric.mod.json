@@ -15,7 +15,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.twoturtles.MCio"
+			"net.twoturtles.MCioServer"
 		],
 		"client": [
 			"net.twoturtles.MCioClient"
