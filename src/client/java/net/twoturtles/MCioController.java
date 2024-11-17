@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 
 import net.minecraft.util.math.Vec3d;
+import net.twoturtles.util.TrackPerSecond;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
@@ -27,7 +28,6 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
 import net.twoturtles.mixin.client.MouseMixin;
-import net.twoturtles.util.TrackFPS;
 
 /* TODO
  * - Ensure all calls to random come from the same seed?
@@ -94,7 +94,7 @@ class StateHandler {
     private final ZMQ.Socket stateSocket;
     private final Thread stateThread;
     private final Logger LOGGER = LogUtils.getLogger();
-    private static final TrackFPS sendFPS = new TrackFPS("SEND");
+    private static final TrackPerSecond sendFPS = new TrackPerSecond("StatesSent");
     private int sequence = 0;
     private int ticks = 0;
 

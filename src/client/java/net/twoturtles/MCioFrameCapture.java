@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.io.ByteArrayOutputStream;
 
+import net.twoturtles.util.TrackPerSecond;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -19,17 +20,14 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.stb.STBImageWrite;
 import org.lwjgl.stb.STBIWriteCallback;
 
-
-import net.twoturtles.util.TrackFPS;
-
 /* Interface and state storage for WindowMixin:beforeSwap */
 public final class MCioFrameCapture {
     public static final int CAPTURE_EVERY_N_FRAMES = 2;
     public static final int BYTES_PER_PIXEL = 3;    // GL_RGB
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final TrackFPS frameFPS = new TrackFPS("FRAME");
-    private static final TrackFPS captureFPS = new TrackFPS("CAPTURE");
+    private static final TrackPerSecond frameFPS = new TrackPerSecond("Frames");
+    private static final TrackPerSecond captureFPS = new TrackPerSecond("FrameCaptures");
 
     private static boolean enabled = false;
     private static int frameCount = 0;

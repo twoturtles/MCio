@@ -9,14 +9,14 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
 import org.slf4j.Logger;
 
-import net.twoturtles.util.TickTimer;
+import net.twoturtles.util.TrackPerSecond;
 
 public class MCioServer implements ModInitializer {
 	public static AtomicBoolean isFrozen = new AtomicBoolean(false);
 
 	private final Logger LOGGER = LogUtils.getLogger();
-	private final TickTimer server_timer = new TickTimer("Server");
-	private final TickTimer world_timer = new TickTimer("World");
+	private final TrackPerSecond serverTPS = new TrackPerSecond("ServerTicks");
+	private final TrackPerSecond worldTPS = new TrackPerSecond("WorldTicks");
 
 	@Override
 	public void onInitialize() {
@@ -28,8 +28,6 @@ public class MCioServer implements ModInitializer {
 		// XXX Check out command TickSprint
 		/* Server Ticks */
 		ServerTickEvents.START_SERVER_TICK.register(server -> {
-			server_timer.start();
-
 			ServerTickManager tickManager = server.getTickManager();
 			if (isFrozen.get()) {	/* Want frozen */
 				if (!tickManager.isFrozen()) {
@@ -46,16 +44,15 @@ public class MCioServer implements ModInitializer {
 		});
 
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			server_timer.end();
+			serverTPS.count();
 		});
 
 
 		/* World Ticks */
 		ServerTickEvents.START_WORLD_TICK.register(server -> {
-			world_timer.start();
 		});
 		ServerTickEvents.END_WORLD_TICK.register(server -> {
-			world_timer.end();
+			worldTPS.count();
 		});
 	}
 }

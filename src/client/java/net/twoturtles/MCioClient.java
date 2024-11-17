@@ -11,7 +11,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 
-import net.twoturtles.util.TickTimer;
+import net.twoturtles.util.TrackPerSecond;
 
 class MCIO_CONST {
 	public static final String KEY_CATEGORY = "MCio";
@@ -28,7 +28,6 @@ public class MCioClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
 		LOGGER.info("Client Init");
-		TickTimer.do_log = true;
 
 		mc_ctrl = new MCioController();
 		mc_ctrl.start();
@@ -52,7 +51,7 @@ public class MCioClient implements ClientModInitializer {
 class MCioKeys {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private KeyBinding breakKey, nextKey;
-	private final TickTimer client_timer = new TickTimer("Client");
+	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
 
 	public void initialize() {
 		LOGGER.info("Init");
@@ -68,8 +67,6 @@ class MCioKeys {
 				MCIO_CONST.KEY_CATEGORY
 		));
 		ClientTickEvents.START_CLIENT_TICK.register(client -> {
-			client_timer.start();
-
 			if (breakKey.wasPressed() && client.world != null) {
 				LOGGER.info("Break-Toggle");
 				/* Tell server */
@@ -83,7 +80,7 @@ class MCioKeys {
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			client_timer.end();
+			clientTPS.count();
 		});
 	}
 }
