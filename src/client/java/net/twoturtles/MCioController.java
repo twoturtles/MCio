@@ -40,7 +40,7 @@ import net.twoturtles.util.TrackFPS;
  * - minerl compatible mode - find out other features to make it useful
  * - gymnasium
  * - tests - java and python
- * - Save, and replay scripts
+ * - Save and replay scripts
  * - Asynchronous and synchronous modes
  * - Everything in client, so server could be run separately
  */
@@ -94,6 +94,8 @@ class StateHandler {
     private final Thread stateThread;
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackFPS sendFPS = new TrackFPS("SEND");
+    private int sequence = 0;
+    private int ticks = 0;
 
     public StateHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
         this.client = client;
@@ -112,6 +114,7 @@ class StateHandler {
               * The server state is only updated once per tick so it makes the most sense to send an update
               * after that. */
             signalHandler.sendSignal();
+            this.ticks++;
         });
     }
 
@@ -152,6 +155,7 @@ class StateHandler {
     private void stateThreadRun() {
         try {
             while (running.get()) {
+                // StateHandler sends a signal on END_CLIENT_TICK
                 signalHandler.waitForSignal();
                 sendNextState();
             }
@@ -187,8 +191,9 @@ class StateHandler {
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
         /* Create packet */
+        LOGGER.info("SEQ {}", sequence);
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
-                frameRV.frame_count(), frameRV.frame_png, player.getHealth(),
+                sequence++, frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
@@ -352,7 +357,7 @@ class ActionHandler {
         }
 
         ActionPacket action = packetOpt.get();
-        //LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
+        LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
 
         /* Keyboard handler */
         for (int[] tuple : action.keys()) {
