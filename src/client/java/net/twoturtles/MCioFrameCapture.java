@@ -20,7 +20,8 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.stb.STBImageWrite;
 import org.lwjgl.stb.STBIWriteCallback;
 
-/* Interface and state storage for WindowMixin:beforeSwap */
+/* Interface and state storage for WindowMixin:beforeSwap. beforeSwap does the actual capture
+ * and stores the frame here. StateHandler picks up the most recent frame at the end of every tick */
 public final class MCioFrameCapture {
     public static final int CAPTURE_EVERY_N_FRAMES = 2;
     public static final int BYTES_PER_PIXEL = 3;    // GL_RGB

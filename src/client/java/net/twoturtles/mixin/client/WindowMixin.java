@@ -31,8 +31,9 @@ public class WindowMixin {
     @Unique
     private static boolean doRetinaHack = true;
 
-    // This captures frames and hands them to MCioFrameCapture. This plugs in to the Minecraft
-    // swapBuffers method so the frame is ready to go.
+    // This captures frames and stores them to MCioFrameCapture. This plugs in to the Minecraft
+    // swapBuffers method so the frame is ready to go when it's captured.
+    // StateHandler picks up the most recent frame at the end of every tick */
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
         if (!MCioFrameCapture.isEnabled()) return;

@@ -59,7 +59,16 @@ public class MCioController {
 
     private final MinecraftClient client;
     private final AtomicBoolean running = new AtomicBoolean(false);
-
+    private int actionSequenceAtTickStart = 0;
+    // This tracks the last action sequence that has been processed before a full client tick.
+    // XXX This is an attempt to determine the last action that was processed by the server. It is
+    // passed back to the agent in state packets so it can determine when it has received state that
+    // has been updated by the last action. I don't really know when actions at the client have been
+    // sent to the server and its state has been updated. Maybe we could look at server ticks, but
+    // how would that work with multiplayer servers? Should state be sent from the server? But then
+    // how do we send frames? May need to separate the two state sources at some point. That will probably
+    // be necessary for multiplayer anyway.
+    public int lastFullTickActionSequence = 0;
 
     public MCioController() {
         instance = this;
@@ -74,8 +83,19 @@ public class MCioController {
         ActionHandler action = new ActionHandler(client, context, PORT_ACTION, running);
         action.start();
 
-        StateHandler state = new StateHandler(client, context, PORT_STATE, running);
+        StateHandler state = new StateHandler(client, this, context, PORT_STATE, running);
         state.start();
+
+        ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
+            actionSequenceAtTickStart = action.lastSequenceProcessed;
+        });
+        ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
+            // Synchronization - loading lastSequenceProcessed into local
+            int newActionSequence = action.lastSequenceProcessed;
+            if (newActionSequence >= actionSequenceAtTickStart) {
+                lastFullTickActionSequence = newActionSequence;
+            }
+        });
     }
 
     public void stop() {
@@ -86,8 +106,10 @@ public class MCioController {
     }
 }
 
+// Sends state updates to the agent
 class StateHandler {
     private final MinecraftClient client;
+    private final MCioController controller;
     private final AtomicBoolean running;
     private final SignalWithLatch signalHandler = new SignalWithLatch();
 
@@ -95,12 +117,14 @@ class StateHandler {
     private final Thread stateThread;
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackPerSecond sendFPS = new TrackPerSecond("StatesSent");
-    private int sequence = 0;
+    private int stateSequence = 0;
     private int ticks = 0;
 
-    public StateHandler(MinecraftClient client, ZContext zCtx, int listen_port, AtomicBoolean running) {
+    public StateHandler(MinecraftClient client, MCioController controller, ZContext zCtx,
+                        int listen_port, AtomicBoolean running) {
         this.client = client;
         this.running = running;
+        this.controller = controller;
 
         MCioFrameCapture.setEnabled(true);
 
@@ -109,11 +133,15 @@ class StateHandler {
 
         this.stateThread = new Thread(this::stateThreadRun, "MCio-StateThread");
 
+        ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
+        });
+
         /* Send state at the end of every tick */
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
              /* This will run on the client thread. When the tick ends, signal the state thread to send an update.
               * The server state is only updated once per tick so it makes the most sense to send an update
-              * after that. */
+              * after that.
+              * XXX Not sure how SERVER_TICK corresponds to CLIENT_TICK */
             signalHandler.sendSignal();
             this.ticks++;
         });
@@ -193,11 +221,13 @@ class StateHandler {
 
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
-                sequence++, 0 /* XXX */,
+                stateSequence++, this.controller.lastFullTickActionSequence,
                 frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
+
+        //LOGGER.info("{}", statePkt);
 
         /* Send */
         try {
@@ -315,8 +345,12 @@ class ActionHandler {
     private final Thread actionThread;
     private final Logger LOGGER = LogUtils.getLogger();
 
+    // Set at the end of processing an ActionPacket. Picked up by the State thread.
+    public int lastSequenceProcessed = 0;
+
     /* XXX Clear all actions if remote controller disconnects? */
-    public ActionHandler(MinecraftClient client, ZContext zCtx, int remote_port, AtomicBoolean running) {
+    public ActionHandler(MinecraftClient client, ZContext zCtx,
+                         int remote_port, AtomicBoolean running) {
         this.client = client;
         this.running = running;
 
@@ -380,6 +414,7 @@ class ActionHandler {
             });
         }
 
+        lastSequenceProcessed = action.sequence();
     }
 
     private void handleZMQException(ZMQException e) {
