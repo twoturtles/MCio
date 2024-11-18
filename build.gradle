@@ -93,6 +93,9 @@ publishing {
 
 /* MCio config */
 loom {
+	// Add additional log4j config files
+	log4jConfigs.from(file("log4j-dev.xml"))
+
 	runs {
 		client {
 			programArgs (
@@ -102,7 +105,8 @@ loom {
 					//'--fullscreen'
 			)
 			vmArgs (
-//					'-Dfabric.log.level=warn'  // trace, debug, info, warn, error
+					// Use log4j-dev.xml instead
+					// '-Dfabric.log.level=warn'  // trace, debug, info, warn, error
 			)
 		}
 		client1 {

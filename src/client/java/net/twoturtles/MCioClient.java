@@ -1,9 +1,10 @@
 package net.twoturtles;
 
 import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+
 import org.lwjgl.glfw.GLFW;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.client.option.KeyBinding;
 
 import net.fabricmc.api.ClientModInitializer;
