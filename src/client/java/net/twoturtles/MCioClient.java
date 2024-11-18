@@ -55,8 +55,6 @@ class MCioKeys {
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
 
 	public void initialize() {
-		LOGGER.info("Init");
-
 		breakKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 				"MCioIO_break",
 				GLFW.GLFW_KEY_B,

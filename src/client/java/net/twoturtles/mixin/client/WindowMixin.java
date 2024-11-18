@@ -71,9 +71,9 @@ public class WindowMixin {
         }
         GLFW.glfwDefaultWindowHints();
         if (MinecraftClient.IS_SYSTEM_MAC) {
+            // This makes it so windows aren't double resolution on retina displays
             LOGGER.info("RETINA-FRAME-BUFFER-DISABLE");
-            // 143361
-            GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW.GLFW_FALSE);
+            GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER /* 143361 */, GLFW.GLFW_FALSE);
         }
 
         // The retina flag above doesn't quite work. The frame buffer ends up being twice the size of the window.
@@ -93,7 +93,7 @@ public class WindowMixin {
 
             GLFW.glfwGetFramebufferSize(handle, frameWidth, frameHeight);
             GLFW.glfwGetWindowSize(handle, winWidth, winHeight);
-            LOGGER.info("RETINA-HACK frame={},{} win={},{}", frameWidth[0], frameHeight[0], winWidth[0], winHeight[0]);
+            LOGGER.debug("RETINA-HACK frame={},{} win={},{}", frameWidth[0], frameHeight[0], winWidth[0], winHeight[0]);
             GLFW.glfwSetWindowSize(handle, winWidth[0] - 1, winHeight[0] - 1);
             GLFW.glfwSetWindowSize(handle, winWidth[0], winHeight[0]);
             if (frameWidth[0] == winWidth[0] || frameHeight[0] == winHeight[0]) {

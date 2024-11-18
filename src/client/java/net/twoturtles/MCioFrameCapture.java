@@ -109,9 +109,9 @@ class MCioFrameSave {
         // Register the tick event to pick up the key press.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (captureKey.wasPressed() && client.world != null) {
-//                doCaptureMC(client);
                 doCapturePNG(client);
-//                doCaptureRaw(client);
+                // doCaptureMC(client);
+                // doCaptureRaw(client);
             }
         });
     }

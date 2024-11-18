@@ -148,12 +148,12 @@ class StateHandler {
     }
 
     public void start() {
-        LOGGER.warn("Thread start");
+        LOGGER.info("State-Thread start");
         stateThread.start();
     }
 
     private void cleanupSocket() {
-        LOGGER.info("State thread cleanup");
+        LOGGER.info("State-Thread cleanup");
         if (stateSocket != null) {
             try {
                 stateSocket.close();
@@ -226,8 +226,7 @@ class StateHandler {
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
-
-        //LOGGER.info("{}", statePkt);
+        LOGGER.debug("StatePacket: {}", statePkt);
 
         /* Send */
         try {
@@ -344,6 +343,7 @@ class ActionHandler {
     private final ZMQ.Socket actionSocket;
     private final Thread actionThread;
     private final Logger LOGGER = LogUtils.getLogger();
+    private static final TrackPerSecond recvPPS = new TrackPerSecond("ActionsReceived");
 
     // Set at the end of processing an ActionPacket. Picked up by the State thread.
     public int lastSequenceProcessed = 0;
@@ -362,6 +362,7 @@ class ActionHandler {
     }
 
     public void start() {
+        LOGGER.info("Action-Thread start");
         actionThread.start();
     }
 
@@ -388,9 +389,10 @@ class ActionHandler {
             LOGGER.warn("Received invalid action packet");
             return;
         }
+        recvPPS.count();
 
         ActionPacket action = packetOpt.get();
-        //LOGGER.info("ACTION {} {}", action, action.arrayToString(action.mouse_pos()));
+        LOGGER.debug("ActionPacket {} {}", action, action.arrayToString(action.mouse_pos()));
 
         /* Keyboard handler */
         for (int[] tuple : action.keys()) {
@@ -419,14 +421,14 @@ class ActionHandler {
 
     private void handleZMQException(ZMQException e) {
         if (!running.get()) {
-            LOGGER.info("Action thread shutting down");
+            LOGGER.info("Action-Thread shutting down");
         } else {
             LOGGER.error("ZMQ error in action thread", e);
         }
     }
 
     private void cleanupSocket() {
-        LOGGER.info("Action thread cleanup");
+        LOGGER.info("Action-Thread cleanup");
         if (actionSocket != null) {
             try {
                 actionSocket.close();
