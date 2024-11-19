@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 class NetworkDefines {
     private NetworkDefines() {}
     public static final int MCIO_PROTOCOL_VERSION = 0;
+    public static final int DEFAULT_ACTION_PORT = 4001;  // For receiving 4ctions
+    public static final int DEFAULT_STATE_PORT = 5001;    // For sending 5tate
 }
 
 class Validate {

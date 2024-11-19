@@ -53,8 +53,6 @@ public class MCioController {
     public static boolean windowFocused;
 
     private final Logger LOGGER = LogUtils.getLogger();
-    private static final int PORT_ACTION = 5556;  // For receiving actions
-    private static final int PORT_STATE = 5557;    // For sending screen and other state.
     private final ZContext context;
 
     private final MinecraftClient client;
@@ -80,10 +78,10 @@ public class MCioController {
         this.running.set(true);
 
         // Start threads
-        ActionHandler action = new ActionHandler(client, context, PORT_ACTION, running);
+        ActionHandler action = new ActionHandler(client, context, NetworkDefines.DEFAULT_ACTION_PORT, running);
         action.start();
 
-        StateHandler state = new StateHandler(client, this, context, PORT_STATE, running);
+        StateHandler state = new StateHandler(client, this, context, NetworkDefines.DEFAULT_STATE_PORT, running);
         state.start();
 
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
