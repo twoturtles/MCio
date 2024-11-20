@@ -16,7 +16,6 @@ public class MCioServer implements ModInitializer {
 
 	private final Logger LOGGER = LogUtils.getLogger();
 	private final TrackPerSecond serverTPS = new TrackPerSecond("ServerTicks");
-	private final TrackPerSecond worldTPS = new TrackPerSecond("WorldTicks");
 
 	@Override
 	public void onInitialize() {
@@ -55,7 +54,6 @@ public class MCioServer implements ModInitializer {
 			LOGGER.debug("World Tick Start {}", serverWorld.getRegistryKey().getValue().toString());
 		});
 		ServerTickEvents.END_WORLD_TICK.register(serverWorld -> {
-			worldTPS.count();
 			LOGGER.debug("World Tick End {}", serverWorld.getRegistryKey().getValue().toString());
 		});
 	}
