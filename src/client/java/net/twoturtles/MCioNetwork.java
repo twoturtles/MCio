@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Set;
 
 import com.mojang.logging.LogUtils;
 import org.lwjgl.glfw.GLFW;
@@ -86,11 +85,11 @@ record ActionPacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
         int sequence,
-        boolean key_reset,          // TODO clear all pressed keys (useful for crashed controller).
+        boolean reset,          // Reset state sequence and clear all key / button presses
 
         // Action
-        int[][] keys,
-        int[][] mouse_buttons,
+        int[][] keys,           // Array of (key, action) pairs. E.g., (GLFW.GLFW_KEY_W, GLFW.GLFW_PRESS)
+        int[][] mouse_buttons,	//  Array of (button, action) pairs. E.g., (GLFW.GLFW_MOUSE_BUTTON_1, GLFW.GLFW_PRESS)
         int[][] mouse_pos
 ) {
     // Helper for debugging to print the double arrays nicely

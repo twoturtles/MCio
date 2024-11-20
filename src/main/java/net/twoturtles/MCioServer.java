@@ -28,6 +28,7 @@ public class MCioServer implements ModInitializer {
 		// XXX Check out command TickSprint
 		/* Server Ticks */
 		ServerTickEvents.START_SERVER_TICK.register(server -> {
+			LOGGER.debug("Server Tick Start");
 			ServerTickManager tickManager = server.getTickManager();
 			if (isFrozen.get()) {	/* Want frozen */
 				if (!tickManager.isFrozen()) {
@@ -45,14 +46,17 @@ public class MCioServer implements ModInitializer {
 
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			serverTPS.count();
+			LOGGER.debug("Server Tick End");
 		});
 
 
 		/* World Ticks */
-		ServerTickEvents.START_WORLD_TICK.register(server -> {
+		ServerTickEvents.START_WORLD_TICK.register(serverWorld -> {
+			LOGGER.debug("World Tick Start {}", serverWorld.getRegistryKey().getValue().toString());
 		});
-		ServerTickEvents.END_WORLD_TICK.register(server -> {
+		ServerTickEvents.END_WORLD_TICK.register(serverWorld -> {
 			worldTPS.count();
+			LOGGER.debug("World Tick End {}", serverWorld.getRegistryKey().getValue().toString());
 		});
 	}
 }

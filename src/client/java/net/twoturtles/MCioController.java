@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
@@ -56,6 +58,8 @@ public class MCioController {
     private final ZContext context;
 
     private final MinecraftClient client;
+    ActionHandler actionHandler;
+    StateHandler stateHandler;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private int actionSequenceAtTickStart = 0;
     // This tracks the last action sequence that has been processed before a full client tick.
@@ -78,18 +82,17 @@ public class MCioController {
         this.running.set(true);
 
         // Start threads
-        ActionHandler action = new ActionHandler(client, context, NetworkDefines.DEFAULT_ACTION_PORT, running);
-        action.start();
-
-        StateHandler state = new StateHandler(client, this, context, NetworkDefines.DEFAULT_STATE_PORT, running);
-        state.start();
+        this.actionHandler = new ActionHandler(client, this, context, NetworkDefines.DEFAULT_ACTION_PORT, running);
+        this.stateHandler= new StateHandler(client, this, context, NetworkDefines.DEFAULT_STATE_PORT, running);
+        this.actionHandler.start();
+        this.stateHandler.start();
 
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
-            actionSequenceAtTickStart = action.lastSequenceProcessed;
+            actionSequenceAtTickStart = this.actionHandler.lastSequenceProcessed;
         });
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             // Synchronization - loading lastSequenceProcessed into local
-            int newActionSequence = action.lastSequenceProcessed;
+            int newActionSequence = this.actionHandler.lastSequenceProcessed;
             if (newActionSequence >= actionSequenceAtTickStart) {
                 lastFullTickActionSequence = newActionSequence;
             }
@@ -109,6 +112,8 @@ class StateHandler {
     private final MinecraftClient client;
     private final MCioController controller;
     private final AtomicBoolean running;
+    // The ActionThread uses this to request a sequence number reset. E.g., after crashed agent.
+    final AtomicBoolean doSequenceReset = new AtomicBoolean(false);
     private final SignalWithLatch signalHandler = new SignalWithLatch();
 
     private final ZMQ.Socket stateSocket;
@@ -121,8 +126,8 @@ class StateHandler {
     public StateHandler(MinecraftClient client, MCioController controller, ZContext zCtx,
                         int listen_port, AtomicBoolean running) {
         this.client = client;
-        this.running = running;
         this.controller = controller;
+        this.running = running;
 
         MCioFrameCapture.setEnabled(true);
 
@@ -204,6 +209,12 @@ class StateHandler {
             return;
         }
         Window window = client.getWindow();
+
+        // XXX Use case? Maybe reset last action sequence to help a crashed agent?
+        boolean doReset = doSequenceReset.getAndSet(false);
+        if (doReset) {
+            stateSequence = 0;
+        }
 
         /* Gather information */
         FrameRV frameRV = getFrame();
@@ -337,19 +348,25 @@ class StateHandler {
 class ActionHandler {
     private final MinecraftClient client;
     private final AtomicBoolean running;
+    private final MCioController controller;
 
     private final ZMQ.Socket actionSocket;
     private final Thread actionThread;
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackPerSecond recvPPS = new TrackPerSecond("ActionsReceived");
 
+    // Track keys and buttons that are currently pressed so we can clear them on reset.
+    private final Set<Integer> keysPressed = new HashSet<>();
+    private final Set<Integer> buttonsPressed = new HashSet<>();
+
     // Set at the end of processing an ActionPacket. Picked up by the State thread.
     public int lastSequenceProcessed = 0;
 
     /* XXX Clear all actions if remote controller disconnects? */
-    public ActionHandler(MinecraftClient client, ZContext zCtx,
+    public ActionHandler(MinecraftClient client, MCioController controller, ZContext zCtx,
                          int remote_port, AtomicBoolean running) {
         this.client = client;
+        this.controller = controller;
         this.running = running;
 
         actionSocket = zCtx.createSocket(SocketType.SUB);  // Sub socket for receiving actions
@@ -392,20 +409,55 @@ class ActionHandler {
         ActionPacket action = packetOpt.get();
         LOGGER.debug("ActionPacket {} {}", action, action.arrayToString(action.mouse_pos()));
 
+        /* Reset handler */
+        if (action.reset()) {
+            for (int keyCode : keysPressed) {
+                client.execute(() -> {
+                    client.keyboard.onKey(client.getWindow().getHandle(),
+                            keyCode, 0, GLFW.GLFW_RELEASE, 0);
+                });
+            }
+            keysPressed.clear();
+
+            for (int buttonCode : buttonsPressed) {
+                client.execute(() -> {
+                    client.keyboard.onKey(client.getWindow().getHandle(),
+                            buttonCode, 0, GLFW.GLFW_RELEASE, 0);
+                });
+            }
+            buttonsPressed.clear();
+
+            this.controller.stateHandler.doSequenceReset.set(true);
+        }
+
         /* Keyboard handler */
         for (int[] tuple : action.keys()) {
+            int keyCode = tuple[0];
+            int actionCode = tuple[1];
             client.execute(() -> {
                 client.keyboard.onKey(client.getWindow().getHandle(),
-                        tuple[0], 0, tuple[1], 0);
+                        keyCode, 0, actionCode, 0);
             });
+            if (actionCode == GLFW.GLFW_PRESS) {
+                this.keysPressed.add(keyCode);
+            } else if (actionCode == GLFW.GLFW_RELEASE) {
+                this.keysPressed.remove(keyCode);
+            }
         }
 
         /* Mouse handler */
         for (int[] tuple : action.mouse_buttons()) {
+            int buttonCode = tuple[0];
+            int actionCode = tuple[1];
             client.execute(() -> {
                 ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
-                        client.getWindow().getHandle(), tuple[0], tuple[1], 0);
+                        client.getWindow().getHandle(), buttonCode, actionCode, 0);
             });
+            if (actionCode == GLFW.GLFW_PRESS) {
+                this.buttonsPressed.add(buttonCode);
+            } else if (actionCode == GLFW.GLFW_RELEASE) {
+                this.buttonsPressed.remove(buttonCode);
+            }
         }
         for (int[] tuple : action.mouse_pos()) {
             client.execute(() -> {
