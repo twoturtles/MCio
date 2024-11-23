@@ -1,10 +1,20 @@
-package net.twoturtles.util;
+package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
+public class MCioUtil {
+    static void sleep(double seconds) {
+        try {
+            Thread.sleep((long) (seconds * 1000));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
 /* Track and log some event per second */
-public class TrackPerSecond {
+class TrackPerSecond {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final double A_BILLION = 1_000_000_000.0;
     private double start = System.nanoTime() / A_BILLION;
@@ -12,14 +22,14 @@ public class TrackPerSecond {
     private double logTime = 10.0;
     private String name = "";
 
-    public TrackPerSecond(String name) { this.name = name; }
-    public TrackPerSecond(String name, double logTime) {
+    TrackPerSecond(String name) { this.name = name; }
+    TrackPerSecond(String name, double logTime) {
         this.name = name;
         this.logTime = logTime;
     }
 
     /* Count frames. Log every logTime seconds. Return true when logged. */
-    public boolean count() {
+    boolean count() {
         double end = System.nanoTime() / A_BILLION;
         count++;
         if (end - start >= logTime) {

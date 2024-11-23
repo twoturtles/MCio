@@ -5,7 +5,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.io.ByteArrayOutputStream;
 
-import net.twoturtles.util.TrackPerSecond;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -103,7 +102,7 @@ class MCioFrameSave {
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "MCioFrameSave",
                 GLFW.GLFW_KEY_C,
-                MCIO_CONST.KEY_CATEGORY
+                MCio_Const.KEY_CATEGORY
         ));
 
         // Register the tick event to pick up the key press.

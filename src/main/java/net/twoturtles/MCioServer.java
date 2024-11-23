@@ -10,23 +10,12 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
 import org.slf4j.Logger;
 
-import net.twoturtles.util.TrackPerSecond;
-
-enum MCioMode {
-	SYNC,
-	ASYNC
-}
-
-class MCioConfig {
-	MCioMode mode = MCioMode.SYNC;
-}
-
 public class MCioServer implements ModInitializer {
-	public static AtomicBoolean isFrozen = new AtomicBoolean(false);
-
 	private final Logger LOGGER = LogUtils.getLogger();
 	private final TrackPerSecond serverTPS = new TrackPerSecond("ServerTicks");
 	private MCioConfig config;
+	private MCioServerSync serverSync;
+	private MCioServerAsync serverAsync;
 
 	@Override
 	public void onInitialize() {
@@ -36,35 +25,13 @@ public class MCioServer implements ModInitializer {
 		LOGGER.info("Main Init");
 		config = new MCioConfig();
 
-		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-			LOGGER.info("Server Started {}", config.mode);
-			if (config.mode == MCioMode.SYNC) {
-				isFrozen.set(true);
-				ServerTickManager tickManager = server.getTickManager();
-				tickManager.setFrozen(true);
-				// 2147483647 / 100 / 86400 = 248 days at 100 tps. tickManager actually uses a long.
-				tickManager.startSprint(Integer.MAX_VALUE);
-			}
-		});
+		if (config.mode == MCioMode.SYNC) {
+			serverSync = new MCioServerSync(config);
+		} else {
+			serverAsync = new MCioServerAsync(config);
+		}
 
 		/* Server Ticks */
-		ServerTickEvents.START_SERVER_TICK.register(server -> {
-			LOGGER.debug("Server Tick Start");
-			ServerTickManager tickManager = server.getTickManager();
-			if (isFrozen.get()) {	/* Want frozen */
-				if (!tickManager.isFrozen()) {
-					LOGGER.info("Freeze");
-					tickManager.setFrozen(true);
-				}
-			} else {	/* Want unfrozen */
-				if (tickManager.isFrozen()) {
-					LOGGER.info("Unfreeze");
-					tickManager.setFrozen(false);
-				}
-			}
-
-		});
-
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			serverTPS.count();
 			LOGGER.debug("Server Tick End");
