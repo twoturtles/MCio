@@ -1,6 +1,6 @@
 package net.twoturtles.mixin.client;
 
-import net.twoturtles.MCioController;
+import net.twoturtles.MCioClientAsync;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -52,7 +52,7 @@ public class MouseMixin implements MouseMixinInterface {
     // if it's on the Minecraft window.
     @Inject(method = "onCursorPos(JDD)V", at = @At("HEAD"), cancellable = true)
     private void onCursorPosStart(long window, double x, double y, CallbackInfo ci) {
-        if (!isAgentMovement && !MCioController.windowFocused) {
+        if (!isAgentMovement && !MCioClientAsync.windowFocused) {
             // Physical mouse movement but window isn't focused. Cancel movement.
             ci.cancel();
         }

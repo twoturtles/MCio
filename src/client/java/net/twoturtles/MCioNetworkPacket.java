@@ -24,14 +24,6 @@ class NetworkDefines {
     public static final int DEFAULT_STATE_PORT = 5001;    // For sending 5tate
 }
 
-class Validate {
-    static void check(boolean condition, String message) {
-        if (!condition) {
-            throw new IllegalArgumentException(message);
-        }
-    }
-}
-
 
 /* State packets sent to agent */
 record StatePacket(
@@ -58,6 +50,15 @@ record StatePacket(
         Validate.check(cursor_mode == GLFW.GLFW_CURSOR_DISABLED ||
                 cursor_mode == GLFW.GLFW_CURSOR_NORMAL, "Invalid cursorMode");
         Validate.check(player_pos.length == 3, "Invalid player_pos");
+    }
+}
+
+// Like assert, but doesn't get disabled by the compiler
+class Validate {
+    static void check(boolean condition, String message) {
+        if (!condition) {
+            throw new IllegalArgumentException(message);
+        }
     }
 }
 

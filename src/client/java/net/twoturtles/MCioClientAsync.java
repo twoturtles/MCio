@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 
 import net.minecraft.util.math.Vec3d;
-import net.twoturtles.util.TrackPerSecond;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
@@ -50,8 +49,8 @@ import net.twoturtles.mixin.client.MouseMixin;
 
 /* Top-level class. Starts on the client thread.
  * Spawns threads for receiving actions and sending state updates. */
-public class MCioController {
-    static MCioController instance;
+public class MCioClientAsync {
+    static MCioClientAsync instance;
     public static boolean windowFocused;
 
     private final Logger LOGGER = LogUtils.getLogger();
@@ -72,7 +71,7 @@ public class MCioController {
     // be necessary for multiplayer anyway.
     public int lastFullTickActionSequence = 0;
 
-    public MCioController() {
+    public MCioClientAsync() {
         instance = this;
         this.context = new ZContext();
         this.client = MinecraftClient.getInstance();
@@ -110,7 +109,7 @@ public class MCioController {
 // Sends state updates to the agent
 class StateHandler {
     private final MinecraftClient client;
-    private final MCioController controller;
+    private final MCioClientAsync controller;
     private final AtomicBoolean running;
     // The ActionThread uses this to request a sequence number reset. E.g., after crashed agent.
     final AtomicBoolean doSequenceReset = new AtomicBoolean(false);
@@ -123,7 +122,7 @@ class StateHandler {
     private int stateSequence = 0;
     private int ticks = 0;
 
-    public StateHandler(MinecraftClient client, MCioController controller, ZContext zCtx,
+    public StateHandler(MinecraftClient client, MCioClientAsync controller, ZContext zCtx,
                         int listen_port, AtomicBoolean running) {
         this.client = client;
         this.controller = controller;
@@ -348,7 +347,7 @@ class StateHandler {
 class ActionHandler {
     private final MinecraftClient client;
     private final AtomicBoolean running;
-    private final MCioController controller;
+    private final MCioClientAsync controller;
 
     private final ZMQ.Socket actionSocket;
     private final Thread actionThread;
@@ -363,7 +362,7 @@ class ActionHandler {
     public int lastSequenceProcessed = 0;
 
     /* XXX Clear all actions if remote controller disconnects? */
-    public ActionHandler(MinecraftClient client, MCioController controller, ZContext zCtx,
+    public ActionHandler(MinecraftClient client, MCioClientAsync controller, ZContext zCtx,
                          int remote_port, AtomicBoolean running) {
         this.client = client;
         this.controller = controller;
