@@ -3,6 +3,7 @@ package net.twoturtles;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mojang.logging.LogUtils;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.ServerTickManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -11,11 +12,21 @@ import org.slf4j.Logger;
 
 import net.twoturtles.util.TrackPerSecond;
 
+enum MCioMode {
+	SYNC,
+	ASYNC
+}
+
+class MCioConfig {
+	MCioMode mode = MCioMode.SYNC;
+}
+
 public class MCioServer implements ModInitializer {
 	public static AtomicBoolean isFrozen = new AtomicBoolean(false);
 
 	private final Logger LOGGER = LogUtils.getLogger();
 	private final TrackPerSecond serverTPS = new TrackPerSecond("ServerTicks");
+	private MCioConfig config;
 
 	@Override
 	public void onInitialize() {
@@ -23,8 +34,19 @@ public class MCioServer implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		LOGGER.info("Main Init");
+		config = new MCioConfig();
 
-		// XXX Check out command TickSprint
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+			LOGGER.info("Server Started {}", config.mode);
+			if (config.mode == MCioMode.SYNC) {
+				isFrozen.set(true);
+				ServerTickManager tickManager = server.getTickManager();
+				tickManager.setFrozen(true);
+				// 2147483647 / 100 / 86400 = 248 days at 100 tps. tickManager actually uses a long.
+				tickManager.startSprint(Integer.MAX_VALUE);
+			}
+		});
+
 		/* Server Ticks */
 		ServerTickEvents.START_SERVER_TICK.register(server -> {
 			LOGGER.debug("Server Tick Start");
@@ -47,7 +69,6 @@ public class MCioServer implements ModInitializer {
 			serverTPS.count();
 			LOGGER.debug("Server Tick End");
 		});
-
 
 		/* World Ticks */
 		ServerTickEvents.START_WORLD_TICK.register(serverWorld -> {
