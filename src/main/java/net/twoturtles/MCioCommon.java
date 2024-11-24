@@ -20,7 +20,7 @@ class MCioConfig {
 
     private MCioConfig() {
         // XXX Load from disk
-        mode = MCioMode.ASYNC;
+        mode = MCioMode.SYNC;
     }
 }
 

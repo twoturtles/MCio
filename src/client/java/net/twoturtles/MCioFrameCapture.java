@@ -23,7 +23,7 @@ import org.lwjgl.stb.STBIWriteCallback;
  * and stores the frame here. StateHandler picks up the most recent frame at the end of every tick */
 public final class MCioFrameCapture {
     private static MCioFrameCapture instance;
-    public final int CAPTURE_EVERY_N_FRAMES = 2;
+    public final int ASYNC_CAPTURE_EVERY_N_FRAMES = 2;
     public final int BYTES_PER_PIXEL = 3;    // GL_RGB
 
     private final Logger LOGGER = LogUtils.getLogger();
@@ -63,7 +63,14 @@ public final class MCioFrameCapture {
 
     public boolean shouldCaptureFrame() {
         frameFPS.count();
-        return frameCount % CAPTURE_EVERY_N_FRAMES == 0;
+        if (config.mode == MCioMode.ASYNC) {
+            // In async mode we're running real time. As optimization only capture every other frame.
+            // Probably not necessary
+            return frameCount % ASYNC_CAPTURE_EVERY_N_FRAMES == 0;
+        } else {
+            // In sync mode every frame is a tick, so always capture.
+            return true;
+        }
     }
 
     public MCioFrame getLastCapturedFrame() { return lastCapturedFrame; }
