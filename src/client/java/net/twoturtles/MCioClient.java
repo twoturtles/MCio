@@ -36,6 +36,7 @@ public class MCioClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTPS.count();
 		});
+
 	}
 }
 

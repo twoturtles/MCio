@@ -54,12 +54,10 @@ public class MCioClientAsync {
     public static boolean windowFocused;
 
     private final Logger LOGGER = LogUtils.getLogger();
-    private final ZContext context;
+    private final MCioNetwork network;
 
     private final MinecraftClient client;
-    ActionHandler actionHandler;
-    StateHandler stateHandler;
-    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicBoolean running = new AtomicBoolean(true);
     private int actionSequenceAtTickStart = 0;
     // This tracks the last action sequence that has been processed before a full client tick.
     // XXX This is an attempt to determine the last action that was processed by the server. It is
@@ -73,18 +71,9 @@ public class MCioClientAsync {
 
     public MCioClientAsync() {
         instance = this;
-        this.context = new ZContext();
         this.client = MinecraftClient.getInstance();
-    }
+        network = new MCioNetwork(running);
 
-    public void start() {
-        this.running.set(true);
-
-        // Start threads
-        this.actionHandler = new ActionHandler(client, this, context, NetworkDefines.DEFAULT_ACTION_PORT, running);
-        this.stateHandler= new StateHandler(client, this, context, NetworkDefines.DEFAULT_STATE_PORT, running);
-        this.actionHandler.start();
-        this.stateHandler.start();
 
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
             actionSequenceAtTickStart = this.actionHandler.lastSequenceProcessed;
@@ -96,14 +85,9 @@ public class MCioClientAsync {
                 lastFullTickActionSequence = newActionSequence;
             }
         });
+
     }
 
-    public void stop() {
-        running.set(false);
-        if (context != null) {
-            context.close();
-        }
-    }
 }
 
 // Sends state updates to the agent
@@ -115,8 +99,6 @@ class StateHandler {
     final AtomicBoolean doSequenceReset = new AtomicBoolean(false);
     private final SignalWithLatch signalHandler = new SignalWithLatch();
 
-    private final ZMQ.Socket stateSocket;
-    private final Thread stateThread;
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackPerSecond sendFPS = new TrackPerSecond("StatesSent");
     private int stateSequence = 0;
@@ -130,10 +112,6 @@ class StateHandler {
 
         MCioFrameCapture.setEnabled(true);
 
-        stateSocket = zCtx.createSocket(SocketType.PUB);  // Pub for sending state
-        stateSocket.bind("tcp://*:" + listen_port);
-
-        this.stateThread = new Thread(this::stateThreadRun, "MCio-StateThread");
 
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
         });
@@ -147,22 +125,6 @@ class StateHandler {
             signalHandler.sendSignal();
             this.ticks++;
         });
-    }
-
-    public void start() {
-        LOGGER.info("State-Thread start");
-        stateThread.start();
-    }
-
-    private void cleanupSocket() {
-        LOGGER.info("State-Thread cleanup");
-        if (stateSocket != null) {
-            try {
-                stateSocket.close();
-            } catch (Exception e) {
-                LOGGER.error("Error closing state socket", e);
-            }
-        }
     }
 
     /* Used to signal between the render thread capturing frames and the state thread sending
@@ -180,18 +142,6 @@ class StateHandler {
         }
         public void sendSignal() {
             latch.countDown();
-        }
-    }
-
-    private void stateThreadRun() {
-        try {
-            while (running.get()) {
-                // StateHandler sends a signal on END_CLIENT_TICK
-                signalHandler.waitForSignal();
-                sendNextState();
-            }
-        } finally {
-            cleanupSocket();
         }
     }
 
@@ -237,12 +187,6 @@ class StateHandler {
         LOGGER.debug("StatePacket: {}", statePkt);
 
         /* Send */
-        try {
-            byte[] pBytes = StatePacketPacker.pack(statePkt);
-            stateSocket.send(pBytes);
-        } catch (IOException e) {
-            LOGGER.warn("StatePacketPacker failed");
-        }
     }
 
     /*
@@ -349,8 +293,6 @@ class ActionHandler {
     private final AtomicBoolean running;
     private final MCioClientAsync controller;
 
-    private final ZMQ.Socket actionSocket;
-    private final Thread actionThread;
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackPerSecond recvPPS = new TrackPerSecond("ActionsReceived");
 
@@ -368,45 +310,13 @@ class ActionHandler {
         this.controller = controller;
         this.running = running;
 
-        actionSocket = zCtx.createSocket(SocketType.SUB);  // Sub socket for receiving actions
-        actionSocket.connect("tcp://localhost:" + remote_port);
-        actionSocket.subscribe(new byte[0]); // Subscribe to everything
-
-        this.actionThread = new Thread(this::actionThreadRun, "MCio-ActionThread");
-    }
-
-    public void start() {
-        LOGGER.info("Action-Thread start");
-        actionThread.start();
-    }
-
-    private void actionThreadRun() {
-        try {
-            while (running.get()) {
-                try {
-                    processNextAction();
-                } catch (ZMQException e) {
-                    handleZMQException(e);
-                    break;
-                }
-            }
-        } finally {
-            cleanupSocket();
-        }
     }
 
     private void processNextAction() {
         // Block waiting for next action.
-        byte[] pkt = actionSocket.recv();
-        Optional<ActionPacket> packetOpt = ActionPacketUnpacker.unpack(pkt);
-        if (packetOpt.isEmpty()) {
-            LOGGER.warn("Received invalid action packet");
-            return;
-        }
-        recvPPS.count();
+        /* Recv */
 
-        ActionPacket action = packetOpt.get();
-        LOGGER.debug("ActionPacket {} {}", action, action.arrayToString(action.mouse_pos()));
+        recvPPS.count();
 
         /* Reset handler */
         if (action.reset()) {
@@ -468,23 +378,5 @@ class ActionHandler {
         lastSequenceProcessed = action.sequence();
     }
 
-    private void handleZMQException(ZMQException e) {
-        if (!running.get()) {
-            LOGGER.info("Action-Thread shutting down");
-        } else {
-            LOGGER.error("ZMQ error in action thread", e);
-        }
-    }
-
-    private void cleanupSocket() {
-        LOGGER.info("Action-Thread cleanup");
-        if (actionSocket != null) {
-            try {
-                actionSocket.close();
-            } catch (Exception e) {
-                LOGGER.error("Error closing action socket", e);
-            }
-        }
-    }
 }
 

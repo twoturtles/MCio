@@ -15,7 +15,7 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-/* Networking interface for communicating with the agent. */
+/* Defines packet structure for Action and State packets */
 
 class NetworkDefines {
     private NetworkDefines() {}
