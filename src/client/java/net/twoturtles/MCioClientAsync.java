@@ -11,17 +11,16 @@ import net.minecraft.client.MinecraftClient;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 public class MCioClientAsync {
+    private final Logger LOGGER = LogUtils.getLogger();
     public static boolean windowFocused;
     private final MinecraftClient client;
+
+    private final MCioNetworkConnection connection;
     private final MCioActionHandler actionHandler;
     private final MCioStateHandler stateHandler;
 
-    private final Logger LOGGER = LogUtils.getLogger();
-    private final MCioNetworkConnection connection;
-
     private final AtomicBoolean running = new AtomicBoolean(true);
 
-    private int actionSequenceAtTickStart = 0;
     // This tracks the last action sequence that has been processed before a full client tick.
     // XXX This is an attempt to determine the last action that was processed by the server. It is
     // passed back to the agent in state packets so it can determine when it has received state that
@@ -30,9 +29,13 @@ public class MCioClientAsync {
     // how would that work with multiplayer servers? Should state be sent from the server? But then
     // how do we send frames? May need to separate the two state sources at some point. That will probably
     // be necessary for multiplayer anyway.
-    public int lastFullTickActionSequence = 0;
+    private int actionSequenceLastReceived = 0;    // XXX not synchronized
+    private int actionSequenceAtTickStart = 0;
+    private int lastFullTickActionSequence = 0;
 
-    public MCioClientAsync() {
+    // States are sent at the end of every client tick. Actions are received and processed on
+    // a separate thread.
+    public MCioClientAsync(MCioConfig config) {
         client = MinecraftClient.getInstance();
         connection = new MCioNetworkConnection();
         actionHandler = new MCioActionHandler(client);
@@ -42,14 +45,12 @@ public class MCioClientAsync {
         LOGGER.info("Process-Action-Thread start");
         actionThread.start();
 
-
-
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
-            actionSequenceAtTickStart = this.actionHandler.lastSequenceProcessed;
+            actionSequenceAtTickStart = actionSequenceLastReceived;
         });
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             // Synchronization - loading lastSequenceProcessed into local
-            int newActionSequence = this.actionHandler.lastSequenceProcessed;
+            int newActionSequence = actionSequenceLastReceived;
             if (newActionSequence >= actionSequenceAtTickStart) {
                 lastFullTickActionSequence = newActionSequence;
             }
@@ -57,7 +58,7 @@ public class MCioClientAsync {
 
         /* Send state at the end of every tick */
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
-            Optional<StatePacket> opt = stateHandler.collectState();
+            Optional<StatePacket> opt = stateHandler.collectState(lastFullTickActionSequence);
             opt.ifPresent(connection::sendStatePacket);
         });
     }
@@ -66,9 +67,19 @@ public class MCioClientAsync {
     private void actionThreadRun() {
         while (running.get()) {
             Optional<ActionPacket> opt = connection.recvActionPacket();
-            opt.ifPresent(actionHandler::processAction);
+            if (opt.isPresent()) {
+                ActionPacket action = opt.get();
+                actionHandler.processAction(action);
+                actionSequenceLastReceived = action.sequence();
+            }
         }
     }
+
+    public void stop() {
+        running.set(false);
+        connection.close();
+    }
+
 //
 ///* Used to signal between the render thread capturing frames and the state thread sending
 //     * frames and state to the agent. */

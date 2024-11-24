@@ -8,7 +8,11 @@ enum MCioMode {
 }
 
 class MCioConfig {
-    MCioMode mode = MCioMode.SYNC;
+    MCioMode mode;
+    MCioConfig() {
+        // XXX Load from disk
+        mode = MCioMode.ASYNC;
+    }
 }
 
 class MCio_Const {

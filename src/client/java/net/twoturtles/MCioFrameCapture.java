@@ -29,7 +29,6 @@ public final class MCioFrameCapture {
     private static final TrackPerSecond frameFPS = new TrackPerSecond("Frames");
     private static final TrackPerSecond captureFPS = new TrackPerSecond("FrameCaptures");
 
-    private static boolean enabled = false;
     private static int frameCount = 0;
     private static MCioFrame lastCapturedFrame = null;
 
@@ -50,8 +49,6 @@ public final class MCioFrameCapture {
         lastCapturedFrame = frame;
     }
 
-    public static void setEnabled(boolean enabled_val) { enabled = enabled_val; }
-    public static boolean isEnabled() { return enabled; }
     public static void incrementFrameCount() { frameCount++; }
     public static int getFrameCount() { return frameCount; }
 

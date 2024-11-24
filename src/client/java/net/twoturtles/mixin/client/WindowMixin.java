@@ -36,7 +36,6 @@ public class WindowMixin {
     // StateHandler picks up the most recent frame at the end of every tick */
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
-        if (!MCioFrameCapture.isEnabled()) return;
         MCioFrameCapture.incrementFrameCount();
         if (!MCioFrameCapture.shouldCaptureFrame()) {
             return;

@@ -29,14 +29,21 @@ public class MCioClient implements ClientModInitializer {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private final MCioFrameSave fsave = new MCioFrameSave();
 	private MCioClientAsync clientAsync;
+	private MCioClientSync clientSync;
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
+	private MCioConfig config;
 
 	@Override
 	public void onInitializeClient() {
 		LOGGER.info("Client Init");
+		config = new MCioConfig();
 
-		clientAsync = new MCioClientAsync();
-		clientAsync.start();
+		if (config.mode == MCioMode.SYNC) {
+			clientSync = new MCioClientSync(config);
+		} else {
+			clientAsync = new MCioClientAsync(config);
+		}
+
 		fsave.initialize();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
@@ -45,7 +52,9 @@ public class MCioClient implements ClientModInitializer {
 
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			LOGGER.info("Client Stopping");
-			if (clientAsync != null) {
+			if (clientSync != null) {
+				clientSync.stop();
+			} else {
 				clientAsync.stop();
 			}
 		});

@@ -1,7 +1,6 @@
 package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.Window;
@@ -12,19 +11,12 @@ import net.minecraft.util.math.Vec3d;
 import net.twoturtles.mixin.client.MouseMixin;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
-import org.zeromq.ZContext;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 
-/*
-        // StateHandler sends a signal on END_CLIENT_TICK
-        signalHandler.waitForSignal();
-        sendNextState();
- */
 
 // Collect state information to send to the agent
 // All information is client side?
@@ -45,7 +37,7 @@ public class MCioStateHandler {
     // Status effects
 
     // Collect state and package into a StatePacket
-    Optional<StatePacket> collectState() {
+    Optional<StatePacket> collectState(int lastFullTickActionSequence) {
         ClientPlayerEntity player = client.player;
         if (player == null) {
             return Optional.empty();
@@ -72,8 +64,7 @@ public class MCioStateHandler {
 
         /* Create packet */
         StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
-                stateSequence++, 0/* XXX this.controller.lastFullTickActionSequence */,
-                frameRV.frame_png, player.getHealth(),
+                stateSequence++, lastFullTickActionSequence, frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);

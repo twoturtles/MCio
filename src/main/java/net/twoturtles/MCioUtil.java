@@ -48,9 +48,16 @@ class TrackPerSecond {
 class LatestItemQueue<T> {
     private static final Logger LOGGER = LogUtils.getLogger();
     private T item;
+    private boolean logOnDrop = true;
+
+    LatestItemQueue() {
+    }
+    LatestItemQueue(boolean logOnDrop) {
+        this.logOnDrop = logOnDrop;
+    }
 
     public synchronized void put(T item) {
-        if (this.item != null) {
+        if (this.item != null && logOnDrop) {
             LOGGER.warn("Packet Drop {}", item.getClass().getSimpleName());
         }
         this.item = item;
