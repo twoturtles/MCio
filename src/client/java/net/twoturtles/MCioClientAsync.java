@@ -11,7 +11,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 public class MCioClientAsync {
     private final Logger LOGGER = LogUtils.getLogger();
-    public static boolean windowFocused;
     private final MinecraftClient client;
 
     private final MCioNetworkConnection connection;

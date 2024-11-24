@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.twoturtles.MCioClient;
 
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
@@ -23,8 +24,8 @@ public class MinecraftClientMixin {
 
     @Inject(method = "onWindowFocusChanged(Z)V", at = @At("HEAD"), cancellable = true)
     private void onWindowFocusChanged(boolean focused, CallbackInfo ci) {
-        // Store the true value of windowFocused in the MCioClientAsync.
-        MCioClientAsync.windowFocused = focused;
+        // Store the true value of windowFocused in the MCioClient for access by MouseMixin
+        MCioClient.MCioWindowFocused = focused;
         // Keep MinecraftClient's copy always true
         windowFocused = true;
         // Cancel the original method to prevent overwriting

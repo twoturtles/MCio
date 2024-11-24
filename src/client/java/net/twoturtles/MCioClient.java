@@ -33,6 +33,9 @@ public class MCioClient implements ClientModInitializer {
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
 	private MCioConfig config;
 
+	// Used by MinecraftClientMixin and MouseMixin
+	public static boolean MCioWindowFocused;
+
 	@Override
 	public void onInitializeClient() {
 		LOGGER.info("Client Init");
