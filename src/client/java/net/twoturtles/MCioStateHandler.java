@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
  */
 
 // Collect state information to send to the agent
+// All information is client side?
 public class MCioStateHandler {
     private final MinecraftClient client;
 
@@ -44,7 +45,7 @@ public class MCioStateHandler {
     // Status effects
 
     // Collect state and package into a StatePacket
-    private Optional<StatePacket> collectState() {
+    Optional<StatePacket> collectState() {
         ClientPlayerEntity player = client.player;
         if (player == null) {
             return Optional.empty();

@@ -1,34 +1,14 @@
 package net.twoturtles;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CountDownLatch;
 
-import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.client.util.Window;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-
-import org.lwjgl.glfw.GLFW;
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQException;
-
-import net.twoturtles.mixin.client.MouseMixin;
 
 public class MCioClientAsync {
     public static boolean windowFocused;
@@ -37,7 +17,7 @@ public class MCioClientAsync {
     private final MCioStateHandler stateHandler;
 
     private final Logger LOGGER = LogUtils.getLogger();
-    private final MCioNetwork network;
+    private final MCioNetworkConnection connection;
 
     private final AtomicBoolean running = new AtomicBoolean(true);
 
@@ -54,11 +34,11 @@ public class MCioClientAsync {
 
     public MCioClientAsync() {
         client = MinecraftClient.getInstance();
-        network = new MCioNetwork(running);
+        connection = new MCioNetworkConnection();
         actionHandler = new MCioActionHandler(client);
         stateHandler = new MCioStateHandler(client);
 
-        Thread actionThread = new Thread(this::actionThreadRun, "MCio-ProcessActionThread");
+        Thread actionThread = new Thread(this::actionThreadRun, "MCio-ActionThread");
         LOGGER.info("Process-Action-Thread start");
         actionThread.start();
 
@@ -77,41 +57,36 @@ public class MCioClientAsync {
 
         /* Send state at the end of every tick */
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
-            /* This will run on the client thread. When the tick ends, signal the state thread to send an update.
-             * The server state is only updated once per tick so it makes the most sense to send an update
-             * after that.
-             * XXX Not sure how SERVER_TICK corresponds to CLIENT_TICK */
-            signalHandler.sendSignal();
-            this.ticks++;
+            Optional<StatePacket> opt = stateHandler.collectState();
+            opt.ifPresent(connection::sendStatePacket);
         });
     }
 
+    // Receive and process actions. Separate thread since it will block waiting for an action.
     private void actionThreadRun() {
-        try {
-            while (running.get()) {
-            }
-        } finally {
-            cleanupSocket();
+        while (running.get()) {
+            Optional<ActionPacket> opt = connection.recvActionPacket();
+            opt.ifPresent(actionHandler::processAction);
         }
     }
-
-/* Used to signal between the render thread capturing frames and the state thread sending
-     * frames and state to the agent. */
-    class SignalWithLatch {
-        private CountDownLatch latch = new CountDownLatch(1);
-        public void waitForSignal() {
-            try {
-                /* Waits until the latch goes to 0. */
-                latch.await();
-            } catch (InterruptedException e) {
-                LOGGER.warn("Interrupted");
-            }
-            latch = new CountDownLatch(1);  // Reset for next use
-        }
-        public void sendSignal() {
-            latch.countDown();
-        }
-    }
+//
+///* Used to signal between the render thread capturing frames and the state thread sending
+//     * frames and state to the agent. */
+//    class SignalWithLatch {
+//        private CountDownLatch latch = new CountDownLatch(1);
+//        public void waitForSignal() {
+//            try {
+//                /* Waits until the latch goes to 0. */
+//                latch.await();
+//            } catch (InterruptedException e) {
+//                LOGGER.warn("Interrupted");
+//            }
+//            latch = new CountDownLatch(1);  // Reset for next use
+//        }
+//        public void sendSignal() {
+//            latch.countDown();
+//        }
+//    }
 
 }
 

@@ -12,13 +12,14 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 // Processes incoming actions from the agent
-public class MCioActionHandler {
+class MCioActionHandler {
     private final MinecraftClient client;
 
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackPerSecond recvPPS = new TrackPerSecond("ActionsReceived");
 
     // Track keys and buttons that are currently pressed so we can clear them on reset.
+    // XXX Do the clear
     private final Set<Integer> keysPressed = new HashSet<>();
     private final Set<Integer> buttonsPressed = new HashSet<>();
 
@@ -26,14 +27,11 @@ public class MCioActionHandler {
     // XXX public int lastSequenceProcessed = 0;
 
     /* XXX Clear all actions if remote controller disconnects? */
-    public MCioActionHandler(MinecraftClient client) {
+    MCioActionHandler(MinecraftClient client) {
         this.client = client;
     }
 
-    private void processAction(ActionPacket action) {
-        // Block waiting for next action.
-        /* Recv */
-
+    void processAction(ActionPacket action) {
         recvPPS.count();
 
         /* Reset handler */
