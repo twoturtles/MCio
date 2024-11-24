@@ -36,27 +36,28 @@ public class WindowMixin {
     // StateHandler picks up the most recent frame at the end of every tick */
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
-        MCioFrameCapture.incrementFrameCount();
-        if (!MCioFrameCapture.shouldCaptureFrame()) {
+        MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
+        frameCapture.incrementFrameCount();
+        if (!frameCapture.shouldCaptureFrame()) {
             return;
         }
-        int frameCount = MCioFrameCapture.getFrameCount();
+        int frameCount = frameCapture.getFrameCount();
 
         Window window = (Window)(Object)this;
         int width = window.getFramebufferWidth();
         int height = window.getFramebufferHeight();
 
         /* XXX ring buffer or swap frames */
-        ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * MCioFrameCapture.BYTES_PER_PIXEL);
+        ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * frameCapture.BYTES_PER_PIXEL);
         pixelBuffer.clear(); // Reset position to 0
         MCioFrameCapture.MCioFrame frame = new MCioFrameCapture.MCioFrame(
-                frameCount, width, height, MCioFrameCapture.BYTES_PER_PIXEL, pixelBuffer);
+                frameCount, width, height, frameCapture.BYTES_PER_PIXEL, pixelBuffer);
 
         glReadBuffer(GL_BACK);
         glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer);
 
         /* Bad synchronization, but works for now. Once this is handed off, this thread won't touch it again. */
-        MCioFrameCapture.setLastFrame(frame);
+        frameCapture.setLastFrame(frame);
     }
 
     // Based on https://github.com/FlashyReese/sodium-extra-fabric/blob/1.21/dev/common/src/main/java/me/flashyreese/mods/sodiumextra/mixin/reduce_resolution_on_mac/MixinWindow.java

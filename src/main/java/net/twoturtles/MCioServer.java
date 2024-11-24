@@ -1,10 +1,6 @@
 package net.twoturtles;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.mojang.logging.LogUtils;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.server.ServerTickManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
@@ -23,7 +19,7 @@ public class MCioServer implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		LOGGER.info("Main Init");
-		config = new MCioConfig();
+		config = MCioConfig.getInstance();
 
 		if (config.mode == MCioMode.SYNC) {
 			serverSync = new MCioServerSync(config);

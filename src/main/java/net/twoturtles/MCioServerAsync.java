@@ -1,9 +1,10 @@
 package net.twoturtles;
 
-import com.mojang.logging.LogUtils;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+import net.minecraft.server.MinecraftServer;
+
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 
 class MCioServerAsync {
     private final Logger LOGGER = LogUtils.getLogger();
@@ -13,8 +14,8 @@ class MCioServerAsync {
         this.config = config;
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            this.init(server);
         });
-
     }
 
     void init(MinecraftServer server) {

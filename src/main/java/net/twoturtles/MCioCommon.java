@@ -8,14 +8,23 @@ enum MCioMode {
 }
 
 class MCioConfig {
+    private static MCioConfig instance;
     MCioMode mode;
-    MCioConfig() {
+
+    public static MCioConfig getInstance() {
+        if (instance == null) {
+            instance = new MCioConfig();
+        }
+        return instance;
+    }
+
+    private MCioConfig() {
         // XXX Load from disk
         mode = MCioMode.ASYNC;
     }
 }
 
-class MCio_Const {
+class MCioConst {
     public static final String KEY_CATEGORY = "MCio";
 }
 

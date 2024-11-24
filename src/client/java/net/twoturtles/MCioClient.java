@@ -36,7 +36,7 @@ public class MCioClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		LOGGER.info("Client Init");
-		config = new MCioConfig();
+		config = MCioConfig.getInstance();
 
 		if (config.mode == MCioMode.SYNC) {
 			clientSync = new MCioClientSync(config);

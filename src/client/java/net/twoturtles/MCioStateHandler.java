@@ -90,14 +90,14 @@ public class MCioStateHandler {
         }
     }
     private FrameRV getFrame() {
-        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getLastCapturedFrame();
+        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getInstance().getLastCapturedFrame();
         if (frame == null || frame.frame() == null) {
             return FrameRV.empty();
         }
 
         /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
         sendFPS.count();
-        ByteBuffer pngBuf = MCioFrameCapture.getFramePNG(frame);
+        ByteBuffer pngBuf = MCioFrameCapture.getInstance().getFramePNG(frame);
         return new FrameRV(frame.frame_count(), pngBuf);
     }
 
