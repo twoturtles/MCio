@@ -29,7 +29,7 @@ public final class MCioFrameCapture {
     private final Logger LOGGER = LogUtils.getLogger();
     private final TrackPerSecond frameFPS = new TrackPerSecond("Frames");
     private final TrackPerSecond captureFPS = new TrackPerSecond("FrameCaptures");
-    private MCioConfig config;
+    MCioConfig config;
 
     private int frameCount = 0;
     private MCioFrame lastCapturedFrame = null;

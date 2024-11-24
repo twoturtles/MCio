@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 public class MCioServer implements ModInitializer {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private final TrackPerSecond serverTPS = new TrackPerSecond("ServerTicks");
-	private MCioConfig config;
+	MCioConfig config;
 	private MCioServerSync serverSync;
 	private MCioServerAsync serverAsync;
 

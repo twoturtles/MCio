@@ -21,4 +21,6 @@ class MCioServerAsync {
     void init(MinecraftServer server) {
         LOGGER.info("Server Started: Async Mode");
     }
+
+    void stop() { }
 }
