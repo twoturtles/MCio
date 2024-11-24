@@ -2,7 +2,6 @@ package net.twoturtles;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -79,25 +78,5 @@ public class MCioClientAsync {
         running.set(false);
         connection.close();
     }
-
-//
-///* Used to signal between the render thread capturing frames and the state thread sending
-//     * frames and state to the agent. */
-//    class SignalWithLatch {
-//        private CountDownLatch latch = new CountDownLatch(1);
-//        public void waitForSignal() {
-//            try {
-//                /* Waits until the latch goes to 0. */
-//                latch.await();
-//            } catch (InterruptedException e) {
-//                LOGGER.warn("Interrupted");
-//            }
-//            latch = new CountDownLatch(1);  // Reset for next use
-//        }
-//        public void sendSignal() {
-//            latch.countDown();
-//        }
-//    }
-
 }
 
