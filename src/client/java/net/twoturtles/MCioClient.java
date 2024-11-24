@@ -41,31 +41,36 @@ public class MCioClient implements ClientModInitializer {
 		LOGGER.info("Client Init");
 		config = MCioConfig.getInstance();
 
-		if (config.mode == MCioMode.SYNC) {
-			clientSync = new MCioClientSync(config);
-		} else {
-			clientAsync = new MCioClientAsync(config);
-		}
-
 		fsave.initialize();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
 			LOGGER.info("Client Started");
 		});
-
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			LOGGER.info("Client Stopping");
-			if (clientSync != null) {
-				clientSync.stop();
-			} else {
-				clientAsync.stop();
-			}
+			stop();
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTPS.count();
 		});
 
+		if (config.mode == MCioDef.Mode.SYNC) {
+			clientSync = new MCioClientSync(config);
+			MCioFrameCapture.getInstance().setEnabled(true);
+		} else if (config.mode == MCioDef.Mode.ASYNC) {
+			clientAsync = new MCioClientAsync(config);
+			MCioFrameCapture.getInstance().setEnabled(true);
+		}
+
+	}
+
+	void stop() {
+		if (config.mode == MCioDef.Mode.SYNC) {
+			clientSync.stop();
+		} else if (config.mode == MCioDef.Mode.ASYNC) {
+			clientAsync.stop();
+		}
 	}
 }
 

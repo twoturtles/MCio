@@ -2,6 +2,7 @@ package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
 import org.slf4j.Logger;
@@ -21,11 +22,13 @@ public class MCioServer implements ModInitializer {
 		LOGGER.info("Main Init");
 		config = MCioConfig.getInstance();
 
-		if (config.mode == MCioMode.SYNC) {
-			serverSync = new MCioServerSync(config);
-		} else {
-			serverAsync = new MCioServerAsync(config);
-		}
+		ServerLifecycleEvents.SERVER_STARTED.register(client -> {
+			LOGGER.info("Server Started");
+		});
+		ServerLifecycleEvents.SERVER_STOPPING.register(client -> {
+			LOGGER.info("Server Stopping");
+			stop();
+		});
 
 		/* Server Ticks */
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
@@ -33,13 +36,20 @@ public class MCioServer implements ModInitializer {
 			LOGGER.debug("Server Tick End");
 		});
 
-		/* World Ticks */
-		ServerTickEvents.START_WORLD_TICK.register(serverWorld -> {
-			LOGGER.debug("World Tick Start {}", serverWorld.getRegistryKey().getValue().toString());
-		});
-		ServerTickEvents.END_WORLD_TICK.register(serverWorld -> {
-			LOGGER.debug("World Tick End {}", serverWorld.getRegistryKey().getValue().toString());
-		});
+		if (config.mode == MCioDef.Mode.SYNC) {
+			serverSync = new MCioServerSync(config);
+		} else if (config.mode == MCioDef.Mode.ASYNC){
+			serverAsync = new MCioServerAsync(config);
+		}
+
+	}
+
+	void stop() {
+		if (config.mode == MCioDef.Mode.SYNC) {
+			serverSync.stop();
+		} else if (config.mode == MCioDef.Mode.ASYNC) {
+			serverAsync.stop();
+		}
 	}
 }
 

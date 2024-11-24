@@ -29,6 +29,7 @@ public final class MCioFrameCapture {
     private final Logger LOGGER = LogUtils.getLogger();
     private final TrackPerSecond frameFPS = new TrackPerSecond("Frames");
     private final TrackPerSecond captureFPS = new TrackPerSecond("FrameCaptures");
+    private boolean enabled = false;
     MCioConfig config;
 
     private int frameCount = 0;
@@ -40,6 +41,9 @@ public final class MCioFrameCapture {
         }
         return instance;
     }
+
+    public void setEnabled(boolean enabled_val) { enabled = enabled_val; }
+    public boolean isEnabled() { return enabled; }
 
     public record MCioFrame(
             int frame_count,
@@ -63,7 +67,7 @@ public final class MCioFrameCapture {
 
     public boolean shouldCaptureFrame() {
         frameFPS.count();
-        if (config.mode == MCioMode.ASYNC) {
+        if (config.mode == MCioDef.Mode.ASYNC) {
             // In async mode we're running real time. As optimization only capture every other frame.
             // Probably not necessary
             return frameCount % ASYNC_CAPTURE_EVERY_N_FRAMES == 0;
@@ -115,7 +119,7 @@ class MCioFrameSave {
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "MCioFrameSave",
                 GLFW.GLFW_KEY_C,
-                MCioConst.KEY_CATEGORY
+                MCioDef.KEY_CATEGORY
         ));
 
         // Register the tick event to pick up the key press.

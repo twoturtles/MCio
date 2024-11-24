@@ -37,6 +37,7 @@ public class WindowMixin {
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
         MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
+        if (!frameCapture.isEnabled()) return;
         frameCapture.incrementFrameCount();
         if (!frameCapture.shouldCaptureFrame()) {
             return;

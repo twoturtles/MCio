@@ -31,10 +31,18 @@ class MCioServerSync {
         // Set frozen to wait for steps
         tickManager.setFrozen(true);
 
-        new TestThread(server);
+        //new TestThread(server);
     }
 
+    void stop() { }
+
     // Run steps as fast as possible
+    /*
+    [16:48:27] [Server thread/INFO] (TrackPerSecond) ServerTicks per-second=492.5
+    [16:48:27] [Render thread/INFO] (TrackPerSecond) ClientTicks per-second=112.0
+    [16:48:28] [Render thread/INFO] (TrackPerSecond) Frames per-second=112.0
+    [16:48:28] [Render thread/INFO] (TrackPerSecond) FrameCaptures per-second=112.0
+     */
     class TestThread {
         private final Logger LOGGER = LogUtils.getLogger();
         private final MinecraftServer server;

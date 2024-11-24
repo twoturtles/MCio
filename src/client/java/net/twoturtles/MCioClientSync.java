@@ -19,6 +19,12 @@ public class MCioClientSync {
     void stop() { }
 
     // XXX Run steps as fast as possible
+    /*
+    [16:51:01] [Server thread/INFO] (TrackPerSecond) ServerTicks per-second=38.7
+    [16:51:01] [Render thread/INFO] (TrackPerSecond) ClientTicks per-second=109.5
+    [16:51:02] [Render thread/INFO] (TrackPerSecond) Frames per-second=110.1
+    [16:51:02] [Render thread/INFO] (TrackPerSecond) FrameCaptures per-second=110.1
+     */
     class TestThread {
         private final Logger LOGGER = LogUtils.getLogger();
 

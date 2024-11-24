@@ -2,7 +2,7 @@ package net.twoturtles;
 
 public class MCioConfig {
     private static MCioConfig instance;
-    MCioMode mode;
+    public MCioDef.Mode mode;
 
     public static MCioConfig getInstance() {
         if (instance == null) {
@@ -13,7 +13,7 @@ public class MCioConfig {
 
     private MCioConfig() {
         // XXX Load from disk
-        mode = MCioMode.SYNC;
+        mode = MCioDef.Mode.OFF;
     }
 }
 
