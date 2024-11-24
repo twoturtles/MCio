@@ -29,45 +29,21 @@ public class MCioNetwork {
         stateConnection = new StateConnection(this.zContext, NetworkDefines.DEFAULT_STATE_PORT, running);
     }
 
+    // Public interface to receive an action from the agent. Blocks.
+    ActionPacket recvAction() {
+        return actionConnection.recvAction();
+    }
+
+    // Public interface to send a state packet.
+    void sendState(StatePacket statePacket) {
+        stateConnection.sendState(statePacket);
+    }
+
     public void stop() {
         running.set(false);
         if (zContext != null) {
             zContext.close();
         }
-    }
-}
-
-// Keep only the most recent packet. Will drop actions/states if we get behind.
-class LatestItemQueue<T> {
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private T item;
-
-    public synchronized void put(T item) {
-        if (this.item != null) {
-            LOGGER.warn("Packet Drop {}", item.getClass().getSimpleName());
-        }
-        this.item = item;
-        notifyAll();
-    }
-
-    public synchronized T get() {
-        while (item == null) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                LOGGER.warn("Unexpected Interrupt");
-            }
-        }
-        T result = item;
-        item = null;
-        return result;
-    }
-
-    // May return null
-    public synchronized T getNoWait() {
-        T result = item;
-        item = null;
-        return result;
     }
 }
 
@@ -86,9 +62,19 @@ class ActionConnection {
         actionSocket.connect("tcp://localhost:" + actionPort);
         actionSocket.subscribe(new byte[0]); // Subscribe to everything
 
-        this.actionThread = new Thread(this::actionThreadRun, "MCio-ActionThread");
-        LOGGER.info("Action-Thread start");
+        this.actionThread = new Thread(this::actionThreadRun, "MCio-NetworkActionThread");
+        LOGGER.info("Network-Action-Thread start");
         actionThread.start();
+    }
+
+    // Public interface to receive an action from the agent. Blocks.
+    public ActionPacket recvAction() {
+        return latestAction.get();
+    }
+
+    // Public interface to receive an action from the agent. May return null
+    public ActionPacket recvActionNoWait() {
+        return latestAction.getNoWait();
     }
 
     private void recvActionPacket() {
@@ -123,14 +109,14 @@ class ActionConnection {
 
     private void handleZMQException(ZMQException e) {
         if (!running.get()) {
-            LOGGER.info("Action-Thread shutting down");
+            LOGGER.info("Network-Action-Thread shutting down");
         } else {
             LOGGER.error("ZMQ error in action thread", e);
         }
     }
 
     private void cleanupSocket() {
-        LOGGER.info("Action-Thread cleanup");
+        LOGGER.info("Network-Action-Thread cleanup");
         if (actionSocket != null) {
             try {
                 actionSocket.close();
@@ -154,16 +140,17 @@ class StateConnection {
         stateSocket = zContext.createSocket(SocketType.PUB);  // Pub for sending state
         stateSocket.bind("tcp://*:" + statePort);
 
-        this.stateThread = new Thread(this::stateThreadRun, "MCio-StateThread");
-        LOGGER.info("State-Thread start");
+        this.stateThread = new Thread(this::stateThreadRun, "MCio-NetworkStateThread");
+        LOGGER.info("Network-State-Thread start");
         stateThread.start();
     }
 
-    /*
-            // StateHandler sends a signal on END_CLIENT_TICK
-            signalHandler.waitForSignal();
-            sendNextState();
-     */
+    // Public interface to send a state packet. Actually places the packet on the latestState
+    // queue to be sent by the stateThread.
+    public void sendState(StatePacket statePacket) {
+        latestState.put(statePacket);
+    }
+
     private void stateThreadRun() {
         try {
             while (running.get()) {
@@ -187,7 +174,7 @@ class StateConnection {
     }
 
     private void cleanupSocket() {
-        LOGGER.info("State-Thread cleanup");
+        LOGGER.info("Network-State-Thread cleanup");
         if (stateSocket != null) {
             try {
                 stateSocket.close();
@@ -196,5 +183,5 @@ class StateConnection {
             }
         }
     }
-
 }
+

@@ -43,3 +43,38 @@ class TrackPerSecond {
     }
 }
 
+/* Keep only the most recent item. If a new item is added before the previous is removed,
+ * the previous item is dropped. */
+class LatestItemQueue<T> {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private T item;
+
+    public synchronized void put(T item) {
+        if (this.item != null) {
+            LOGGER.warn("Packet Drop {}", item.getClass().getSimpleName());
+        }
+        this.item = item;
+        notifyAll();
+    }
+
+    public synchronized T get() {
+        while (item == null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                LOGGER.warn("Unexpected Interrupt");
+            }
+        }
+        T result = item;
+        item = null;
+        return result;
+    }
+
+    // May return null
+    public synchronized T getNoWait() {
+        T result = item;
+        item = null;
+        return result;
+    }
+}
+
