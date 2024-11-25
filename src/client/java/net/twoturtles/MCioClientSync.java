@@ -42,28 +42,28 @@ public class MCioClientSync {
     }
 
     void clientStep() {
-        if (!gameRunning) {
-            return;
-        }
-
         // XXX Make window responsive while waiting for an action. At least allow it to be brought to the foreground.
         // XXX Why can't I double jump to fly in creative mode?
 
+        if (!gameRunning) {
+            return;
+        }
         if (waitingForFirstAction) {
             LOGGER.info("Waiting for first action");
         }
         Optional<ActionPacket> optAction = connection.recvActionPacket();
-        if (optAction.isPresent()) {
-            if (waitingForFirstAction) {
-                LOGGER.info("Received first action");
-                waitingForFirstAction = false;
-            }
-            ActionPacket action = optAction.get();
-            LOGGER.debug("ACTION {}", action);
-            actionHandler.processAction(action);
-        } else {
+        if (optAction.isEmpty()) {
             LOGGER.warn("Invalid action");
+            return;
         }
+
+        if (waitingForFirstAction) {
+            LOGGER.info("Received first action");
+            waitingForFirstAction = false;
+        }
+        ActionPacket action = optAction.get();
+        LOGGER.debug("ACTION {}", action);
+        actionHandler.processAction(action);
     }
 
     void serverStep() {
