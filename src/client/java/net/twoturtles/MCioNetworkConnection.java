@@ -16,7 +16,7 @@ class MCioNetworkConnection {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final ZContext zContext;
     private final ZMQ.Socket actionSocket;
-    private final ZMQ.Socket stateSocket;
+    private final ZMQ.Socket observationSocket;
 
     MCioNetworkConnection() {
         this.zContext = new ZContext();
@@ -25,8 +25,8 @@ class MCioNetworkConnection {
         actionSocket.connect("tcp://localhost:" + NetworkDefines.DEFAULT_ACTION_PORT);
         actionSocket.subscribe(new byte[0]); // Subscribe to everything
 
-        stateSocket = zContext.createSocket(SocketType.PUB);  // Pub for sending state
-        stateSocket.bind("tcp://*:" + NetworkDefines.DEFAULT_STATE_PORT);
+        observationSocket = zContext.createSocket(SocketType.PUB);  // Pub for sending observation
+        observationSocket.bind("tcp://*:" + NetworkDefines.DEFAULT_OBSERVATION_PORT);
     }
 
     // Public interface to receive an action from the agent. Blocks.
@@ -42,14 +42,14 @@ class MCioNetworkConnection {
         }
     }
 
-    // Public interface to send a state packet to the agent
-    void sendStatePacket(StatePacket statePacket) {
+    // Public interface to send an observation packet to the agent
+    void sendObservationPacket(ObservationPacket observationPacket) {
         try {
-            byte[] pBytes = StatePacketPacker.pack(statePacket);
+            byte[] pBytes = ObservationPacketPacker.pack(observationPacket);
             // Send to agent
-            stateSocket.send(pBytes);
+            observationSocket.send(pBytes);
         } catch (IOException e) {
-            LOGGER.warn("StatePacketPacker failed");
+            LOGGER.warn("ObservationPacketPacker failed");
         }
     }
 
@@ -57,8 +57,8 @@ class MCioNetworkConnection {
         if (actionSocket != null) {
             actionSocket.close();
         }
-        if (stateSocket != null) {
-            stateSocket.close();
+        if (observationSocket != null) {
+            observationSocket.close();
         }
         if (zContext != null) {
             zContext.close();

@@ -15,25 +15,25 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-/* Defines packet structure for Action and State packets */
+/* Defines packet structure for Action and Observation packets */
 
 class NetworkDefines {
     private NetworkDefines() {}
     public static final int MCIO_PROTOCOL_VERSION = 0;
     public static final int DEFAULT_ACTION_PORT = 4001;  // For receiving 4ctions
-    public static final int DEFAULT_STATE_PORT = 5001;    // For sending 5tate
+    public static final int DEFAULT_OBSERVATION_PORT = 5001;    // For sending 5tate
 }
 
 
-/* State packets sent to agent */
-record StatePacket(
+/* Observation packets sent to agent */
+record ObservationPacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
         String mode,    // "SYNC" or "ASYNC"
         int sequence,
         int last_action_sequence,
 
-        // State
+        // Observation
         ByteBuffer frame_png,
         float health,
         int cursor_mode,
@@ -45,7 +45,7 @@ record StatePacket(
         ArrayList<InventorySlot> inventory_armor,
         ArrayList<InventorySlot> inventory_offhand
 ) {
-    StatePacket {
+    ObservationPacket {
         Validate.check(version == NetworkDefines.MCIO_PROTOCOL_VERSION, "Invalid version");
         Validate.check(cursor_pos.length == 2, "Invalid cursor_pos");
         Validate.check(cursor_mode == GLFW.GLFW_CURSOR_DISABLED ||
@@ -69,13 +69,13 @@ record InventorySlot(
         int count
 ) {}
 
-/* Serialize StatePacket */
-class StatePacketPacker {
+/* Serialize ObservationPacket */
+class ObservationPacketPacker {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
 
-    public static byte[] pack(StatePacket state) throws IOException {
-        return CBOR_MAPPER.writeValueAsBytes(state);
+    public static byte[] pack(ObservationPacket observation) throws IOException {
+        return CBOR_MAPPER.writeValueAsBytes(observation);
     }
 }
 
@@ -87,7 +87,7 @@ record ActionPacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
         int sequence,
-        boolean reset,          // Reset state sequence and clear all key / button presses
+        boolean reset,          // Reset observation sequence and clear all key / button presses
 
         // Action
         int[][] keys,           // Array of (key, action) pairs. E.g., (GLFW.GLFW_KEY_W, GLFW.GLFW_PRESS)

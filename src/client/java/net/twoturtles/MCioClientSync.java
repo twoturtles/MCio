@@ -16,7 +16,7 @@ public class MCioClientSync {
 
     private final MCioNetworkConnection connection;
     private final MCioActionHandler actionHandler;
-    private final MCioStateHandler stateHandler;
+    private final MCioObservationHandler observationHandler;
 
     private boolean gameRunning = false;
     private boolean waitingForFirstAction = true;
@@ -28,7 +28,7 @@ public class MCioClientSync {
 
         connection = new MCioNetworkConnection();
         actionHandler = new MCioActionHandler(client);
-        stateHandler = new MCioStateHandler(client, config);
+        observationHandler = new MCioObservationHandler(client, config);
 
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
             clientStep();
@@ -76,12 +76,12 @@ public class MCioClientSync {
         }
 
         // XXX Server is on a different thread. Need some synchronization
-        Optional<StatePacket> optState = stateHandler.collectState(lastActionSequence);
-        if (optState.isPresent()) {
-            LOGGER.debug("STATE {}", optState.get());
+        Optional<ObservationPacket> optObservation = observationHandler.collectObservation(lastActionSequence);
+        if (optObservation.isPresent()) {
+            LOGGER.debug("OBSERVATION {}", optObservation.get());
             gameRunning = true;
         }
-        optState.ifPresent(connection::sendStatePacket);
+        optObservation.ifPresent(connection::sendObservationPacket);
     }
 
     void stop() { }

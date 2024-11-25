@@ -20,7 +20,7 @@ import org.lwjgl.stb.STBImageWrite;
 import org.lwjgl.stb.STBIWriteCallback;
 
 /* Interface and state storage for WindowMixin:beforeSwap. beforeSwap does the actual capture
- * and stores the frame here. StateHandler picks up the most recent frame at the end of every tick */
+ * and stores the frame here. ObservationHandler picks up the most recent frame at the end of every tick */
 public final class MCioFrameCapture {
     private static MCioFrameCapture instance;
     public final int ASYNC_CAPTURE_EVERY_N_FRAMES = 2;

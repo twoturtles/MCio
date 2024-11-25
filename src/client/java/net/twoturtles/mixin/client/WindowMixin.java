@@ -33,7 +33,7 @@ public class WindowMixin {
 
     // This captures frames and stores them to MCioFrameCapture. This plugs in to the Minecraft
     // swapBuffers method so the frame is ready to go when it's captured.
-    // StateHandler picks up the most recent frame at the end of every tick */
+    // ObservationHandler picks up the most recent frame at the end of every tick */
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
         MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();

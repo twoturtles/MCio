@@ -18,28 +18,28 @@ import java.util.List;
 import java.util.Optional;
 
 
-// Collect state information to send to the agent
+// Collect information to send to the agent
 // All information is client side?
-public class MCioStateHandler {
+public class MCioObservationHandler {
     private final MinecraftClient client;
     private final MCioConfig config;
 
     private final Logger LOGGER = LogUtils.getLogger();
-    private static final TrackPerSecond sendFPS = new TrackPerSecond("StatesSent");
-    private int stateSequence = 0;
+    private static final TrackPerSecond sendFPS = new TrackPerSecond("ObservationsSent");
+    private int observationSequence = 0;
 
-    public MCioStateHandler(MinecraftClient client, MCioConfig config) {
+    public MCioObservationHandler(MinecraftClient client, MCioConfig config) {
         this.client = client;
         this.config = config;
     }
 
-    // TODO - more things in the state packet
+    // TODO - more things in the observation packet
     // Experience
     // Enchantments
     // Status effects
 
-    // Collect state and package into a StatePacket
-    Optional<StatePacket> collectState(int lastFullTickActionSequence) {
+    // Collect observation and package into an ObservationPacket
+    Optional<ObservationPacket> collectObservation(int lastFullTickActionSequence) {
         ClientPlayerEntity player = client.player;
         if (player == null) {
             return Optional.empty();
@@ -48,7 +48,7 @@ public class MCioStateHandler {
         // XXX Use case? Maybe reset last action sequence to help a crashed agent?
 //        boolean doReset = doSequenceReset.getAndSet(false);
 //        if (doReset) {
-//            stateSequence = 0;
+//            observationSequence = 0;
 //        }
 
         /* Gather information */
@@ -65,18 +65,18 @@ public class MCioStateHandler {
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
         /* Create packet */
-        StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION, config.mode.toString(),
-                stateSequence++, lastFullTickActionSequence, frameRV.frame_png, player.getHealth(),
+        ObservationPacket observationPkt = new ObservationPacket(NetworkDefines.MCIO_PROTOCOL_VERSION, config.mode.toString(),
+                observationSequence++, lastFullTickActionSequence, frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
-        LOGGER.debug("StatePacket: {}", statePkt);
+        LOGGER.debug("ObservationPacket: {}", observationPkt);
 
-        return Optional.of(statePkt);
+        return Optional.of(observationPkt);
     }
 
     /*
-     * Methods for collecting state data from Minecraft
+     * Methods for collecting observation data from Minecraft
      */
 
     /* Return type for getFrame */

@@ -21,7 +21,7 @@ class MCioActionHandler {
     private final Set<Integer> keysPressed = new HashSet<>();
     private final Set<Integer> buttonsPressed = new HashSet<>();
 
-    // Set at the end of processing an ActionPacket. Picked up by the State thread.
+    // Set at the end of processing an ActionPacket. Picked up by the Observation thread.
     // XXX public int lastSequenceProcessed = 0;
 
     /* XXX Clear all actions if remote controller disconnects? */
@@ -50,7 +50,7 @@ class MCioActionHandler {
             }
             buttonsPressed.clear();
 
-            // XXX this.controller.stateHandler.doSequenceReset.set(true);
+            // XXX this.controller.observationHandler.doSequenceReset.set(true);
         }
 
         /* Keyboard handler */
