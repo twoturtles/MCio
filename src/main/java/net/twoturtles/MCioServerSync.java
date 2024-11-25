@@ -9,7 +9,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 
 class MCioServerSync {
     private final Logger LOGGER = LogUtils.getLogger();
-    MCioConfig config;
+    private MCioConfig config;
 
     public MCioServerSync(MCioConfig config) {
         this.config = config;

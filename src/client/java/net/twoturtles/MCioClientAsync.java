@@ -3,7 +3,6 @@ package net.twoturtles;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;

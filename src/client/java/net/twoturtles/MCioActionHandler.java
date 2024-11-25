@@ -5,11 +5,9 @@ import net.minecraft.client.MinecraftClient;
 import net.twoturtles.mixin.client.MouseMixin;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
-import org.zeromq.ZContext;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 // Processes incoming actions from the agent
 class MCioActionHandler {

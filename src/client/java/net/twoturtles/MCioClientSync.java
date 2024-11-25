@@ -1,22 +1,87 @@
 package net.twoturtles;
 
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTickManager;
 import net.minecraft.server.integrated.IntegratedServer;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
+import java.util.Optional;
+
 public class MCioClientSync {
     private final Logger LOGGER = LogUtils.getLogger();
-    MCioConfig config;
+    private final MinecraftClient client;
+    private MCioConfig config;
+
+    private final MCioNetworkConnection connection;
+    private final MCioActionHandler actionHandler;
+    private final MCioStateHandler stateHandler;
+
+    private boolean gameRunning = false;
+    private boolean waitingForFirstAction = true;
+    private int lastActionSequence = 0;
 
     MCioClientSync(MCioConfig config) {
+        client = MinecraftClient.getInstance();
         this.config = config;
 
+        connection = new MCioNetworkConnection();
+        actionHandler = new MCioActionHandler(client);
+        stateHandler = new MCioStateHandler(client, config);
+
+        ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
+            clientStep();
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
+            serverStep();
+        });
+
         //new TestThread();
+    }
+
+    void clientStep() {
+        if (!gameRunning) {
+            return;
+        }
+
+        // XXX Make window responsive while waiting for an action. At least allow it to be brought to the foreground.
+        // XXX Why can't I double jump to fly in creative mode?
+
+        if (waitingForFirstAction) {
+            LOGGER.info("Waiting for first action");
+        }
+        Optional<ActionPacket> optAction = connection.recvActionPacket();
+        if (optAction.isPresent()) {
+            if (waitingForFirstAction) {
+                LOGGER.info("Received first action");
+                waitingForFirstAction = false;
+            }
+            ActionPacket action = optAction.get();
+            LOGGER.debug("ACTION {}", action);
+            actionHandler.processAction(action);
+        } else {
+            LOGGER.warn("Invalid action");
+        }
+    }
+
+    void serverStep() {
+        IntegratedServer server = client.getServer();
+        if (server != null) {
+            server.execute(() -> {
+                ServerTickManager serverTickManager = server.getTickManager();
+                serverTickManager.step(1);
+            });
+        }
+
+        // XXX Server is on a different thread. Need some synchronization
+        Optional<StatePacket> optState = stateHandler.collectState(lastActionSequence);
+        if (optState.isPresent()) {
+            LOGGER.debug("STATE {}", optState.get());
+            gameRunning = true;
+        }
+        optState.ifPresent(connection::sendStatePacket);
     }
 
     void stop() { }
