@@ -146,26 +146,8 @@ class MCioFrameSave {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (captureKey.wasPressed() && client.world != null) {
                 doCapturePNG(client);
-                // doCaptureMC(client);
-                // doCaptureRaw(client);
             }
         });
-    }
-
-    /* Write file using Minecraft's built-in screenshot writer, but without printing a message to the screen.
-     * These end up in the standard minecraft screenshots dir. */
-    private void doCaptureMC(MinecraftClient client) {
-        String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
-        String fileName = String.format("frame_%s_%d.png", timestamp, frameCount++);
-        LOGGER.info("Captured frame: {}", fileName);
-
-        // Capture the frame using Minecraft's screenshot recorder
-        ScreenshotRecorder.saveScreenshot(
-                client.runDirectory,
-                fileName,
-                client.getFramebuffer(),
-                (message) -> {}       // No message to the UI
-        );
     }
 
     /* Write png to frame_captures dir */
@@ -187,25 +169,5 @@ class MCioFrameSave {
         LOGGER.info("Captured frame: {}", outputFile.getAbsolutePath());
     }
 
-    /* Save raw pixels to file. The OpenGL origin is in the bottom left, so the frames will appear upside down. */
-    private void doCaptureRaw(MinecraftClient client) {
-        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getInstance().getLastCapturedFrame();
-        frame.frame().rewind();  // Make sure we're at the start of the buffer
-
-        java.io.File outputDir = new java.io.File("frame_captures");
-        if (!outputDir.exists()) {
-            outputDir.mkdir();
-        }
-        String fileName = String.format("frame_%d.raw", frame.frame_count());
-        java.io.File outputFile = new java.io.File(outputDir, fileName);
-
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outputFile)) {
-            java.nio.channels.FileChannel channel = fos.getChannel();
-            channel.write(frame.frame());
-            LOGGER.info("Captured frame: {}", outputFile.getAbsolutePath());
-        } catch (java.io.IOException e) {
-            System.err.println("Failed to write frame: " + e.getMessage());
-        }
-    }
 }
 
