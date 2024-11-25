@@ -29,6 +29,7 @@ class NetworkDefines {
 record StatePacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
+        String mode,    // "SYNC" or "ASYNC"
         int sequence,
         int last_action_sequence,
 

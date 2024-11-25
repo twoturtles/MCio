@@ -22,13 +22,15 @@ import java.util.Optional;
 // All information is client side?
 public class MCioStateHandler {
     private final MinecraftClient client;
+    private final MCioConfig config;
 
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackPerSecond sendFPS = new TrackPerSecond("StatesSent");
     private int stateSequence = 0;
 
-    public MCioStateHandler(MinecraftClient client) {
+    public MCioStateHandler(MinecraftClient client, MCioConfig config) {
         this.client = client;
+        this.config = config;
     }
 
     // TODO - more things in the state packet
@@ -63,7 +65,7 @@ public class MCioStateHandler {
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
         /* Create packet */
-        StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
+        StatePacket statePkt = new StatePacket(NetworkDefines.MCIO_PROTOCOL_VERSION, config.mode.toString(),
                 stateSequence++, lastFullTickActionSequence, frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),

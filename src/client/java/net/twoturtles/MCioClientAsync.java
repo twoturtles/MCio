@@ -39,7 +39,7 @@ public class MCioClientAsync {
 
         connection = new MCioNetworkConnection();
         actionHandler = new MCioActionHandler(client);
-        stateHandler = new MCioStateHandler(client);
+        stateHandler = new MCioStateHandler(client, config);
 
         Thread actionThread = new Thread(this::actionThreadRun, "MCio-ActionThread");
         LOGGER.info("Process-Action-Thread start");
