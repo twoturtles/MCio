@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -32,8 +33,13 @@ class MCioNetworkConnection {
     // Returns null (Optional.empty()) when unpacking fails
     Optional<ActionPacket> recvActionPacket() {
         // Block waiting for packet
-        byte[] pkt = actionSocket.recv();
-        return ActionPacketUnpacker.unpack(pkt);
+        try {
+            byte[] pkt = actionSocket.recv();
+            return ActionPacketUnpacker.unpack(pkt);
+        }  catch (ZMQException e) {
+            // This is probably during shutdown, but maybe should return error.
+            return Optional.empty();
+        }
     }
 
     // Public interface to send a state packet to the agent
