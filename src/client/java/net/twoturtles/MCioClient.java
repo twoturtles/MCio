@@ -27,7 +27,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private final Logger LOGGER = LogUtils.getLogger();
-	private final MCioFrameSave fsave = new MCioFrameSave();
 	private MCioClientAsync clientAsync;
 	private MCioClientSync clientSync;
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
@@ -40,8 +39,7 @@ public class MCioClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		LOGGER.info("Client Init");
 		config = MCioConfig.getInstance();
-
-		fsave.initialize();
+		MCioFrameSave.initialize();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
 			LOGGER.info("Client Started mode={}", config.mode);

@@ -1,9 +1,7 @@
 package net.twoturtles;
 
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
@@ -12,9 +10,7 @@ import com.mojang.logging.LogUtils;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.ScreenshotRecorder;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryUtil;
@@ -43,6 +39,9 @@ public final class MCioFrameCapture {
         }
         return instance;
     }
+    private MCioFrameCapture() {
+        config = MCioConfig.getInstance();
+    }
 
     public void setEnabled(boolean enabled_val) { enabled = enabled_val; }
     public boolean isEnabled() { return enabled; }
@@ -54,10 +53,6 @@ public final class MCioFrameCapture {
             int bytes_per_pixel,
             ByteBuffer frame
     ) { }
-
-    private MCioFrameCapture() {
-        config = MCioConfig.getInstance();
-    }
 
     // Called by WindowMixin to hand off a new frame
     public void setLastFrame(MCioFrame frame) {
@@ -130,11 +125,22 @@ public final class MCioFrameCapture {
 
 /* Provides hot key to save frames to files without printing a message to the screen. */
 class MCioFrameSave {
+    private static MCioFrameSave instance;
     private final Logger LOGGER = LogUtils.getLogger();
     private KeyBinding captureKey;
     private int frameCount = 0;
 
-    public void initialize() {
+    public static void initialize() {
+        // Use for initial setup.
+        getInstance();
+    }
+    public static MCioFrameSave getInstance() {
+        if (instance == null) {
+            instance = new MCioFrameSave();
+        }
+        return instance;
+    }
+    private MCioFrameSave() {
         // Register the keybinding (default to C (capture))
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "MCioFrameSave",
@@ -145,28 +151,39 @@ class MCioFrameSave {
         // Register the tick event to pick up the key press.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (captureKey.wasPressed() && client.world != null) {
-                doCapturePNG(client);
+                doCapture();
             }
         });
     }
+    //
 
-    /* Write png to frame_captures dir */
-    /* for 1280x1280 frames: PNG 1.2M, Raw 4.7M, PNG from PIL: 964K, Minecraft screenshot PNG: 1.4M */
-    private void doCapturePNG(MinecraftClient client) {
-        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getInstance().getLastCapturedFrame();
+    // Save a frame to disk. It goes in the frame_captures dir.
+    public void saveFrame(MCioFrameCapture.MCioFrame frame) {
+        String fileName = String.format("frame_%d.png", frame.frame_count());
+        saveFrame(frame, fileName);
+    }
+    // Allow fileName override
+    public void saveFrame(MCioFrameCapture.MCioFrame frame, String fileName) {
         frame.frame().rewind();  // Make sure we're at the start of the buffer
 
         java.io.File outputDir = new java.io.File("frame_captures");
         if (!outputDir.exists()) {
             outputDir.mkdir();
         }
-        String fileName = String.format("frame_%d.png", frame.frame_count());
         java.io.File outputFile = new java.io.File(outputDir, fileName);
 
+        // Flip - openGL frames are upside down
         STBImageWrite.stbi_flip_vertically_on_write(true);
         STBImageWrite.stbi_write_png(outputFile.getAbsolutePath(), frame.width(), frame.height(),
                 3, frame.frame(), frame.width() * 3);
         LOGGER.info("Captured frame: {}", outputFile.getAbsolutePath());
+    }
+
+    /* Callback for captureKey. Write png to frame_captures dir */
+    /* for 1280x1280 frames: PNG 1.2M, Raw 4.7M, PNG from PIL: 964K, Minecraft screenshot PNG: 1.4M */
+    private void doCapture() {
+        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getInstance().getLastCapturedFrame();
+        saveFrame(frame);
     }
 
 }
