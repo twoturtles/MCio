@@ -1,5 +1,7 @@
 package net.twoturtles;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTickManager;
@@ -13,6 +15,7 @@ public class MCioClientSync {
 
     MCioClientSync(MCioConfig config) {
         this.config = config;
+
         //new TestThread();
     }
 

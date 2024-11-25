@@ -113,8 +113,6 @@ class MCioFrameSave {
     private int frameCount = 0;
 
     public void initialize() {
-        LOGGER.info("Init");
-
         // Register the keybinding (default to C (capture))
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "MCioFrameSave",

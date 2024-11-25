@@ -44,7 +44,7 @@ public class MCioClient implements ClientModInitializer {
 		fsave.initialize();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
-			LOGGER.info("Client Started");
+			LOGGER.info("Client Started mode={}", config.mode);
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			LOGGER.info("Client Stopping");

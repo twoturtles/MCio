@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 public class MCioServer implements ModInitializer {
 	private final Logger LOGGER = LogUtils.getLogger();
 	private final TrackPerSecond serverTPS = new TrackPerSecond("ServerTicks");
-	MCioConfig config;
+	private MCioConfig config;
 	private MCioServerSync serverSync;
 	private MCioServerAsync serverAsync;
 
@@ -23,7 +23,7 @@ public class MCioServer implements ModInitializer {
 		config = MCioConfig.getInstance();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(client -> {
-			LOGGER.info("Server Started");
+			LOGGER.info("Server Started mode={}", config.mode);
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(client -> {
 			LOGGER.info("Server Stopping");

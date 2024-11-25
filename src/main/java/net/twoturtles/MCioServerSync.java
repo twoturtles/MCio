@@ -13,14 +13,10 @@ class MCioServerSync {
 
     public MCioServerSync(MCioConfig config) {
         this.config = config;
-
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            this.init(server);
-        });
+        ServerLifecycleEvents.SERVER_STARTED.register(this::init);
     }
 
     void init(MinecraftServer server) {
-        LOGGER.info("Server Started: Sync Mode");
         // For sync mode run Minecraft in sprint mode. This way there's no artificial delay between ticks.
         // It will go as fast as we step.
         ServerTickManager tickManager = server.getTickManager();

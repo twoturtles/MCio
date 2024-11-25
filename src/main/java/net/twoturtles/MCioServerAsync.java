@@ -12,14 +12,6 @@ class MCioServerAsync {
 
     public MCioServerAsync(MCioConfig config) {
         this.config = config;
-
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            this.init(server);
-        });
-    }
-
-    void init(MinecraftServer server) {
-        LOGGER.info("Server Started: Async Mode");
     }
 
     void stop() { }
