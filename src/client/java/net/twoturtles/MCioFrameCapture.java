@@ -2,8 +2,10 @@ package net.twoturtles;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -57,9 +59,11 @@ public final class MCioFrameCapture {
         config = MCioConfig.getInstance();
     }
 
+    // Called by WindowMixin to hand off a new frame
     public void setLastFrame(MCioFrame frame) {
         captureFPS.count();
         lastCapturedFrame = frame;
+        invokeCaptureCallbacks(frame);
     }
 
     public void incrementFrameCount() { frameCount++; }
@@ -104,6 +108,24 @@ public final class MCioFrameCapture {
 
         return ByteBuffer.wrap(outputStream.toByteArray());
     }
+
+    /*
+     * Provide a callback interface for captures
+     */
+    @FunctionalInterface
+    public interface FrameCaptureCallback {
+        void invokeCallback(MCioFrame frame);
+    }
+    private final List<FrameCaptureCallback> captureCallbacks = new ArrayList<>();
+    public void registerCaptureCallback(FrameCaptureCallback callback) {
+        captureCallbacks.add(callback);
+    }
+    private void invokeCaptureCallbacks(MCioFrame frame) {
+        for (FrameCaptureCallback callback : captureCallbacks) {
+            callback.invokeCallback(frame);
+        }
+    }
+
 }
 
 /* Provides hot key to save frames to files without printing a message to the screen. */
