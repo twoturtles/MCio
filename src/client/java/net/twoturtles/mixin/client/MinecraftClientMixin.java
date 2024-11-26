@@ -37,11 +37,14 @@ public class MinecraftClientMixin {
     // Targeting "i": int i = this.renderTickCounter.beginRenderTick(Util.getMeasuringTimeMs(), tick);
     // Seems brittle. This targets the first int assigned in the method.
     // This is the number of ticks to take. Normally 0 or 1, but can be higher (to catch up?).
-    // Make it always at least 1 so we tick every frame.
+    // Make it always 1 so we tick every frame, but not more than 1 so we generate a frame every tick.
     @ModifyVariable(method = "render(Z)V", at = @At("STORE"), ordinal = 0)
     private int injected(int i) {
         if (MCioConfig.getInstance().mode == MCioDef.Mode.SYNC) {
-            return Math.max(i, 1);
+            if (i > 1) {
+                LOGGER.debug("Reducing i {} -> 1", i);
+            }
+            return 1;
         } else {
             // Not SYNC, use original value
             return i;

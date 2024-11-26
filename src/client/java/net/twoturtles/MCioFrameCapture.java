@@ -30,7 +30,8 @@ public final class MCioFrameCapture {
     private boolean enabled = false;
     MCioConfig config;
 
-    private int frameCount = 0;
+    private int frameSequence = 0;     // Total number of frames so far
+    private int frameCaptureSequence = 0;  // Number of frames
     private MCioFrame lastCapturedFrame = null;
 
     public static MCioFrameCapture getInstance() {
@@ -47,7 +48,8 @@ public final class MCioFrameCapture {
     public boolean isEnabled() { return enabled; }
 
     public record MCioFrame(
-            int frame_count,
+            int frame_sequence,
+            int frame_capture_sequence,
             int width,
             int height,
             int bytes_per_pixel,
@@ -55,21 +57,33 @@ public final class MCioFrameCapture {
     ) { }
 
     // Called by WindowMixin to hand off a new frame
-    public void setLastFrame(MCioFrame frame) {
+    public void capture(ByteBuffer pixelBuffer, int width, int height) {
+        frameCaptureSequence++;
         captureFPS.count();
+        pixelBuffer.rewind();
+        MCioFrame frame = new MCioFrame(frameSequence, frameCaptureSequence,
+                width, height, BYTES_PER_PIXEL, pixelBuffer);
         lastCapturedFrame = frame;
         invokeCaptureCallbacks(frame);
     }
 
-    public void incrementFrameCount() { frameCount++; }
-    public int getFrameCount() { return frameCount; }
+    public void captureDebug(String name, ByteBuffer pixelBuffer, int width, int height) {
+        pixelBuffer.rewind();
+        MCioFrame frame = new MCioFrame(frameSequence, frameCaptureSequence,
+                width, height, BYTES_PER_PIXEL, pixelBuffer);
+        String fileName = String.format("%03d-%s.png", frame.frame_sequence(), name);
+        MCioFrameSave.getInstance().saveFrame(frame, fileName);
+    }
+
+    public void incrementFrameCount() { frameSequence++; }
+    public int getFrameSequence() { return frameSequence; }
 
     public boolean shouldCaptureFrame() {
         frameFPS.count();
         if (config.mode == MCioDef.Mode.ASYNC) {
             // In async mode we're running real time. As optimization only capture every other frame.
             // Probably not necessary
-            return frameCount % ASYNC_CAPTURE_EVERY_N_FRAMES == 0;
+            return frameSequence % ASYNC_CAPTURE_EVERY_N_FRAMES == 0;
         } else {
             // In sync mode every frame is a tick, so always capture.
             return true;
@@ -106,6 +120,9 @@ public final class MCioFrameCapture {
 
     /*
      * Provide a callback interface for captures
+     * Note: These are called during render processing just before
+     * net.minecraft.client.util.Window.swapBuffers() is called. Be careful
+     * about large amounts of processing or blocking.
      */
     @FunctionalInterface
     public interface FrameCaptureCallback {
@@ -128,7 +145,6 @@ class MCioFrameSave {
     private static MCioFrameSave instance;
     private final Logger LOGGER = LogUtils.getLogger();
     private KeyBinding captureKey;
-    private int frameCount = 0;
 
     public static void initialize() {
         // Use for initial setup.
@@ -159,7 +175,7 @@ class MCioFrameSave {
 
     // Save a frame to disk. It goes in the frame_captures dir.
     public void saveFrame(MCioFrameCapture.MCioFrame frame) {
-        String fileName = String.format("frame_%d.png", frame.frame_count());
+        String fileName = String.format("frame_%03d.png", frame.frame_sequence());
         saveFrame(frame, fileName);
     }
     // Allow fileName override

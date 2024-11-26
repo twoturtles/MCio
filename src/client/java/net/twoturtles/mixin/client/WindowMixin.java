@@ -29,7 +29,7 @@ public class WindowMixin {
     @Unique
     private static boolean checkFrameSize = true;
     @Unique
-    private static boolean doRetinaHack = true;
+    private static boolean doRetinaHack = true;     // XXX Make configurable
 
     // This captures frames and stores them to MCioFrameCapture. This plugs in to the Minecraft
     // swapBuffers method so the frame is ready to go when it's captured.
@@ -37,12 +37,12 @@ public class WindowMixin {
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
         MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
-        if (!frameCapture.isEnabled()) return;
         frameCapture.incrementFrameCount();
+
+        if (!frameCapture.isEnabled()) return;
         if (!frameCapture.shouldCaptureFrame()) {
             return;
         }
-        int frameCount = frameCapture.getFrameCount();
 
         Window window = (Window)(Object)this;
         int width = window.getFramebufferWidth();
@@ -51,14 +51,12 @@ public class WindowMixin {
         /* XXX ring buffer or swap frames */
         ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * frameCapture.BYTES_PER_PIXEL);
         pixelBuffer.clear(); // Reset position to 0
-        MCioFrameCapture.MCioFrame frame = new MCioFrameCapture.MCioFrame(
-                frameCount, width, height, frameCapture.BYTES_PER_PIXEL, pixelBuffer);
 
         glReadBuffer(GL_BACK);
         glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer);
 
         /* Bad synchronization, but works for now. Once this is handed off, this thread won't touch it again. */
-        frameCapture.setLastFrame(frame);
+        frameCapture.capture(pixelBuffer, width, height);
     }
 
     // Based on https://github.com/FlashyReese/sodium-extra-fabric/blob/1.21/dev/common/src/main/java/me/flashyreese/mods/sodiumextra/mixin/reduce_resolution_on_mac/MixinWindow.java

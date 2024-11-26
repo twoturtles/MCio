@@ -32,6 +32,7 @@ record ObservationPacket(
         String mode,    // "SYNC" or "ASYNC"
         int sequence,
         int last_action_sequence,
+        int frame_sequence,
 
         // Observation
         ByteBuffer frame_png,

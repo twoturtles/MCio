@@ -65,8 +65,10 @@ public class MCioObservationHandler {
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
         /* Create packet */
-        ObservationPacket observationPkt = new ObservationPacket(NetworkDefines.MCIO_PROTOCOL_VERSION, config.mode.toString(),
-                observationSequence++, lastFullTickActionSequence, frameRV.frame_png, player.getHealth(),
+        ObservationPacket observationPkt = new ObservationPacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
+                config.mode.toString(), observationSequence++, lastFullTickActionSequence, frameRV.frame_sequence(),
+
+                frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 fPlayerPos, player.getPitch(), player.getYaw(),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
@@ -81,7 +83,7 @@ public class MCioObservationHandler {
 
     /* Return type for getFrame */
     record FrameRV(
-            int frame_count,
+            int frame_sequence,
             ByteBuffer frame_png
     ){
         public static FrameRV empty() {
@@ -100,7 +102,7 @@ public class MCioObservationHandler {
         /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
         sendFPS.count();
         ByteBuffer pngBuf = MCioFrameCapture.getInstance().getFramePNG(frame);
-        return new FrameRV(frame.frame_count(), pngBuf);
+        return new FrameRV(frame.frame_sequence(), pngBuf);
     }
 
     /* Return type for getInventoriesRV() */
