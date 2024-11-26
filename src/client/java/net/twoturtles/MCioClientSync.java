@@ -64,12 +64,10 @@ public class MCioClientSync {
     }
 
     void checkGameRunning(MinecraftClient client) {
-        if (gameRunning) {
-            return;
-        }
-        // XXX This still passes a few frames before the game it up.
-        // I believe these will happen at the same time, but check.
-        if (client.world != null && client.player != null) {
+        if (gameRunning) { return; }
+
+        // currentScreen is null when the game window is up.
+        if (client.currentScreen == null) {
             gameRunning = true;
         }
     }
@@ -77,6 +75,8 @@ public class MCioClientSync {
     void processAction() {
         // XXX Make window responsive while waiting for an action. At least allow it to be brought to the foreground.
         // XXX Why can't I double jump to fly in creative mode?
+        // XXX Hangs if you go to the menu
+
         if (!gameRunning) {
             return;
         }
@@ -95,7 +95,7 @@ public class MCioClientSync {
         }
         ActionPacket action = optAction.get();
         lastActionSequence = action.sequence();
-        LOGGER.info("ACTION {}", action);
+        LOGGER.debug("ACTION {}", action);
         actionHandler.processAction(action);
     }
 
