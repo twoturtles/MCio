@@ -37,7 +37,7 @@ public class WindowMixin {
     @Inject(method = "swapBuffers", at = @At("HEAD"))
     private void beforeSwap(CallbackInfo ci) {
         MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
-        frameCapture.incrementFrameCount();
+        frameCapture.incrementFrameSequence();
 
         if (!frameCapture.isEnabled()) return;
         if (!frameCapture.shouldCaptureFrame()) {
@@ -48,7 +48,6 @@ public class WindowMixin {
         int width = window.getFramebufferWidth();
         int height = window.getFramebufferHeight();
 
-        /* XXX ring buffer or swap frames */
         ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * frameCapture.BYTES_PER_PIXEL);
         pixelBuffer.clear(); // Reset position to 0
 

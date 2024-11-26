@@ -75,7 +75,7 @@ public final class MCioFrameCapture {
         MCioFrameSave.getInstance().saveFrame(frame, fileName);
     }
 
-    public void incrementFrameCount() { frameSequence++; }
+    public void incrementFrameSequence() { frameSequence++; }
     public int getFrameSequence() { return frameSequence; }
 
     public boolean shouldCaptureFrame() {
