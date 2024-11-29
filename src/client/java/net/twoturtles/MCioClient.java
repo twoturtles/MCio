@@ -8,20 +8,17 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 /* TODO
- * - Ensure all calls to random come from the same seed?
- * - step mode to allow stepping by ticks. Also allow above realtime speed.
+ * - Teleport in actions to reset
+ * - Ensure all calls to random come from the same seed? Seed from env
  * - Disable idle frame slowdown?
  *      client.getInactivityFpsLimiter()
  * - shared config file, override with env/command line option
- * - separate logging with level config
- * - Command line args / config to start in paused state
+ * - logging level config
  * - minerl compatible mode - find out other features to make it useful
  * - gymnasium
  * - tests - java and python
  * - Save and replay scripts
- * - Asynchronous and synchronous modes
  * - Everything in client, so server could be run separately
- * - Bind both sockets in minecraft? Would this fix zmq slow joiner?
  */
 
 public class MCioClient implements ClientModInitializer {

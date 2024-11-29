@@ -10,6 +10,9 @@ import net.minecraft.server.integrated.IntegratedServer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
+// XXX XXX Synchronize server tick completion with observations.
+// Currently the server ticks more slowly than we generate observations.
+
 
 public class MCioClientSync {
     private final Logger LOGGER = LogUtils.getLogger();

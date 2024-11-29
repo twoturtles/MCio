@@ -70,7 +70,7 @@ public class MCioObservationHandler {
 
                 frameRV.frame_png, player.getHealth(),
                 cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
-                fPlayerPos, player.getPitch(), player.getYaw(),
+                fPlayerPos, player.getPitch(), getYaw(player),
                 inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
         LOGGER.debug("ObservationPacket: {}", observationPkt);
 
@@ -80,6 +80,16 @@ public class MCioObservationHandler {
     /*
      * Methods for collecting observation data from Minecraft
      */
+
+    private float getYaw(ClientPlayerEntity player) {
+        float yaw = player.getYaw();
+        // Normalize yaw -180 to 180. Minecraft already normalizes pitch -90 to 90.
+        yaw = yaw % 360f;
+        if (yaw > 180f) {
+            yaw -= 360f;
+        }
+        return yaw;
+    }
 
     /* Return type for getFrame */
     record FrameRV(
