@@ -5,6 +5,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
+import net.minecraft.world.GameRules;
 import org.slf4j.Logger;
 
 public class MCioServer implements ModInitializer {
@@ -22,10 +23,12 @@ public class MCioServer implements ModInitializer {
 		LOGGER.info("Main Init");
 		config = MCioConfig.getInstance();
 
-		ServerLifecycleEvents.SERVER_STARTED.register(client -> {
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			LOGGER.info("Server Started mode={}", config.mode);
+			// Automatically disable chat messages about commands
+			server.getGameRules().get(GameRules.SEND_COMMAND_FEEDBACK).set(false, server);
 		});
-		ServerLifecycleEvents.SERVER_STOPPING.register(client -> {
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			LOGGER.info("Server Stopping");
 			stop();
 		});
