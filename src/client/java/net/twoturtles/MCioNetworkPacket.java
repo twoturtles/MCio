@@ -94,7 +94,7 @@ record ActionPacket(
         // Action
         int[][] keys,           // Array of (key, action) pairs. E.g., (GLFW.GLFW_KEY_W, GLFW.GLFW_PRESS)
         int[][] mouse_buttons,	//  Array of (button, action) pairs. E.g., (GLFW.GLFW_MOUSE_BUTTON_1, GLFW.GLFW_PRESS)
-        int[][] mouse_pos
+        int[][] cursor_pos      // Array of length 1 of (xpos, ypos) pairs. Array just for consistency. Also, the list makes it easy to leave empty.
 ) {
     // Helper for debugging to print the double arrays nicely
     public String arrayToString(int[][] array) {

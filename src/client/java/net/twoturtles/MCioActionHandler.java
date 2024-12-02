@@ -92,7 +92,7 @@ class MCioActionHandler {
                 this.buttonsPressed.remove(buttonCode);
             }
         }
-        for (int[] tuple : action.mouse_pos()) {
+        for (int[] tuple : action.cursor_pos()) {
             client.execute(() -> {
                 ((MouseMixinInterface) client.mouse).onCursorPosAgent$Mixin(
                         client.getWindow().getHandle(), tuple[0], tuple[1]);
