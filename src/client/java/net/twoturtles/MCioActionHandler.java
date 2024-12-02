@@ -1,12 +1,18 @@
 package net.twoturtles;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
 import net.twoturtles.mixin.client.MouseMixin;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 // Processes incoming actions from the agent
@@ -51,6 +57,15 @@ class MCioActionHandler {
             buttonsPressed.clear();
 
             // XXX this.controller.observationHandler.doSequenceReset.set(true);
+        }
+
+        /* Commands */
+        ClientPlayerEntity player = client.player;
+        if (player != null) {
+            for (String command : action.commands()) {
+                LOGGER.info("Run Command: {}", command);
+                player.networkHandler.sendChatCommand(command);
+            }
         }
 
         /* Keyboard handler */
