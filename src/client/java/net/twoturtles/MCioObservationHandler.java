@@ -45,12 +45,6 @@ public class MCioObservationHandler {
             return Optional.empty();
         }
 
-        // XXX Use case? Maybe reset last action sequence to help a crashed agent?
-//        boolean doReset = doSequenceReset.getAndSet(false);
-//        if (doReset) {
-//            observationSequence = 0;
-//        }
-
         /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();

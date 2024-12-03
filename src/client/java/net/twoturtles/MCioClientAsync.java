@@ -22,11 +22,8 @@ public class MCioClientAsync {
     // This tracks the last action sequence that has been processed before a full client tick.
     // XXX This is an attempt to determine the last action that was processed by the server. It is
     // passed back to the agent in observation packets so it can determine when it has received an observation that
-    // has been updated by the last action. I don't really know when actions at the client have been
-    // sent to the server and its observation has been updated. Maybe we could look at server ticks, but
-    // how would that work with multiplayer servers? Should observations be sent from the server? But then
-    // how do we send frames? May need to separate the two observation sources at some point. That will probably
-    // be necessary for multiplayer anyway.
+    // has been updated by the last action.
+    // XXX This isn't taking into account when the server has updated based on the action.
     private int actionSequenceLastReceived = 0;    // XXX not synchronized
     private int actionSequenceAtTickStart = 0;
     private int lastFullTickActionSequence = 0;
@@ -49,6 +46,7 @@ public class MCioClientAsync {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             // Synchronization - loading lastSequenceProcessed into local
+            // XXX I think this is confused
             int newActionSequence = actionSequenceLastReceived;
             if (newActionSequence >= actionSequenceAtTickStart) {
                 lastFullTickActionSequence = newActionSequence;

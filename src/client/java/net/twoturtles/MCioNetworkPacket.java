@@ -88,7 +88,6 @@ record ActionPacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
         int sequence,
-        boolean reset,      // Reset observation sequence and clear all key / button presses
         String[] commands,  // Server commands to execute (teleport, time set, etc.). Do not include the /
 
         // Action

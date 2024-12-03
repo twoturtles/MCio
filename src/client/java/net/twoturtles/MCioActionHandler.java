@@ -33,27 +33,6 @@ class MCioActionHandler {
     void processAction(ActionPacket action) {
         recvPPS.count();
 
-        /* Reset handler */
-        if (action.reset()) {
-            for (int keyCode : keysPressed) {
-                client.execute(() -> {
-                    client.keyboard.onKey(client.getWindow().getHandle(),
-                            keyCode, 0, GLFW.GLFW_RELEASE, 0);
-                });
-            }
-            keysPressed.clear();
-
-            for (int buttonCode : buttonsPressed) {
-                client.execute(() -> {
-                    client.keyboard.onKey(client.getWindow().getHandle(),
-                            buttonCode, 0, GLFW.GLFW_RELEASE, 0);
-                });
-            }
-            buttonsPressed.clear();
-
-            // XXX this.controller.observationHandler.doSequenceReset.set(true);
-        }
-
         /* Commands */
         ClientPlayerEntity player = client.player;
         if (player != null) {

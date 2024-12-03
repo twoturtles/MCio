@@ -30,8 +30,8 @@ public class MCioClientSync {
 
     /*
      * Order of events:
-     * START_CLIENT_TICK -> wait -> process action -> client tick -> END_CLIENT_TICK ->
-     *      server_step (unknown completion) -> Render -> Capture callback -> generate observation
+     * START_CLIENT_TICK -> wait for action -> process action -> client tick -> END_CLIENT_TICK ->
+     *      serverStep (unknown completion) -> Render -> Capture callback (beforeSwap) -> generate observation
      *
      */
     MCioClientSync(MCioConfig config) {
