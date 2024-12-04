@@ -8,17 +8,16 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 /* TODO
- * - Teleport in actions to reset
  * - Ensure all calls to random come from the same seed? Seed from env
  * - Disable idle frame slowdown?
  *      client.getInactivityFpsLimiter()
  * - shared config file, override with env/command line option
  * - logging level config
  * - minerl compatible mode - find out other features to make it useful
- * - gymnasium
  * - tests - java and python
  * - Save and replay scripts
  * - Everything in client, so server could be run separately
+ * - Configurable tick rate for Async
  */
 
 public class MCioClient implements ClientModInitializer {
