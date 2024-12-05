@@ -19,6 +19,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
  * - Everything in client, so server could be run separately
  * - Configurable tick rate for Async
  * - Action to clear escape (for init)
+ * - Skip narrator on initial start
  */
 
 public class MCioClient implements ClientModInitializer {

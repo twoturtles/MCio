@@ -3,6 +3,7 @@ package net.twoturtles;
 /* Top level network interface for communicating with the agent. Spawns threads for ZMQ. */
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -26,7 +27,18 @@ class MCioNetworkConnection {
         actionSocket.subscribe(new byte[0]); // Subscribe to everything
 
         observationSocket = zContext.createSocket(SocketType.PUB);  // Pub for sending observation
-        observationSocket.bind("tcp://*:" + NetworkDefines.DEFAULT_OBSERVATION_PORT);
+        try {
+            observationSocket.bind("tcp://*:" + NetworkDefines.DEFAULT_OBSERVATION_PORT);
+        } catch (ZMQException e) {
+            if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
+                LOGGER.error("MCIO Observation port already in use. " +
+                        "Please ensure no other instance of Minecraft/MCio is running.");
+                System.exit(1);
+            } else {
+                throw e;
+            }
+        }
+
     }
 
     // Public interface to receive an action from the agent. Blocks.
