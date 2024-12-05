@@ -18,6 +18,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
  * - Save and replay scripts
  * - Everything in client, so server could be run separately
  * - Configurable tick rate for Async
+ * - Action to clear escape (for init)
  */
 
 public class MCioClient implements ClientModInitializer {
