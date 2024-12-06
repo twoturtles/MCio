@@ -20,6 +20,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
  * - Configurable tick rate for Async
  * - Action to clear escape (for init)
  * - Skip narrator on initial start
+ * - Simple command line Minecraft launcher
  */
 
 public class MCioClient implements ClientModInitializer {
