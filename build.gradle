@@ -1,6 +1,7 @@
 plugins {
 	id 'fabric-loom' version '1.8-SNAPSHOT'
 	id 'maven-publish'
+	id "com.modrinth.minotaur" version "2.+"
 }
 
 version = project.mod_version
@@ -134,4 +135,20 @@ loom {
 			property 'minecraft.clientPort', '25566'  // different port
 		}
 	}
+}
+
+// build.gradle
+modrinth {
+	token = System.getenv("MODRINTH_TOKEN")
+	projectId = "mcio"
+	versionNumber = "0.1.0"
+	changelog = "CHANGELOG.md"
+	versionType = "beta"
+	uploadFile = remapJar
+	gameVersions = ["1.21.3"]
+	loaders = ["fabric"]
+	dependencies {
+		required.project "fabric-api"
+	}
+	debugMode = true
 }
