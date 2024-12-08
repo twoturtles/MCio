@@ -51,8 +51,14 @@ public class WindowMixin {
         ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * frameCapture.BYTES_PER_PIXEL);
         pixelBuffer.clear(); // Reset position to 0
 
+        // Need alignment set to 1 to properly read frame sizes that are not multiples of 4.
+        int[] alignment = new int[1];
+        glGetIntegerv(GL_PACK_ALIGNMENT, alignment);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glReadBuffer(GL_BACK);
         glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer);
+        // Reset alignment to previous value
+        glPixelStorei(GL_PACK_ALIGNMENT, alignment[0]);
 
         /* Bad synchronization, but works for now. Once this is handed off, this thread won't touch it again. */
         frameCapture.capture(pixelBuffer, width, height);

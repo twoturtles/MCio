@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-
 // Collect information to send to the agent
 // All information is client side?
 public class MCioObservationHandler {

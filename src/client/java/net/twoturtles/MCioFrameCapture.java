@@ -160,7 +160,7 @@ class MCioFrameSave {
         // Register the keybinding (default to C (capture))
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "MCioFrameSave",
-                GLFW.GLFW_KEY_C,
+                GLFW.GLFW_KEY_V,
                 MCioDef.KEY_CATEGORY
         ));
 
@@ -171,7 +171,6 @@ class MCioFrameSave {
             }
         });
     }
-    //
 
     // Save a frame to disk. It goes in the frame_captures dir.
     public void saveFrame(MCioFrameCapture.MCioFrame frame) {

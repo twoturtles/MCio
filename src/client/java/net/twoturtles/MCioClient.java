@@ -54,11 +54,10 @@ public class MCioClient implements ClientModInitializer {
 
 		if (config.mode == MCioDef.Mode.SYNC) {
 			clientSync = new MCioClientSync(config);
-			MCioFrameCapture.getInstance().setEnabled(true);
 		} else if (config.mode == MCioDef.Mode.ASYNC) {
 			clientAsync = new MCioClientAsync(config);
-			MCioFrameCapture.getInstance().setEnabled(true);
 		}
+		MCioFrameCapture.getInstance().setEnabled(true);
 
 	}
 
