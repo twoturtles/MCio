@@ -55,6 +55,10 @@ dependencies {
 // Testing - Enable JUnit for fabric
 test {
 	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed", "standardOut", "standardError"
+		showStandardStreams = true
+	}
 }
 
 processResources {
