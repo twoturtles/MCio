@@ -74,7 +74,7 @@ public class MCioObservationHandler {
      * Methods for collecting observation data from Minecraft
      */
 
-    private float getYaw(ClientPlayerEntity player) {
+    float getYaw(ClientPlayerEntity player) {
         float yaw = player.getYaw();
         // Normalize yaw -180 to 180. Minecraft already normalizes pitch -90 to 90.
         yaw = yaw % 360f;

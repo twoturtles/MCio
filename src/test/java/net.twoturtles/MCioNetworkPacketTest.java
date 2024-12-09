@@ -1,4 +1,9 @@
 package net.twoturtles;
 
-public class MCioNetworkPacket {
+import org.junit.jupiter.api.Test;
+
+public class MCioNetworkPacketTest {
+    @Test
+    void testTODO() {
+    }
 }
