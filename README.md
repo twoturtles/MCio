@@ -6,5 +6,5 @@ MCio is a Fabric mod that creates a network interface to Minecraft. It enables p
 ## Quick Links ##
 
 - **Documentation**: For any overview and documentation, see our [Wiki](https://github.com/twoturtles/mcio_remote/wiki).
-- MCio Mod: [Repo](https://github.com/twoturtles/MCio) and [Modrinth TODO](TODO)
+- MCio Mod: [Repo](https://github.com/twoturtles/MCio) and [Modrinth](https://modrinth.com/mod/mcio)
 - mcio_remote: Python interface [Repo](https://github.com/twoturtles/mcio_remote) and [Package](https://pypi.org/project/mcio_remote/)
