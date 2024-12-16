@@ -157,7 +157,7 @@ class MCioFrameSave {
         return instance;
     }
     private MCioFrameSave() {
-        // Register the keybinding (default to C (capture))
+        // Register the keybinding (default to V)
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "MCioFrameSave",
                 GLFW.GLFW_KEY_V,
