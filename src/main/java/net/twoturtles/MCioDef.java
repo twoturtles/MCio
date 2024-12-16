@@ -9,19 +9,20 @@ public class MCioDef {
         ASYNC("async");
 
         private final String value;
+        public static final Mode DEFAULT = ASYNC;
 
         Mode(String value) {
             this.value = value;
         }
 
         public static Mode fromString(String str) {
-            if (str == null) return OFF;
+            if (str == null) return DEFAULT;
             for (Mode mode : Mode.values()) {
                 if (mode.value.equalsIgnoreCase(str)) {
                     return mode;
                 }
             }
-            return OFF;
+            return DEFAULT;
         }
     }
 
