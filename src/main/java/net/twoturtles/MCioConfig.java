@@ -21,7 +21,7 @@ public class MCioConfig {
     }
 
     private void loadDefaults() {
-        mode = MCioDef.Mode.OFF;
+        mode = MCioDef.Mode.ASYNC;
     }
 
     // TODO
