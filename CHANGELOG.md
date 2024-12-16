@@ -2,6 +2,7 @@
 
 ## 0.1.2+1.21.3 - 2024-12-16
 - Default to mode ASYNC
+- MCIO_PROTOCOL_VERSION = 0
 
 ## 0.1.1+1.21.3 - 2024-12-08
 
