@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 class NetworkDefines {
     private NetworkDefines() {}
-    public static final int MCIO_PROTOCOL_VERSION = 0;
+    public static final int MCIO_PROTOCOL_VERSION = 1;
     public static final int DEFAULT_ACTION_PORT = 4001;  // For receiving 4ctions
     public static final int DEFAULT_OBSERVATION_PORT = 8001;    // For sending 8bservations
 }
@@ -89,6 +89,7 @@ record ActionPacket(
         int version,    // MCIO_PROTOCOL_VERSION
         int sequence,
         String[] commands,  // Server commands to execute (teleport, time set, etc.). Do not include the /
+        boolean stop,   // Tell Minecraft to exit
 
         // Action
         int[][] keys,           // Array of (key, action) pairs. E.g., (GLFW.GLFW_KEY_W, GLFW.GLFW_PRESS)
@@ -110,7 +111,17 @@ class ActionPacketUnpacker {
 
     public static Optional<ActionPacket> unpack(byte[] data) {
         try {
-            return Optional.of(CBOR_MAPPER.readValue(data, ActionPacket.class));
+            ActionPacket actionPacket = CBOR_MAPPER.readValue(data, ActionPacket.class);
+            if (actionPacket == null) {
+                LOGGER.error("Unpacked action packet is null");
+                return Optional.empty();
+            }
+            if (actionPacket.version() != NetworkDefines.MCIO_PROTOCOL_VERSION) {
+                LOGGER.error("MCio Protocol version mismatch: Action packet = {}, expected = {}",
+                        actionPacket.version(), NetworkDefines.MCIO_PROTOCOL_VERSION);
+                return Optional.empty();
+            }
+            return Optional.of(actionPacket);
         } catch (IOException e) {
             String debugInfo = debugPacket(data);
             LOGGER.error("Failed to unpack data: {}.\nRaw packet: {}", e.getMessage(), debugInfo);

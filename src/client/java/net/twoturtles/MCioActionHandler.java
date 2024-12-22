@@ -24,6 +24,12 @@ class MCioActionHandler {
     void processAction(ActionPacket action) {
         recvPPS.count();
 
+        /* Stop */
+        if (action.stop()) {
+            LOGGER.info("Received Stop command");
+            client.scheduleStop();
+        }
+
         /* Commands */
         ClientPlayerEntity player = client.player;
         if (player != null) {
