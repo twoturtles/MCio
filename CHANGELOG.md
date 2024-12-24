@@ -2,6 +2,7 @@
 
 ## 0.2.0+1.21.3 - 2024-12-22
 - Add Stop to protocol
+- Reverse bind/connect for the action port
 - MCIO_PROTOCOL_VERSION = 1
 
 ## 0.1.2+1.21.3 - 2024-12-16
