@@ -157,12 +157,15 @@ modrinth {
 	projectId = "MCio"
 	versionNumber = "0.2.0.dev0+1.21.3"
 	changelog = file("CHANGELOG.md").text
-	versionType = "beta"
+	versionType = "release"
 	uploadFile = remapJar
 	gameVersions = ["1.21.3"]
 	loaders = ["fabric"]
+	syncBodyFrom = rootProject.file("README.md").text
 	dependencies {
 		required.project "fabric-api"
 	}
 	debugMode = false
 }
+// Automatically run the modrinthSyncBody when pushing new version
+tasks.modrinth.dependsOn(tasks.modrinthSyncBody)
