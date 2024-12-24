@@ -23,7 +23,17 @@ class MCioNetworkConnection {
         this.zContext = new ZContext();
 
         actionSocket = zContext.createSocket(SocketType.SUB);  // Sub socket for receiving actions
-        actionSocket.connect("tcp://localhost:" + NetworkDefines.DEFAULT_ACTION_PORT);
+        try {
+            actionSocket.bind("tcp://localhost:" + NetworkDefines.DEFAULT_ACTION_PORT);
+        } catch (ZMQException e) {
+            if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
+                LOGGER.error("MCIO Action port already in use. " +
+                        "Please ensure no other instance of Minecraft/MCio is running.");
+                System.exit(1);
+            } else {
+                throw e;
+            }
+        }
         actionSocket.subscribe(new byte[0]); // Subscribe to everything
 
         observationSocket = zContext.createSocket(SocketType.PUB);  // Pub for sending observation
