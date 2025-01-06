@@ -56,14 +56,14 @@ public class MCioClientAsync {
         /* Send observation at the end of every tick */
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             Optional<ObservationPacket> opt = observationHandler.collectObservation(lastFullTickActionSequence);
-            opt.ifPresent(connection::sendObservationPacket);
+            opt.ifPresent(packet -> connection.sendObservationPacket(packet, false));
         });
     }
 
     // Receive and process actions. Separate thread since it will block waiting for an action.
     private void actionThreadRun() {
         while (running.get()) {
-            Optional<ActionPacket> opt = connection.recvActionPacket();
+            Optional<ActionPacket> opt = connection.recvActionPacket(true);
             if (opt.isPresent()) {
                 ActionPacket action = opt.get();
                 actionHandler.processAction(action);

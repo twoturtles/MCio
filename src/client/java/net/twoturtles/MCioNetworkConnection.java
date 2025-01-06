@@ -22,7 +22,7 @@ class MCioNetworkConnection {
     MCioNetworkConnection() {
         this.zContext = new ZContext();
 
-        actionSocket = zContext.createSocket(SocketType.SUB);  // Sub socket for receiving actions
+        actionSocket = zContext.createSocket(SocketType.PULL);
         try {
             actionSocket.bind("tcp://localhost:" + NetworkDefines.DEFAULT_ACTION_PORT);
         } catch (ZMQException e) {
@@ -34,9 +34,8 @@ class MCioNetworkConnection {
                 throw e;
             }
         }
-        actionSocket.subscribe(new byte[0]); // Subscribe to everything
 
-        observationSocket = zContext.createSocket(SocketType.PUB);  // Pub for sending observation
+        observationSocket = zContext.createSocket(SocketType.PUSH);
         try {
             observationSocket.bind("tcp://*:" + NetworkDefines.DEFAULT_OBSERVATION_PORT);
         } catch (ZMQException e) {
@@ -48,28 +47,32 @@ class MCioNetworkConnection {
                 throw e;
             }
         }
-
     }
 
-    // Public interface to receive an action from the agent. Blocks.
+    // Receive an action from the agent
     // Returns null (Optional.empty()) when unpacking fails
-    Optional<ActionPacket> recvActionPacket() {
-        // Block waiting for packet
+    Optional<ActionPacket> recvActionPacket(boolean block) {
         try {
-            byte[] pkt = actionSocket.recv();
-            return ActionPacketUnpacker.unpack(pkt);
+            int flags = block ? 0 : ZMQ.DONTWAIT;
+            byte[] pkt = actionSocket.recv(flags);
+            // pkt can be null if non-blocking
+            return pkt != null ? ActionPacketUnpacker.unpack(pkt) : Optional.empty();
         }  catch (ZMQException e) {
             // This is probably during shutdown, but maybe should return error.
             return Optional.empty();
         }
     }
 
-    // Public interface to send an observation packet to the agent
-    void sendObservationPacket(ObservationPacket observationPacket) {
+    // Send an observation packet to the agent
+    void sendObservationPacket(ObservationPacket observationPacket, boolean block) {
         try {
             byte[] pBytes = ObservationPacketPacker.pack(observationPacket);
             // Send to agent
-            observationSocket.send(pBytes);
+            int flags = block ? 0 : ZMQ.DONTWAIT;
+            boolean success = observationSocket.send(pBytes, flags);
+            if (!success && observationSocket.errno() != ZMQ.Error.EAGAIN.getCode()) {
+                LOGGER.warn("SEND FAILED error={}", ZMQ.Error.findByCode(observationSocket.errno()));
+            }
         } catch (IOException e) {
             LOGGER.warn("ObservationPacketPacker failed");
         }

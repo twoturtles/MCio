@@ -86,7 +86,7 @@ public class MCioClientSync {
         if (waitingForFirstAction) {
             LOGGER.info("Waiting for first action");
         }
-        Optional<ActionPacket> optAction = connection.recvActionPacket();
+        Optional<ActionPacket> optAction = connection.recvActionPacket(true);
         if (optAction.isEmpty()) {
             LOGGER.warn("Invalid action");
             return;
@@ -123,12 +123,13 @@ public class MCioClientSync {
         if (!gameRunning) {
             return;
         }
-        Optional<ObservationPacket> optObservation = observationHandler.collectObservation(lastActionSequence);
-        if (optObservation.isEmpty()) {
+        Optional<ObservationPacket> opt = observationHandler.collectObservation(lastActionSequence);
+        if (opt.isPresent()) {
+            connection.sendObservationPacket(opt.get(), false);
+        } else {
             // client.player is still null
             LOGGER.info("Observation Empty");
         }
-        optObservation.ifPresent(connection::sendObservationPacket);
     }
 
     void stop() { }
