@@ -58,7 +58,7 @@ public class MCioObservationHandler {
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
         /* Create packet */
-        ObservationPacket observationPkt = new ObservationPacket(NetworkDefines.MCIO_PROTOCOL_VERSION,
+        ObservationPacket observationPkt = new ObservationPacket(MCioConfig.MCIO_PROTOCOL_VERSION,
                 config.mode.toString(), observationSequence++, lastFullTickActionSequence, frameRV.frame_sequence(),
 
                 frameRV.frame_png, player.getHealth(),

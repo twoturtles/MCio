@@ -52,9 +52,9 @@ public class MCioClient implements ClientModInitializer {
 			clientTPS.count();
 		});
 
-		if (config.mode == MCioDef.Mode.SYNC) {
+		if (config.mode == MCioConfig.Mode.SYNC) {
 			clientSync = new MCioClientSync(config);
-		} else if (config.mode == MCioDef.Mode.ASYNC) {
+		} else if (config.mode == MCioConfig.Mode.ASYNC) {
 			clientAsync = new MCioClientAsync(config);
 		}
 		MCioFrameCapture.getInstance().setEnabled(true);
@@ -62,9 +62,9 @@ public class MCioClient implements ClientModInitializer {
 	}
 
 	void stop() {
-		if (config.mode == MCioDef.Mode.SYNC) {
+		if (config.mode == MCioConfig.Mode.SYNC) {
 			clientSync.stop();
-		} else if (config.mode == MCioDef.Mode.ASYNC) {
+		} else if (config.mode == MCioConfig.Mode.ASYNC) {
 			clientAsync.stop();
 		}
 	}

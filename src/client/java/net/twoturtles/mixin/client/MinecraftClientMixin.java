@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.twoturtles.MCioDef;
 import net.twoturtles.MCioConfig;
 
 @Mixin(MinecraftClient.class)
@@ -40,7 +39,7 @@ public class MinecraftClientMixin {
     // Make it always 1 so we tick every frame, but not more than 1 so we generate a frame every tick.
     @ModifyVariable(method = "render(Z)V", at = @At("STORE"), ordinal = 0)
     private int injected(int i) {
-        if (MCioConfig.getInstance().mode == MCioDef.Mode.SYNC) {
+        if (MCioConfig.getInstance().mode == MCioConfig.Mode.SYNC) {
             if (i > 1) {
                 LOGGER.debug("Reducing i {} -> 1", i);
             }

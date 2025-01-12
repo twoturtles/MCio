@@ -20,7 +20,6 @@ import org.lwjgl.stb.STBIWriteCallback;
 /* Interface and state storage for WindowMixin:beforeSwap. beforeSwap does the actual capture
  * and stores the frame here. ObservationHandler picks up the most recent frame at the end of every tick */
 public final class MCioFrameCapture {
-    private static MCioFrameCapture instance;
     public final int ASYNC_CAPTURE_EVERY_N_FRAMES = 2;
     public final int BYTES_PER_PIXEL = 3;    // GL_RGB
 
@@ -34,14 +33,14 @@ public final class MCioFrameCapture {
     private int frameCaptureSequence = 0;  // Number of frames
     private MCioFrame lastCapturedFrame = null;
 
-    public static MCioFrameCapture getInstance() {
-        if (instance == null) {
-            instance = new MCioFrameCapture();
-        }
-        return instance;
-    }
+    // Singleton instance
+    private static final MCioFrameCapture INSTANCE = new MCioFrameCapture();
     private MCioFrameCapture() {
         config = MCioConfig.getInstance();
+    }
+
+    public static MCioFrameCapture getInstance() {
+        return INSTANCE;
     }
 
     public void setEnabled(boolean enabled_val) { enabled = enabled_val; }
@@ -80,7 +79,7 @@ public final class MCioFrameCapture {
 
     public boolean shouldCaptureFrame() {
         frameFPS.count();
-        if (config.mode == MCioDef.Mode.ASYNC) {
+        if (config.mode == MCioConfig.Mode.ASYNC) {
             // In async mode we're running real time. As optimization only capture every other frame.
             // Probably not necessary
             return frameSequence % ASYNC_CAPTURE_EVERY_N_FRAMES == 0;
@@ -161,7 +160,7 @@ class MCioFrameSave {
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "MCioFrameSave",
                 GLFW.GLFW_KEY_V,
-                MCioDef.KEY_CATEGORY
+                MCioConfig.KEY_CATEGORY
         ));
 
         // Register the tick event to pick up the key press.

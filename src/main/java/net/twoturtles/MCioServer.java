@@ -39,18 +39,18 @@ public class MCioServer implements ModInitializer {
 			LOGGER.debug("Server Tick End");
 		});
 
-		if (config.mode == MCioDef.Mode.SYNC) {
+		if (config.mode == MCioConfig.Mode.SYNC) {
 			serverSync = new MCioServerSync(config);
-		} else if (config.mode == MCioDef.Mode.ASYNC){
+		} else if (config.mode == MCioConfig.Mode.ASYNC){
 			serverAsync = new MCioServerAsync(config);
 		}
 
 	}
 
 	void stop() {
-		if (config.mode == MCioDef.Mode.SYNC) {
+		if (config.mode == MCioConfig.Mode.SYNC) {
 			serverSync.stop();
-		} else if (config.mode == MCioDef.Mode.ASYNC) {
+		} else if (config.mode == MCioConfig.Mode.ASYNC) {
 			serverAsync.stop();
 		}
 	}

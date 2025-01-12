@@ -24,7 +24,7 @@ class MCioNetworkConnection {
 
         actionSocket = zContext.createSocket(SocketType.PULL);
         try {
-            actionSocket.bind("tcp://localhost:" + NetworkDefines.DEFAULT_ACTION_PORT);
+            actionSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST, MCioConfig.DEFAULT_ACTION_PORT));
         } catch (ZMQException e) {
             if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
                 LOGGER.error("MCIO Action port already in use. " +
@@ -37,7 +37,7 @@ class MCioNetworkConnection {
 
         observationSocket = zContext.createSocket(SocketType.PUSH);
         try {
-            observationSocket.bind("tcp://*:" + NetworkDefines.DEFAULT_OBSERVATION_PORT);
+            observationSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST, MCioConfig.DEFAULT_OBSERVATION_PORT));
         } catch (ZMQException e) {
             if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
                 LOGGER.error("MCIO Observation port already in use. " +
@@ -57,7 +57,7 @@ class MCioNetworkConnection {
             byte[] pkt = actionSocket.recv(flags);
             // pkt can be null if non-blocking
             return pkt != null ? ActionPacketUnpacker.unpack(pkt) : Optional.empty();
-        }  catch (ZMQException e) {
+        } catch (ZMQException e) {
             // This is probably during shutdown, but maybe should return error.
             return Optional.empty();
         }

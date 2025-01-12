@@ -17,14 +17,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 /* Defines packet structure for Action and Observation packets */
 
-class NetworkDefines {
-    private NetworkDefines() {}
-    public static final int MCIO_PROTOCOL_VERSION = 2;
-    public static final int DEFAULT_ACTION_PORT = 4001;  // For receiving 4ctions
-    public static final int DEFAULT_OBSERVATION_PORT = 8001;    // For sending 8bservations
-}
-
-
 /* Observation packets sent to agent */
 record ObservationPacket(
         // Control
@@ -47,7 +39,7 @@ record ObservationPacket(
         ArrayList<InventorySlot> inventory_offhand
 ) {
     ObservationPacket {
-        Validate.check(version == NetworkDefines.MCIO_PROTOCOL_VERSION, "Invalid version");
+        Validate.check(version == MCioConfig.MCIO_PROTOCOL_VERSION, "Invalid version");
         Validate.check(cursor_pos.length == 2, "Invalid cursor_pos");
         Validate.check(cursor_mode == GLFW.GLFW_CURSOR_DISABLED ||
                 cursor_mode == GLFW.GLFW_CURSOR_NORMAL, "Invalid cursorMode");
@@ -116,9 +108,9 @@ class ActionPacketUnpacker {
                 LOGGER.error("Unpacked action packet is null");
                 return Optional.empty();
             }
-            if (actionPacket.version() != NetworkDefines.MCIO_PROTOCOL_VERSION) {
+            if (actionPacket.version() != MCioConfig.MCIO_PROTOCOL_VERSION) {
                 LOGGER.error("MCio Protocol version mismatch: Action packet = {}, expected = {}",
-                        actionPacket.version(), NetworkDefines.MCIO_PROTOCOL_VERSION);
+                        actionPacket.version(), MCioConfig.MCIO_PROTOCOL_VERSION);
                 return Optional.empty();
             }
             return Optional.of(actionPacket);
