@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 class NetworkDefines {
     private NetworkDefines() {}
-    public static final int MCIO_PROTOCOL_VERSION = 1;
+    public static final int MCIO_PROTOCOL_VERSION = 2;
     public static final int DEFAULT_ACTION_PORT = 4001;  // For receiving 4ctions
     public static final int DEFAULT_OBSERVATION_PORT = 8001;    // For sending 8bservations
 }

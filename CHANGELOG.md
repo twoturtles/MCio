@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0+1.21.3 - 2025-01-18
+- Change from zmq pub/sub to push/pull
+- MCIO_PROTOCOL_VERSION = 2
+
 ## 0.2.0+1.21.3 - 2024-12-23
 - Add Stop to protocol
 - Reverse bind/connect for the action port
