@@ -26,8 +26,8 @@ public final class MCioFrameCapture {
     private final Logger LOGGER = LogUtils.getLogger();
     private final TrackPerSecond frameFPS = new TrackPerSecond("Frames");
     private final TrackPerSecond captureFPS = new TrackPerSecond("FrameCaptures");
+    private final MCioConfig config = MCioConfig.getInstance();
     private boolean enabled = false;
-    MCioConfig config;
 
     private int frameSequence = 0;     // Total number of frames so far
     private int frameCaptureSequence = 0;  // Number of frames
@@ -35,10 +35,6 @@ public final class MCioFrameCapture {
 
     // Singleton instance
     private static final MCioFrameCapture INSTANCE = new MCioFrameCapture();
-    private MCioFrameCapture() {
-        config = MCioConfig.getInstance();
-    }
-
     public static MCioFrameCapture getInstance() {
         return INSTANCE;
     }
@@ -79,7 +75,7 @@ public final class MCioFrameCapture {
 
     public boolean shouldCaptureFrame() {
         frameFPS.count();
-        if (config.mode == MCioConfig.Mode.ASYNC) {
+        if (config.mode == MCioConfig.MCioMode.ASYNC) {
             // In async mode we're running real time. As optimization only capture every other frame.
             // Probably not necessary
             return frameSequence % ASYNC_CAPTURE_EVERY_N_FRAMES == 0;

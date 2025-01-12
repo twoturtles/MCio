@@ -3,7 +3,6 @@ package net.twoturtles;
 /* Top level network interface for communicating with the agent. Spawns threads for ZMQ. */
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -18,13 +17,15 @@ class MCioNetworkConnection {
     private final ZContext zContext;
     private final ZMQ.Socket actionSocket;
     private final ZMQ.Socket observationSocket;
+    private final MCioConfig config = MCioConfig.getInstance();
 
     MCioNetworkConnection() {
         this.zContext = new ZContext();
 
         actionSocket = zContext.createSocket(SocketType.PULL);
         try {
-            actionSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST, MCioConfig.DEFAULT_ACTION_PORT));
+            actionSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST,
+                    MCioConfig.getInstance().actionPort));
         } catch (ZMQException e) {
             if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
                 LOGGER.error("MCIO Action port already in use. " +
@@ -37,7 +38,8 @@ class MCioNetworkConnection {
 
         observationSocket = zContext.createSocket(SocketType.PUSH);
         try {
-            observationSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST, MCioConfig.DEFAULT_OBSERVATION_PORT));
+            observationSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST,
+                    MCioConfig.getInstance().observationPort));
         } catch (ZMQException e) {
             if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
                 LOGGER.error("MCIO Observation port already in use. " +
