@@ -2,6 +2,7 @@
 
 ## 0.3.0+1.21.3 - 2025-01-18
 - Change from zmq pub/sub to push/pull
+- Action and observation ports are configurable via env variables
 - MCIO_PROTOCOL_VERSION = 2
 
 ## 0.2.0+1.21.3 - 2024-12-23
