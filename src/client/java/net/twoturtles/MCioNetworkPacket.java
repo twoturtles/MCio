@@ -21,16 +21,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 record ObservationPacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
-        String mode,    // "SYNC" or "ASYNC"
         int sequence,
+        String mode,    // "SYNC" or "ASYNC"
         int last_action_sequence,
         int frame_sequence,
+        String frame_type,  // "PNG" or "JPEG"
 
         // Observation
-        ByteBuffer frame_png,
-        float health,
+        ByteBuffer frame,
         int cursor_mode,
         int[] cursor_pos,    // [x, y]
+        float health,
         float[] player_pos,   // [x, y, z]
         float player_pitch,
         float player_yaw,

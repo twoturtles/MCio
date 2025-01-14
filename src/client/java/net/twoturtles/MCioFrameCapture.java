@@ -87,27 +87,63 @@ public final class MCioFrameCapture {
 
     public MCioFrame getLastCapturedFrame() { return lastCapturedFrame; }
 
-    /* Convert the pixels in the frame to a PNG */
+
+    /*
+     * Convert the pixels in the frame to a PNG / JPEG
+     */
+
+    @FunctionalInterface
+    private interface FrameWriter {
+        boolean convert_write(STBIWriteCallback writeToStreamCb);
+    }
+
     public ByteBuffer getFramePNG(MCioFrame frame) {
-        frame.frame().rewind();  // Make sure we're at the start of the buffer
+        return writeFrame(frame, writeToStreamCb ->
+                STBImageWrite.stbi_write_png_to_func(
+                        writeToStreamCb,
+                        0L,
+                        frame.width(),
+                        frame.height(),
+                        BYTES_PER_PIXEL,
+                        frame.frame(),
+                        frame.width() * BYTES_PER_PIXEL
+                )
+        );
+    }
+
+    public ByteBuffer getFrameJPEG(MCioFrame frame) {
+        return getFrameJPEG(frame, 90);
+    }
+    public ByteBuffer getFrameJPEG(MCioFrame frame, int quality) {
+        return writeFrame(frame, writeToStreamCb ->
+                STBImageWrite.stbi_write_jpg_to_func(
+                        writeToStreamCb,
+                        0L,
+                        frame.width(),
+                        frame.height(),
+                        BYTES_PER_PIXEL,
+                        frame.frame(),
+                        quality
+                ) != 0  // Convert return to boolean. stbi_write_png_to_func() already does this
+        );
+    }
+
+    private ByteBuffer writeFrame(MCioFrame frame, FrameWriter frameWriter) {
+        frame.frame().rewind(); // Ensure the buffer is at the start
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try (STBIWriteCallback callback = STBIWriteCallback.create((context, data, size) -> {
+        STBIWriteCallback writeToStreamCb = STBIWriteCallback.create((context, data, size) -> {
             byte[] bytes = new byte[size];
             MemoryUtil.memByteBuffer(data, size).get(bytes);
             outputStream.write(bytes, 0, size);
-        })) {
-            /* Flip the OpenGL frame */
-            STBImageWrite.stbi_flip_vertically_on_write(true);
-            boolean success = STBImageWrite.stbi_write_png_to_func(callback, 0L,
-                    frame.width(), frame.height(), BYTES_PER_PIXEL, frame.frame(),
-                    frame.width() * BYTES_PER_PIXEL
-            );
-            if (!success) {
-                throw new RuntimeException("Failed to write PNG");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error writing PNG: " + e.getMessage(), e);
+        });
+
+        /* Flip the OpenGL frame */
+        STBImageWrite.stbi_flip_vertically_on_write(true);
+
+        boolean success = frameWriter.convert_write(writeToStreamCb);
+        if (!success) {
+            throw new RuntimeException("Failed to write frame");
         }
 
         return ByteBuffer.wrap(outputStream.toByteArray());

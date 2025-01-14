@@ -58,13 +58,24 @@ public class MCioObservationHandler {
         cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
         /* Create packet */
-        ObservationPacket observationPkt = new ObservationPacket(MCioConfig.MCIO_PROTOCOL_VERSION,
-                config.mode.toString(), observationSequence++, lastFullTickActionSequence, frameRV.frame_sequence(),
+        ObservationPacket observationPkt = new ObservationPacket(
+                MCioConfig.MCIO_PROTOCOL_VERSION,
+                observationSequence++,
+                config.mode.toString(),
+                lastFullTickActionSequence,
+                frameRV.frame_sequence(),
+                frameRV.frame_type().toString(),
 
-                frameRV.frame_png, player.getHealth(),
-                cursorMode, new int[] {cursorPosRV.x(), cursorPosRV.y()},
-                fPlayerPos, player.getPitch(), getYaw(player),
-                inventoriesRV.main, inventoriesRV.armor, inventoriesRV.offHand);
+                frameRV.frame,
+                cursorMode,
+                new int[] {cursorPosRV.x(), cursorPosRV.y()},
+                player.getHealth(),
+                fPlayerPos,
+                player.getPitch(),
+                getYaw(player),
+                inventoriesRV.main,
+                inventoriesRV.armor,
+                inventoriesRV.offHand);
         LOGGER.debug("ObservationPacket: {}", observationPkt);
 
         return Optional.of(observationPkt);
@@ -87,11 +98,13 @@ public class MCioObservationHandler {
     /* Return type for getFrame */
     record FrameRV(
             int frame_sequence,
-            ByteBuffer frame_png
+            MCioConfig.MCioFrameType frame_type,
+            ByteBuffer frame
     ){
         public static FrameRV empty() {
             return new FrameRV(
                     0,  // Maybe make this -1 to signify empty
+                    MCioConfig.DEFAULT_MCIO_FRAME_TYPE,
                     ByteBuffer.allocate(0)  // empty ByteBuffer
             );
         }
@@ -104,8 +117,14 @@ public class MCioObservationHandler {
 
         /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
         sendFPS.count();
-        ByteBuffer pngBuf = MCioFrameCapture.getInstance().getFramePNG(frame);
-        return new FrameRV(frame.frame_sequence(), pngBuf);
+        MCioConfig config = MCioConfig.getInstance();
+        ByteBuffer frameBuf;
+        if (config.frameType == MCioConfig.MCioFrameType.JPEG) {
+            frameBuf = MCioFrameCapture.getInstance().getFrameJPEG(frame, config.frameQuality);
+        } else {
+            frameBuf = MCioFrameCapture.getInstance().getFramePNG(frame);
+        }
+        return new FrameRV(frame.frame_sequence(), config.frameType, frameBuf);
     }
 
     /* Return type for getInventoriesRV() */

@@ -9,6 +9,9 @@ public class MCioConfig {
     public enum MCioMode {
         OFF, SYNC, ASYNC;
     }
+    public enum MCioFrameType {
+        PNG, JPEG;
+    }
 
     // Constants
     public static final int MCIO_PROTOCOL_VERSION = 2;
@@ -17,13 +20,17 @@ public class MCioConfig {
 
     // Configurable
     public MCioMode mode;
+    public MCioFrameType frameType;
+    public int frameQuality;
     public int actionPort;
     public int observationPort;
 
     // Defaults
-    private static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
-    private static final int DEFAULT_ACTION_PORT = 4001; // For receiving 4ctions
-    private static final int DEFAULT_OBSERVATION_PORT = 8001;    // For sending 8bservations
+    public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
+    public static final MCioFrameType DEFAULT_MCIO_FRAME_TYPE = MCioFrameType.PNG;
+    public static final int DEFAULT_FRAME_QUALITY = 90; // Only used for JPEG frames
+    public static final int DEFAULT_ACTION_PORT = 4001; // For receiving 4ctions
+    public static final int DEFAULT_OBSERVATION_PORT = 8001;    // For sending 8bservations
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -32,11 +39,18 @@ public class MCioConfig {
     }
 
     private MCioConfig() {
-        mode = getEnvMode("MCIO_MODE", DEFAULT_MCIO_MODE);
+        mode = getEnvEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
+        frameType = getEnvEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
+        frameQuality = getEnvInt("MCIO_FRAME_QUALITY", DEFAULT_FRAME_QUALITY);
+        frameQuality = Math.clamp(frameQuality, 1, 100);
         actionPort = getEnvInt("MCIO_ACTION_PORT", DEFAULT_ACTION_PORT);
         observationPort = getEnvInt("MCIO_OBSERVATION_PORT", DEFAULT_OBSERVATION_PORT);
 
         LOGGER.info("MCIO_MODE={}", mode);
+        LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
+        if (frameType == MCioFrameType.JPEG) {
+            LOGGER.info("MCIO_FRAME_QUALITY={}", frameQuality);
+        }
         LOGGER.info("MCIO_ACTION_PORT={}", actionPort);
         LOGGER.info("MCIO_OBSERVATION_PORT={}", observationPort);
     }
@@ -52,13 +66,14 @@ public class MCioConfig {
         }
     }
 
-    private static MCioMode getEnvMode(String key, MCioMode defaultValue) {
+    private static <T extends Enum<T>> T getEnvEnum(String key, T defaultValue) {
         String value = System.getenv(key);
         if (value == null) return defaultValue;
         try {
-            return MCioMode.valueOf(value.toUpperCase());
+            return Enum.valueOf(defaultValue.getDeclaringClass(), value.toUpperCase());
         } catch (IllegalArgumentException e) {
             return defaultValue;
         }
     }
+
 }
