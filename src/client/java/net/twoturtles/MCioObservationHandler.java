@@ -64,7 +64,6 @@ public class MCioObservationHandler {
                 config.mode.toString(),
                 lastFullTickActionSequence,
                 frameRV.frame_sequence(),
-                frameRV.frame_type().toString(),
 
                 frameRV.frame,
                 cursorMode,
@@ -98,13 +97,11 @@ public class MCioObservationHandler {
     /* Return type for getFrame */
     record FrameRV(
             int frame_sequence,
-            MCioConfig.MCioFrameType frame_type,
             ByteBuffer frame
     ){
         public static FrameRV empty() {
             return new FrameRV(
                     0,  // Maybe make this -1 to signify empty
-                    MCioConfig.DEFAULT_MCIO_FRAME_TYPE,
                     ByteBuffer.allocate(0)  // empty ByteBuffer
             );
         }
@@ -124,7 +121,7 @@ public class MCioObservationHandler {
         } else {
             frameBuf = MCioFrameCapture.getInstance().getFramePNG(frame);
         }
-        return new FrameRV(frame.frame_sequence(), config.frameType, frameBuf);
+        return new FrameRV(frame.frame_sequence(), frameBuf);
     }
 
     /* Return type for getInventoriesRV() */

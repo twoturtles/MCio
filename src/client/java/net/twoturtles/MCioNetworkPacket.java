@@ -25,7 +25,6 @@ record ObservationPacket(
         String mode,    // "SYNC" or "ASYNC"
         int last_action_sequence,
         int frame_sequence,
-        String frame_type,  // "PNG" or "JPEG"
 
         // Observation
         ByteBuffer frame,
