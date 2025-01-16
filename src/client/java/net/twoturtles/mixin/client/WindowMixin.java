@@ -1,5 +1,6 @@
 package net.twoturtles.mixin.client;
 
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,15 +22,14 @@ import static org.lwjgl.opengl.GL11.*;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 import net.twoturtles.MCioFrameCapture;
+import net.twoturtles.MCioConfig;
 
 @Mixin(Window.class)
 public class WindowMixin {
     @Unique
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger("net.twoturtles.mixin.client.WindowMixin");
     @Unique
-    private static boolean checkFrameSize = true;
-    @Unique
-    private static boolean doRetinaHack = true;     // XXX Make configurable
+    private static boolean checkFrameSize = false;
 
     // This captures frames and stores them to MCioFrameCapture. This plugs in to the Minecraft
     // swapBuffers method so the frame is ready to go when it's captured.
@@ -64,21 +64,31 @@ public class WindowMixin {
         frameCapture.capture(pixelBuffer, width, height);
     }
 
-    // Based on https://github.com/FlashyReese/sodium-extra-fabric/blob/1.21/dev/common/src/main/java/me/flashyreese/mods/sodiumextra/mixin/reduce_resolution_on_mac/MixinWindow.java
-    // Disable double sized frame buffer on retina displays.
+    // Intercepts the call to glfwDefaultWindowHints() so we can make modifications to the hints.
     @Shadow @Final private long handle;
     @Redirect(at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwDefaultWindowHints()V"),
             method = "<init>", remap = false)
     private void onDefaultWindowHints() {
+        // First, set defaults.
         GLFW.glfwDefaultWindowHints();
 
-        if (!doRetinaHack) {
-            return;
+        MCioConfig config = MCioConfig.getInstance();
+        if (config.hideMinecraftWindow) {
+            GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
         }
+        if (config.doRetinaHack) {
+            retinaHack();
+        }
+    }
+
+    // Based on https://github.com/FlashyReese/sodium-extra-fabric/blob/1.21/dev/common/src/main/java/me/flashyreese/mods/sodiumextra/mixin/reduce_resolution_on_mac/MixinWindow.java
+    // Disable double sized frame buffer on retina displays.
+    private void retinaHack() {
         if (MinecraftClient.IS_SYSTEM_MAC) {
             // This makes it so windows aren't double resolution on retina displays
-            LOGGER.info("RETINA-FRAME-BUFFER-DISABLE");
+            LOGGER.info("RETINA-FRAMEBUFFER-DISABLE");
             GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER /* 143361 */, GLFW.GLFW_FALSE);
+            checkFrameSize = true;
         }
 
         // The retina flag above doesn't quite work. The frame buffer ends up being twice the size of the window.

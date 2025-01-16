@@ -24,13 +24,17 @@ public class MCioConfig {
     public int frameQuality;
     public int actionPort;
     public int observationPort;
+    public boolean hideMinecraftWindow;
+    public boolean doRetinaHack;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
     public static final MCioFrameType DEFAULT_MCIO_FRAME_TYPE = MCioFrameType.PNG;
-    public static final int DEFAULT_FRAME_QUALITY = 90; // Only used for JPEG frames
+    public static final int DEFAULT_FRAME_QUALITY = 85; // Only used for JPEG frames
     public static final int DEFAULT_ACTION_PORT = 4001; // For receiving 4ctions
     public static final int DEFAULT_OBSERVATION_PORT = 8001;    // For sending 8bservations
+    public static final boolean DEFAULT_HIDE_MINECRAFT_WINDOW = false;
+    public static final boolean DEFAULT_DO_RETINA_HACK = true;  // Disable retina double resolution
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -45,6 +49,8 @@ public class MCioConfig {
         frameQuality = Math.clamp(frameQuality, 1, 100);
         actionPort = getEnvInt("MCIO_ACTION_PORT", DEFAULT_ACTION_PORT);
         observationPort = getEnvInt("MCIO_OBSERVATION_PORT", DEFAULT_OBSERVATION_PORT);
+        hideMinecraftWindow = getEnvBoolean("MCIO_HIDE_WINDOW", DEFAULT_HIDE_MINECRAFT_WINDOW);
+        doRetinaHack = getEnvBoolean("MCIO_DO_RETINA_HACK", DEFAULT_DO_RETINA_HACK);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -53,6 +59,8 @@ public class MCioConfig {
         }
         LOGGER.info("MCIO_ACTION_PORT={}", actionPort);
         LOGGER.info("MCIO_OBSERVATION_PORT={}", observationPort);
+        LOGGER.info("MCIO_HIDE_WINDOW={}", hideMinecraftWindow);
+        LOGGER.info("MCIO_DO_RETINA_HACK={}", doRetinaHack);
     }
 
     // Helper methods for parsing environment variables
@@ -64,6 +72,14 @@ public class MCioConfig {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    private static boolean getEnvBoolean(String key, boolean defaultValue) {
+        String value = System.getenv(key);
+        if (value == null) return defaultValue;
+
+        value = value.toLowerCase().trim();
+        return value.equals("true") || value.equals("1");
     }
 
     private static <T extends Enum<T>> T getEnvEnum(String key, T defaultValue) {
