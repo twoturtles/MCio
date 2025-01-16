@@ -5,6 +5,7 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.Mouse;
 
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -20,7 +21,7 @@ import net.twoturtles.MouseMixinInterface;
 @Mixin(Mouse.class)
 public class MouseMixin implements MouseMixinInterface {
     @Unique
-    private final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger("net.twoturtles.mixin.client.MouseMixin");
     @Unique
     private boolean isAgentMovement = false;
 
