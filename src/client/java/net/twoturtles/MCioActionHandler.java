@@ -17,6 +17,11 @@ class MCioActionHandler {
     private final Logger LOGGER = LogUtils.getLogger();
     private static final TrackPerSecond recvPPS = new TrackPerSecond("ActionsReceived");
 
+    // Track keys and buttons that are currently pressed so we can clear them on reset.
+    // This will only track presses done via actions, but that should be ok.
+    private final Set<Integer> keysPressed = new HashSet<>();
+    private final Set<Integer> buttonsPressed = new HashSet<>();
+
     MCioActionHandler(MinecraftClient client) {
         this.client = client;
     }
@@ -47,6 +52,11 @@ class MCioActionHandler {
                 client.keyboard.onKey(client.getWindow().getHandle(),
                         keyCode, 0, actionCode, 0);
             });
+            if (actionCode == GLFW.GLFW_PRESS) {
+                this.keysPressed.add(keyCode);
+            } else if (actionCode == GLFW.GLFW_RELEASE) {
+                this.keysPressed.remove(keyCode);
+            }
         }
 
         /* Mouse handler */
@@ -57,6 +67,11 @@ class MCioActionHandler {
                 ((MouseMixin.OnMouseButtonInvoker) client.mouse).invokeOnMouseButton(
                         client.getWindow().getHandle(), buttonCode, actionCode, 0);
             });
+            if (actionCode == GLFW.GLFW_PRESS) {
+                this.buttonsPressed.add(buttonCode);
+            } else if (actionCode == GLFW.GLFW_RELEASE) {
+                this.buttonsPressed.remove(buttonCode);
+            }
         }
         for (int[] tuple : action.cursor_pos()) {
             client.execute(() -> {
