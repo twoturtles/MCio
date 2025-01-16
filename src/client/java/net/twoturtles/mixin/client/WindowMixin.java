@@ -70,10 +70,11 @@ public class WindowMixin {
     @Redirect(at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwDefaultWindowHints()V"),
             method = "<init>", remap = false)
     private void onDefaultWindowHints() {
+        GLFW.glfwDefaultWindowHints();
+
         if (!doRetinaHack) {
             return;
         }
-        GLFW.glfwDefaultWindowHints();
         if (MinecraftClient.IS_SYSTEM_MAC) {
             // This makes it so windows aren't double resolution on retina displays
             LOGGER.info("RETINA-FRAME-BUFFER-DISABLE");
