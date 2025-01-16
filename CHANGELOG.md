@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.0+1.21.3 - 2025-01-XX
+- Add option to hide Minecraft window
+
 ## 0.3.0+1.21.3 - 2025-01-14
 - Change from zmq pub/sub to push/pull
 - Action and observation ports are configurable via env variables
