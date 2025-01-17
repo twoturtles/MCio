@@ -4,6 +4,7 @@
 - Add key/button tracking
 - Add clean_input action
 - Add option to hide Minecraft window
+- MCIO_PROTOCOL_VERSION = 3
 
 ## 0.3.0+1.21.3 - 2025-01-14
 - Change from zmq pub/sub to push/pull

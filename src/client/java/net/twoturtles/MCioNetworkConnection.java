@@ -1,54 +1,38 @@
 package net.twoturtles;
 
-/* Top level network interface for communicating with the agent. Spawns threads for ZMQ. */
+/* Network interface for communicating with the agent. Used by MCioClientSync/Async */
 
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQException;
+import org.zeromq.*;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class MCioNetworkConnection {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final ZContext zContext;
-    private final ZMQ.Socket actionSocket;
-    private final ZMQ.Socket observationSocket;
-    private final MCioConfig config = MCioConfig.getInstance();
+    // XXX
+    private final AtomicBoolean connected = new AtomicBoolean(false);
+
+    record SocketInfo(
+        ZMQ.Socket socket,
+        String name
+    ) {}
+    private final SocketInfo actionSI;
+    private final SocketInfo observationSI;
 
     MCioNetworkConnection() {
         this.zContext = new ZContext();
 
-        actionSocket = zContext.createSocket(SocketType.PULL);
-        try {
-            actionSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST,
-                    MCioConfig.getInstance().actionPort));
-        } catch (ZMQException e) {
-            if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
-                LOGGER.error("MCIO Action port already in use. " +
-                        "Please ensure no other instance of Minecraft/MCio is running.");
-                System.exit(1);
-            } else {
-                throw e;
-            }
-        }
+        actionSI = new SocketInfo(zContext.createSocket(SocketType.PULL), "Action");
+        actionSI.socket.setEventHook(e -> monitorEventCB(e, actionSI), ZMQ.EVENT_ALL);
+        bindSocket(actionSI, MCioConfig.getInstance().actionPort);
 
-        observationSocket = zContext.createSocket(SocketType.PUSH);
-        try {
-            observationSocket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST,
-                    MCioConfig.getInstance().observationPort));
-        } catch (ZMQException e) {
-            if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
-                LOGGER.error("MCIO Observation port already in use. " +
-                        "Please ensure no other instance of Minecraft/MCio is running.");
-                System.exit(1);
-            } else {
-                throw e;
-            }
-        }
+        observationSI = new SocketInfo(zContext.createSocket(SocketType.PUSH), "Observation");
+        observationSI.socket.setEventHook(e -> monitorEventCB(e, observationSI), ZMQ.EVENT_ALL);
+        bindSocket(observationSI, MCioConfig.getInstance().observationPort);
     }
 
     // Receive an action from the agent
@@ -56,7 +40,7 @@ class MCioNetworkConnection {
     Optional<ActionPacket> recvActionPacket(boolean block) {
         try {
             int flags = block ? 0 : ZMQ.DONTWAIT;
-            byte[] pkt = actionSocket.recv(flags);
+            byte[] pkt = actionSI.socket.recv(flags);
             // pkt can be null if non-blocking
             return pkt != null ? ActionPacketUnpacker.unpack(pkt) : Optional.empty();
         } catch (ZMQException e) {
@@ -71,21 +55,49 @@ class MCioNetworkConnection {
             byte[] pBytes = ObservationPacketPacker.pack(observationPacket);
             // Send to agent
             int flags = block ? 0 : ZMQ.DONTWAIT;
-            boolean success = observationSocket.send(pBytes, flags);
-            if (!success && observationSocket.errno() != ZMQ.Error.EAGAIN.getCode()) {
-                LOGGER.warn("SEND FAILED error={}", ZMQ.Error.findByCode(observationSocket.errno()));
+            boolean success = observationSI.socket.send(pBytes, flags);
+            if (!success && observationSI.socket.errno() != ZMQ.Error.EAGAIN.getCode()) {
+                LOGGER.warn("SEND FAILED error={}", ZMQ.Error.findByCode(observationSI.socket.errno()));
             }
         } catch (IOException e) {
             LOGGER.warn("ObservationPacketPacker failed");
         }
     }
 
-    public void close() {
-        if (actionSocket != null) {
-            actionSocket.close();
+    void monitorEventCB(ZEvent e, SocketInfo si) {
+        if (e.getEvent() == ZMonitor.Event.HANDSHAKE_PROTOCOL) {
+            LOGGER.info("{} Socket Connected", si.name);
+        } else if (e.getEvent() == ZMonitor.Event.DISCONNECTED) {
+            LOGGER.info("{} Socket Disconnected", si.name);
+        } else {
+            LOGGER.debug("{} Socket Event {}", si.name, e);
         }
-        if (observationSocket != null) {
-            observationSocket.close();
+    }
+
+    void bindSocket(SocketInfo si, int port) {
+        try {
+            si.socket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST, port));
+        } catch (ZMQException e) {
+            if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
+                LOGGER.error(
+                        "MCIO {} Port {} already in use. " +
+                                "Please ensure no other instance of Minecraft/MCio is using this port.",
+                        si.name,
+                        port
+                );
+                System.exit(1);
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    public void close() {
+        if (actionSI.socket != null) {
+            actionSI.socket.close();
+        }
+        if (observationSI.socket != null) {
+            observationSI.socket.close();
         }
         if (zContext != null) {
             zContext.close();

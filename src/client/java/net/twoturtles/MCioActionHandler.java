@@ -93,7 +93,6 @@ class InputManager {
     // inputCode can be a keyCode or buttonCode, depending on Type.
     private void update_single(int inputCode, int actionCode) {
         long handle = client.getWindow().getHandle();
-        LOGGER.info("INPUT {} {} {}", type, inputCode, actionCode);
 
         if (type == Type.KEY) {
             client.keyboard.onKey(handle, inputCode, 0, actionCode, 0);
