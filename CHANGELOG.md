@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.4.0+1.21.3 - 2025-01-XX
+- Add key/button tracking
+- Add clean_input action
 - Add option to hide Minecraft window
 
 ## 0.3.0+1.21.3 - 2025-01-14
