@@ -37,6 +37,8 @@ public class MCioClientAsync {
         actionHandler = new MCioActionHandler(client);
         observationHandler = new MCioObservationHandler(client, config);
 
+        connection.registerSocketStateCallback(this::socketStateCallback);
+
         Thread actionThread = new Thread(this::actionThreadRun, "MCio-ActionThread");
         LOGGER.info("Process-Action-Thread start");
         actionThread.start();
@@ -69,6 +71,16 @@ public class MCioClientAsync {
                 actionHandler.processAction(action);
                 actionSequenceLastReceived = action.sequence();
             }
+        }
+    }
+
+    /**
+     * If the Action connection goes down, automatically clear inputs.
+     */
+    private void socketStateCallback(MCioNetworkConnection.MCioSocketType type, boolean connected) {
+        if (type == MCioNetworkConnection.MCioSocketType.ACTION && !connected) {
+            LOGGER.info("Clearing Input (Disconnect)");
+            actionHandler.clearInput();
         }
     }
 

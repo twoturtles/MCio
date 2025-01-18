@@ -149,7 +149,7 @@ public final class MCioFrameCapture {
         return ByteBuffer.wrap(outputStream.toByteArray());
     }
 
-    /*
+    /**
      * Provide a callback interface for captures
      * Note: These are called during render processing just before
      * net.minecraft.client.util.Window.swapBuffers() is called. Be careful

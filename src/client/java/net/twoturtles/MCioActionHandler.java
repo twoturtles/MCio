@@ -10,7 +10,9 @@ import org.slf4j.Logger;
 import java.util.HashSet;
 import java.util.Set;
 
-// Processes incoming actions from the agent
+/**
+ * Processes incoming actions from the agent
+ */
 class MCioActionHandler {
     private final MinecraftClient client;
 
@@ -39,8 +41,7 @@ class MCioActionHandler {
         /* Clear input
            Intentionally done before processing new keys / buttons in this pkt. */
         if (action.clear_input()) {
-            keyManager.clear();
-            buttonManager.clear();
+            clearInput();
         }
 
         /* Commands */
@@ -72,6 +73,14 @@ class MCioActionHandler {
             });
         }
     }
+
+    /**
+     * Clear all key / button presses
+     */
+    void clearInput() {
+        keyManager.clear();
+        buttonManager.clear();
+    }
 }
 
 // Send key/button events and track which are currently pressed.
@@ -91,7 +100,8 @@ class InputManager {
 
     // Update key / button state and track which are pressed
     // inputCode can be a keyCode or buttonCode, depending on Type.
-    private void update_single(int inputCode, int actionCode) {
+    // Call from within client.execute().
+    private void updateSingle(int inputCode, int actionCode) {
         long handle = client.getWindow().getHandle();
 
         if (type == Type.KEY) {
@@ -111,7 +121,7 @@ class InputManager {
     // Depending on mode, may be on action thread. Pass to client thread.
     public void update(int inputCode, int actionCode) {
         client.execute(() -> {
-            update_single(inputCode, actionCode);
+            updateSingle(inputCode, actionCode);
         });
     }
 
@@ -120,7 +130,7 @@ class InputManager {
         Set<Integer> pressedCopy = new HashSet<>(pressed);
         client.execute(() -> {
             for (int inputCode : pressedCopy) {
-                update(inputCode, GLFW.GLFW_RELEASE);
+                updateSingle(inputCode, GLFW.GLFW_RELEASE);
             }
         });
     }

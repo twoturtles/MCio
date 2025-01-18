@@ -7,32 +7,42 @@ import org.slf4j.Logger;
 import org.zeromq.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class MCioNetworkConnection {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final ZContext zContext;
-    // XXX
-    private final AtomicBoolean connected = new AtomicBoolean(false);
+    public enum MCioSocketType {
+        ACTION, OBSERVATION
+    }
 
-    record SocketInfo(
-        ZMQ.Socket socket,
-        String name
-    ) {}
-    private final SocketInfo actionSI;
-    private final SocketInfo observationSI;
+    class SocketManager {
+        MCioSocketType type;
+        ZMQ.Socket socket;
+        AtomicBoolean connected;
+
+        SocketManager(MCioSocketType mcioType, SocketType zmqType) {
+            this.type = mcioType;
+            this.socket = zContext.createSocket(zmqType);
+            this.connected = new AtomicBoolean(false);
+        }
+    }
+    private final SocketManager actionSM;
+    private final SocketManager observationSM;
 
     MCioNetworkConnection() {
         this.zContext = new ZContext();
 
-        actionSI = new SocketInfo(zContext.createSocket(SocketType.PULL), "Action");
-        actionSI.socket.setEventHook(e -> monitorEventCB(e, actionSI), ZMQ.EVENT_ALL);
-        bindSocket(actionSI, MCioConfig.getInstance().actionPort);
+        actionSM = new SocketManager(MCioSocketType.ACTION, SocketType.PULL);
+        actionSM.socket.setEventHook(e -> monitorEventCB(e, actionSM), ZMQ.EVENT_ALL);
+        bindSocket(actionSM, MCioConfig.getInstance().actionPort);
 
-        observationSI = new SocketInfo(zContext.createSocket(SocketType.PUSH), "Observation");
-        observationSI.socket.setEventHook(e -> monitorEventCB(e, observationSI), ZMQ.EVENT_ALL);
-        bindSocket(observationSI, MCioConfig.getInstance().observationPort);
+        observationSM = new SocketManager(MCioSocketType.OBSERVATION, SocketType.PUSH);
+        observationSM.socket.setEventHook(e -> monitorEventCB(e, observationSM), ZMQ.EVENT_ALL);
+        bindSocket(observationSM, MCioConfig.getInstance().observationPort);
     }
 
     // Receive an action from the agent
@@ -40,7 +50,7 @@ class MCioNetworkConnection {
     Optional<ActionPacket> recvActionPacket(boolean block) {
         try {
             int flags = block ? 0 : ZMQ.DONTWAIT;
-            byte[] pkt = actionSI.socket.recv(flags);
+            byte[] pkt = actionSM.socket.recv(flags);
             // pkt can be null if non-blocking
             return pkt != null ? ActionPacketUnpacker.unpack(pkt) : Optional.empty();
         } catch (ZMQException e) {
@@ -55,34 +65,57 @@ class MCioNetworkConnection {
             byte[] pBytes = ObservationPacketPacker.pack(observationPacket);
             // Send to agent
             int flags = block ? 0 : ZMQ.DONTWAIT;
-            boolean success = observationSI.socket.send(pBytes, flags);
-            if (!success && observationSI.socket.errno() != ZMQ.Error.EAGAIN.getCode()) {
-                LOGGER.warn("SEND FAILED error={}", ZMQ.Error.findByCode(observationSI.socket.errno()));
+            boolean success = observationSM.socket.send(pBytes, flags);
+            if (!success && observationSM.socket.errno() != ZMQ.Error.EAGAIN.getCode()) {
+                LOGGER.warn("SEND FAILED error={}", ZMQ.Error.findByCode(observationSM.socket.errno()));
             }
         } catch (IOException e) {
             LOGGER.warn("ObservationPacketPacker failed");
         }
     }
 
-    void monitorEventCB(ZEvent e, SocketInfo si) {
+    void monitorEventCB(ZEvent e, SocketManager mgr) {
         if (e.getEvent() == ZMonitor.Event.HANDSHAKE_PROTOCOL) {
-            LOGGER.info("{} Socket Connected", si.name);
+            LOGGER.info("{} Socket Connected", mgr.type);
+            mgr.connected.set(true);
+            invokeSocketStateCallbacks(mgr.type, true);
         } else if (e.getEvent() == ZMonitor.Event.DISCONNECTED) {
-            LOGGER.info("{} Socket Disconnected", si.name);
+            LOGGER.info("{} Socket Disconnected", mgr.type);
+            mgr.connected.set(false);
+            invokeSocketStateCallbacks(mgr.type, false);
         } else {
-            LOGGER.debug("{} Socket Event {}", si.name, e);
+            LOGGER.debug("{} Socket Event {}", mgr.type, e);
         }
     }
 
-    void bindSocket(SocketInfo si, int port) {
+    /**
+     * Provide a callback interface for socket status
+     * The callbacks will run on a zmq io thread.
+     */
+    @FunctionalInterface
+    public interface SocketStateCallback {
+        void invokeCallback(MCioSocketType type, boolean connected);
+    }
+    private final List<SocketStateCallback> stateCallbacks = new ArrayList<>();
+    public void registerSocketStateCallback(SocketStateCallback callback) {
+        stateCallbacks.add(callback);
+    }
+    private void invokeSocketStateCallbacks(MCioSocketType type, boolean connected) {
+        for (SocketStateCallback callback : stateCallbacks) {
+            callback.invokeCallback(type, connected);
+        }
+    }
+
+
+    void bindSocket(SocketManager mgr, int port) {
         try {
-            si.socket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST, port));
+            mgr.socket.bind("tcp://%s:%d".formatted(MCioConfig.DEFAULT_HOST, port));
         } catch (ZMQException e) {
             if (e.getErrorCode() == ZMQ.Error.EADDRINUSE.getCode()) {
                 LOGGER.error(
                         "MCIO {} Port {} already in use. " +
                                 "Please ensure no other instance of Minecraft/MCio is using this port.",
-                        si.name,
+                        mgr.type,
                         port
                 );
                 System.exit(1);
@@ -93,11 +126,11 @@ class MCioNetworkConnection {
     }
 
     public void close() {
-        if (actionSI.socket != null) {
-            actionSI.socket.close();
+        if (actionSM.socket != null) {
+            actionSM.socket.close();
         }
-        if (observationSI.socket != null) {
-            observationSI.socket.close();
+        if (observationSM.socket != null) {
+            observationSM.socket.close();
         }
         if (zContext != null) {
             zContext.close();
