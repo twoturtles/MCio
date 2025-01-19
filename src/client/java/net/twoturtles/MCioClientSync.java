@@ -42,6 +42,8 @@ public class MCioClientSync {
         actionHandler = new MCioActionHandler(client);
         observationHandler = new MCioObservationHandler(client, config);
 
+        connection.registerSocketStateCallback(this::socketStateCallback);
+
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
             ticks++;
             checkGameRunning(client_cb);
@@ -132,6 +134,18 @@ public class MCioClientSync {
         }
     }
 
-    void stop() { }
+    /**
+     * If the Action connection goes down, automatically clear inputs.
+     */
+    private void socketStateCallback(MCioNetworkConnection.MCioSocketType type, boolean connected) {
+        if (type == MCioNetworkConnection.MCioSocketType.ACTION && !connected) {
+            LOGGER.info("Clearing Input (Disconnect)");
+            actionHandler.clearInput();
+        }
+    }
+
+    void stop() {
+        connection.close();
+    }
 
 }
