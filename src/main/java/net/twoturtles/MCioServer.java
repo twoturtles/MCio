@@ -1,3 +1,9 @@
+/**
+ * Top-level file for code that runs on the Server (Main) thread
+ * Note: "Server" here refers to the logical server that exists in both single-player and
+ * dedicated server environments. In single-player, this runs within the client process.
+ * Note 2: MCio currently only actively supports single-player environments.
+ */
 package net.twoturtles;
 
 import com.mojang.logging.LogUtils;

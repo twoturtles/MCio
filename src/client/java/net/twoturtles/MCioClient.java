@@ -1,3 +1,7 @@
+/**
+ * Top-level file for code that runs on the Client (Render) thread
+ */
+
 package net.twoturtles;
 
 import org.slf4j.Logger;
@@ -6,22 +10,6 @@ import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-
-/* TODO
- * - Ensure all calls to random come from the same seed? Seed from env
- * - Disable idle frame slowdown?
- *      client.getInactivityFpsLimiter()
- * - shared config file, override with env/command line option
- * - logging level config
- * - minerl compatible mode - find out other features to make it useful
- * - tests - java and python
- * - Save and replay scripts
- * - Everything in client, so server could be run separately
- * - Configurable tick rate for Async
- * - Action to clear escape (for init)
- * - Skip narrator on initial start
- * - Simple command line Minecraft launcher
- */
 
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
