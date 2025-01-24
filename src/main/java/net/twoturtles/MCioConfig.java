@@ -54,7 +54,7 @@ public class MCioConfig {
         // The default depends on the mode. In sync mode we want to go as fast as possible.
         // Async mode can use however Minecraft is configured.
         boolean defaultUnlimitedFPS = switch (mode) {
-            case OFF -> true;
+            case OFF -> false;
             case SYNC -> DEFAULT_UNLIMITED_FPS_SYNC;
             case ASYNC -> DEFAULT_UNLIMITED_FPS_ASYNC;
         };

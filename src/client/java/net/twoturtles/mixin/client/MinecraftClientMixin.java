@@ -26,6 +26,7 @@ public class MinecraftClientMixin {
     @Inject(method = "onWindowFocusChanged(Z)V", at = @At("HEAD"), cancellable = true)
     private void onWindowFocusChanged(boolean focused, CallbackInfo ci) {
         // Store the true value of windowFocused in the MCioClient for access by MouseMixin
+        // XXX There has to be a cleaner way to do this
         MCioClient.MCioWindowFocused = focused;
         // Keep MinecraftClient's copy always true
         windowFocused = true;

@@ -4,6 +4,7 @@
 
 package net.twoturtles;
 
+import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -14,6 +15,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 public class MCioClient implements ClientModInitializer {
 	/* screen capture */
 	private final Logger LOGGER = LogUtils.getLogger();
+	private MinecraftClient clientMC;
 	private MCioClientAsync clientAsync;
 	private MCioClientSync clientSync;
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
@@ -25,11 +27,17 @@ public class MCioClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		LOGGER.info("Client Init");
+		clientMC = MinecraftClient.getInstance();
 		config = MCioConfig.getInstance();
 		MCioFrameSave.initialize();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
 			LOGGER.info("Client Started mode={}", config.mode);
+			if (config.unlimitedFPS) {
+				// Normal FPS limiting is disabled by RenderSystemMixin. This disables vsync.
+				LOGGER.info("Disabling FPS limiting and VSYNC");
+				clientMC.getWindow().setVsync(false);
+			}
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			LOGGER.info("Client Stopping");

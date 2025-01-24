@@ -7,9 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-
 /**
  * Blocks the call to RenderSystem.limitDisplayFPS based on config
+ * This disables both the regular and the inactivity (AFK) FPS limiting
  */
 @Mixin(RenderSystem.class)
 public class RenderSystemMixin {
