@@ -1,16 +1,17 @@
 {
-	"required": true,
-	"package": "net.twoturtles.mixin.client",
-	"compatibilityLevel": "JAVA_21",
-	"client": [
-		"MinecraftClientMixin",
-		"MouseMixin",
-		"MouseMixin$MouseAccessor",
-		"MouseMixin$OnCursorPosInvoker",
-		"MouseMixin$OnMouseButtonInvoker",
-		"WindowMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
+  "required": true,
+  "package": "net.twoturtles.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MinecraftClientMixin",
+    "MouseMixin",
+    "MouseMixin$MouseAccessor",
+    "MouseMixin$OnCursorPosInvoker",
+    "MouseMixin$OnMouseButtonInvoker",
+    "RenderSystemMixin",
+    "WindowMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
 	}
 }
