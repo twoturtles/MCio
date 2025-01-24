@@ -28,6 +28,9 @@ record ObservationPacket(
 
         // Observation
         ByteBuffer frame,
+        int frame_width,
+        int frame_height,
+        String frame_type,  // "PNG" or "JPEG" or "RAW"
         int cursor_mode,
         int[] cursor_pos,    // [x, y]
         float health,

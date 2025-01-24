@@ -46,7 +46,6 @@ public class MCioClient implements ClientModInitializer {
 			clientAsync = new MCioClientAsync(config);
 		}
 		MCioFrameCapture.getInstance().setEnabled(true);
-
 	}
 
 	void stop() {
@@ -57,4 +56,3 @@ public class MCioClient implements ClientModInitializer {
 		}
 	}
 }
-

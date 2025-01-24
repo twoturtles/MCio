@@ -55,8 +55,9 @@ public class MCioClientAsync {
             }
         });
 
-        /* Send observation at the end of every tick */
-        ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
+        /* Send observation at the end of render tick */
+        MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
+        frameCapture.registerCaptureCallback(frame -> {
             Optional<ObservationPacket> opt = observationHandler.collectObservation(lastFullTickActionSequence);
             opt.ifPresent(packet -> connection.sendObservationPacket(packet, false));
         });
@@ -89,4 +90,3 @@ public class MCioClientAsync {
         connection.close();
     }
 }
-

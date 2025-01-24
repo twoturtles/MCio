@@ -66,6 +66,9 @@ public class MCioObservationHandler {
                 frameRV.frame_sequence(),
 
                 frameRV.frame,
+                frameRV.width,
+                frameRV.height,
+                frameRV.type.toString(),
                 cursorMode,
                 new int[] {cursorPosRV.x(), cursorPosRV.y()},
                 player.getHealth(),
@@ -97,12 +100,18 @@ public class MCioObservationHandler {
     /* Return type for getFrame */
     record FrameRV(
             int frame_sequence,
-            ByteBuffer frame
+            int width,
+            int height,
+            ByteBuffer frame,
+            MCioConfig.MCioFrameType type
     ){
         public static FrameRV empty() {
             return new FrameRV(
                     0,  // Maybe make this -1 to signify empty
-                    ByteBuffer.allocate(0)  // empty ByteBuffer
+                    0,
+                    0,
+                    ByteBuffer.allocate(0),  // empty ByteBuffer
+                    MCioConfig.DEFAULT_MCIO_FRAME_TYPE
             );
         }
     }
@@ -118,10 +127,12 @@ public class MCioObservationHandler {
         ByteBuffer frameBuf;
         if (config.frameType == MCioConfig.MCioFrameType.JPEG) {
             frameBuf = MCioFrameCapture.getInstance().getFrameJPEG(frame, config.frameQuality);
-        } else {
+        } else if (config.frameType == MCioConfig.MCioFrameType.PNG) {
             frameBuf = MCioFrameCapture.getInstance().getFramePNG(frame);
+        } else {
+            frameBuf = MCioFrameCapture.getInstance().getFrameRaw(frame);
         }
-        return new FrameRV(frame.frame_sequence(), frameBuf);
+        return new FrameRV(frame.frame_sequence(), frame.width(), frame.height(), frameBuf, config.frameType);
     }
 
     /* Return type for getInventoriesRV() */
