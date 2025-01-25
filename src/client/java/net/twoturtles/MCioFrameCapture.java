@@ -112,7 +112,7 @@ public final class MCioFrameCapture {
     }
 
     public ByteBuffer getFrameJPEG(MCioFrame frame) {
-        return getFrameJPEG(frame, 90);
+        return getFrameJPEG(frame, MCioConfig.DEFAULT_FRAME_QUALITY);
     }
     public ByteBuffer getFrameJPEG(MCioFrame frame, int quality) {
         return writeFrame(frame, writeToStreamCb ->
@@ -126,6 +126,29 @@ public final class MCioFrameCapture {
                         quality
                 ) != 0  // Convert return to boolean. stbi_write_png_to_func() already does this
         );
+    }
+    public ByteBuffer getFrameRAW(MCioFrame frame) {
+//      return flipFrame(frame);
+        return frame.frame;
+    }
+
+    /* Vertical flip for OpenGL frames
+     * XXX This is expensive. It ends up using >7% of the CPU.
+     * Going to export upside-down frames until something faster is found.
+     */
+    ByteBuffer flipFrame(MCioFrame frame) {
+        int stride = frame.width * frame.bytes_per_pixel; // Number of bytes per row
+        ByteBuffer flippedBuffer = ByteBuffer.allocateDirect(frame.frame.capacity());
+
+        for (int row = 0; row < frame.height; row++) {
+            int srcPos = row * stride;
+            int destPos = (frame.height - 1 - row) * stride;
+            for (int i = 0; i < stride; i++) {
+                flippedBuffer.put(destPos + i, frame.frame.get(srcPos + i));
+            }
+        }
+
+        return flippedBuffer;
     }
 
     private ByteBuffer writeFrame(MCioFrame frame, FrameWriter frameWriter) {

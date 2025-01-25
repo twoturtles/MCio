@@ -63,11 +63,14 @@ public class MCioObservationHandler {
                 observationSequence++,
                 config.mode.toString(),
                 lastFullTickActionSequence,
-                frameRV.frame_sequence(),
+                frameRV.frame_sequence,
+                frameRV.frame_height,
+                frameRV.frame_width,
+                frameRV.frame_type.toString(),
 
                 frameRV.frame,
                 cursorMode,
-                new int[] {cursorPosRV.x(), cursorPosRV.y()},
+                new int[] {cursorPosRV.x, cursorPosRV.y},
                 player.getHealth(),
                 fPlayerPos,
                 player.getPitch(),
@@ -97,11 +100,17 @@ public class MCioObservationHandler {
     /* Return type for getFrame */
     record FrameRV(
             int frame_sequence,
+            int frame_height,
+            int frame_width,
+            MCioConfig.MCioFrameType frame_type,
             ByteBuffer frame
     ){
         public static FrameRV empty() {
             return new FrameRV(
                     0,  // Maybe make this -1 to signify empty
+                    0,
+                    0,
+                    MCioConfig.DEFAULT_MCIO_FRAME_TYPE,
                     ByteBuffer.allocate(0)  // empty ByteBuffer
             );
         }
@@ -115,13 +124,17 @@ public class MCioObservationHandler {
         /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
         sendFPS.count();
         MCioConfig config = MCioConfig.getInstance();
-        ByteBuffer frameBuf;
-        if (config.frameType == MCioConfig.MCioFrameType.JPEG) {
-            frameBuf = MCioFrameCapture.getInstance().getFrameJPEG(frame, config.frameQuality);
-        } else {
-            frameBuf = MCioFrameCapture.getInstance().getFramePNG(frame);
-        }
-        return new FrameRV(frame.frame_sequence(), frameBuf);
+        ByteBuffer frameBuf = switch (config.frameType) {
+            case JPEG -> MCioFrameCapture.getInstance().getFrameJPEG(frame, config.frameQuality);
+            case PNG -> MCioFrameCapture.getInstance().getFramePNG(frame);
+            case RAW -> MCioFrameCapture.getInstance().getFrameRAW(frame);
+        };
+        return new FrameRV(
+                frame.frame_sequence(),
+                frame.height(),
+                frame.width(),
+                config.frameType,
+                frameBuf);
     }
 
     /* Return type for getInventoriesRV() */

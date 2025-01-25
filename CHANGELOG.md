@@ -4,6 +4,8 @@
 - Add key/button tracking
 - Add clean_input action
 - Add option to hide Minecraft window
+- Add option to disable FPS limits and vsync
+- Add raw frame support and make it the default
 - MCIO_PROTOCOL_VERSION = 3
 
 ## 0.3.0+1.21.3 - 2025-01-14

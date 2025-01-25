@@ -25,6 +25,9 @@ record ObservationPacket(
         String mode,    // "SYNC" or "ASYNC"
         int last_action_sequence,
         int frame_sequence,
+        int frame_height,
+        int frame_width,
+        String frame_type,  // See MCioConfig.MCioFrameType
 
         // Observation
         ByteBuffer frame,
