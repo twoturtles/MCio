@@ -5,7 +5,9 @@
 - Add clean_input action
 - Add option to hide Minecraft window
 - Add option to disable FPS limits and vsync
-- Add raw frame support and make it the default
+- Add raw frame support and make it the default.
+  Raw frames are currently exported upside-down for
+  performance reasons.
 - MCIO_PROTOCOL_VERSION = 3
 
 ## 0.3.0+1.21.3 - 2025-01-14
