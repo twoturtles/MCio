@@ -25,6 +25,8 @@ class MCioServerSync {
         // to pass in larger value.
         tickManager.startSprint(Integer.MAX_VALUE);
         // Set frozen to wait for steps
+        // Confusingly, while frozen the server does the normal 20 TPS. But those ticks don't update the world
+        // unless there is a Step. If you step faster than 20 TPS, the server will tick faster.
         tickManager.setFrozen(true);
 
         //new TestThread(server);
