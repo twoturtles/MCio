@@ -1,5 +1,6 @@
 package net.twoturtles;
 
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.MinecraftServer;
@@ -14,6 +15,7 @@ class MCioServerSync {
     public MCioServerSync(MCioConfig config) {
         this.config = config;
         ServerLifecycleEvents.SERVER_STARTED.register(this::init);
+        ServerTickEvents.START_SERVER_TICK.register(this::startTickCB);
     }
 
     void init(MinecraftServer server) {
@@ -24,12 +26,14 @@ class MCioServerSync {
         // ServerTickManager stores the sprint steps as long, so could make a mixin
         // to pass in larger value.
         tickManager.startSprint(Integer.MAX_VALUE);
-        // Set frozen to wait for steps
-        // Confusingly, while frozen the server does the normal 20 TPS. But those ticks don't update the world
-        // unless there is a Step. If you step faster than 20 TPS, the server will tick faster.
-        tickManager.setFrozen(true);
 
         //new TestThread(server);
+    }
+
+    void startTickCB(MinecraftServer server) {
+        if (MCioSyncUtil.getInstance().isGameRunning()) {
+            MCioSyncUtil.getInstance().waitForClientTick();
+        }
     }
 
     void stop() { }

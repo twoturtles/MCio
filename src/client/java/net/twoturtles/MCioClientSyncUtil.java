@@ -1,0 +1,17 @@
+package net.twoturtles;
+
+import net.minecraft.client.MinecraftClient;
+
+public class MCioClientSyncUtil {
+    /**
+     * Pass the game state from the client up to the main namespace.
+     * This must be done here because MCioSyncUtil can't access MinecraftClient.
+     */
+    public static void checkAndSetGameRunning() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        // A "Screen" is an overlay, like "Loading", so currentScreen is null when the game window is up.
+        if (client.currentScreen == null) {
+            MCioSyncUtil.getInstance().setGameRunning(true);
+        }
+    }
+}

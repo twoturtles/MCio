@@ -46,6 +46,7 @@ public class MCioClientSync {
 
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
             ticks++;
+            MCioClientSyncUtil.checkAndSetGameRunning();
             checkGameRunning(client_cb);
             processAction();
         });
@@ -62,7 +63,7 @@ public class MCioClientSync {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
-            serverStep();
+            MCioSyncUtil.getInstance().tellServerToTick();
         });
 
         //new TestThread();
@@ -79,7 +80,6 @@ public class MCioClientSync {
 
     void processAction() {
         // XXX Make window responsive while waiting for an action. At least allow it to be brought to the foreground.
-        // XXX Why can't I double jump to fly in creative mode?
         // XXX Hangs if you go to the menu
 
         if (!gameRunning) {
@@ -102,22 +102,6 @@ public class MCioClientSync {
         lastActionSequence = action.sequence();
         LOGGER.debug("ACTION {}", action);
         actionHandler.processAction(action);
-    }
-
-    // XXX When should this happen? At the end of a tick? After the action?
-    void serverStep() {
-        if (!gameRunning) {
-            return;
-        }
-
-        // XXX Server is on a different thread. Need some synchronization
-        IntegratedServer server = client.getServer();
-        if (server != null) {
-            server.execute(() -> {
-                ServerTickManager serverTickManager = server.getTickManager();
-                serverTickManager.step(1);
-            });
-        }
     }
 
     // XXX Ideally this would include the update from the server
