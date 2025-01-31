@@ -3,6 +3,7 @@
 	"package": "net.twoturtles.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"ServerTickManagerAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

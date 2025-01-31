@@ -1,6 +1,7 @@
 package net.twoturtles;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.twoturtles.mixin.ServerTickManagerAccessor;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.MinecraftServer;
@@ -22,10 +23,10 @@ class MCioServerSync {
         // For sync mode run Minecraft in sprint mode. This way there's no artificial delay between ticks.
         // It will go as fast as we step.
         ServerTickManager tickManager = server.getTickManager();
-        // 2147483647 / 1000 / 86400 = 24 days at 1000 TPS.
-        // ServerTickManager stores the sprint steps as long, so could make a mixin
-        // to pass in larger value.
-        tickManager.startSprint(Integer.MAX_VALUE);
+        // Start the sprint with the normal API, then set the sprint to go forever.
+        tickManager.startSprint(1);
+        ((ServerTickManagerAccessor) tickManager).setSprintTicks(Long.MAX_VALUE);
+        ((ServerTickManagerAccessor) tickManager).setScheduledSprintTicks(Long.MAX_VALUE);
 
         //new TestThread(server);
     }
