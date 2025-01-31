@@ -8,6 +8,7 @@
 - Add raw frame support and make it the default.
   Raw frames are currently exported upside-down for
   performance reasons.
+- Client and server tick fast in sync mode
 - MCIO_PROTOCOL_VERSION = 3
 
 ## 0.3.0+1.21.3 - 2025-01-14

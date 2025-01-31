@@ -27,8 +27,6 @@ class MCioServerSync {
         tickManager.startSprint(1);
         ((ServerTickManagerAccessor) tickManager).setSprintTicks(Long.MAX_VALUE);
         ((ServerTickManagerAccessor) tickManager).setScheduledSprintTicks(Long.MAX_VALUE);
-
-        //new TestThread(server);
     }
 
     void startTickCB(MinecraftServer server) {
@@ -38,37 +36,4 @@ class MCioServerSync {
     }
 
     void stop() { }
-
-    // Run steps as fast as possible
-    /*
-    [16:48:27] [Server thread/INFO] (TrackPerSecond) ServerTicks per-second=492.5
-    [16:48:27] [Render thread/INFO] (TrackPerSecond) ClientTicks per-second=112.0
-    [16:48:28] [Render thread/INFO] (TrackPerSecond) Frames per-second=112.0
-    [16:48:28] [Render thread/INFO] (TrackPerSecond) FrameCaptures per-second=112.0
-     */
-    class TestThread {
-        private final Logger LOGGER = LogUtils.getLogger();
-        private final MinecraftServer server;
-
-        public TestThread(MinecraftServer server) {
-            this.server = server;
-            Thread thread = new Thread(this::threadRun, "MCio-TestThread");
-            thread.start();
-        }
-
-        private void threadRun() {
-            while (true) {
-                ServerTickManager serverTickManager = server.getTickManager();
-                serverTickManager.step(1);
-
-                // XXX
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
 }

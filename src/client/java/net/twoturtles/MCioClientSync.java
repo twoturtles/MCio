@@ -5,14 +5,10 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.server.ServerTickManager;
-import net.minecraft.server.integrated.IntegratedServer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 // XXX XXX Synchronize server tick completion with observations.
-// Currently the server ticks more slowly than we generate observations.
-
 
 public class MCioClientSync {
     private final Logger LOGGER = LogUtils.getLogger();
@@ -65,8 +61,6 @@ public class MCioClientSync {
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             MCioSyncUtil.getInstance().tellServerToTick();
         });
-
-        //new TestThread();
     }
 
     void checkGameRunning(MinecraftClient client) {

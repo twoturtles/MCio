@@ -138,6 +138,14 @@ class ActionPacketUnpacker {
             return hex.toString();
         }
     }
-
 }
 
+/* Serialize ActionPacket (for testing) */
+class ActionPacketPacker {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final ObjectMapper CBOR_MAPPER = new ObjectMapper(new CBORFactory());
+
+    public static byte[] pack(ActionPacket action) throws IOException {
+        return CBOR_MAPPER.writeValueAsBytes(action);
+    }
+}

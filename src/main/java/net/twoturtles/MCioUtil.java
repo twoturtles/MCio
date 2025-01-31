@@ -5,8 +5,11 @@ import org.slf4j.Logger;
 
 public class MCioUtil {
     static void sleep(double seconds) {
+        MCioUtil.msleep((long) (seconds * 1000));
+    }
+    static void msleep(long millis) {
         try {
-            Thread.sleep((long) (seconds * 1000));
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -84,4 +87,3 @@ class LatestItemQueue<T> {
         return result;
     }
 }
-
