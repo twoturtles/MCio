@@ -18,8 +18,8 @@ public class MCioClientSync {
     private final MCioNetworkConnection connection;
     private final MCioActionHandler actionHandler;
     private final MCioObservationHandler observationHandler;
+    private final MCioSyncUtil syncUtil = MCioSyncUtil.getInstance();
 
-    private boolean gameRunning = false;
     private boolean waitingForFirstAction = true;
     private int lastActionSequence = 0;
     private int ticks = 0;
@@ -43,13 +43,12 @@ public class MCioClientSync {
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
             ticks++;
             MCioClientSyncUtil.checkAndSetGameRunning();
-            checkGameRunning(client_cb);
             processAction();
         });
 
         MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
         frameCapture.registerCaptureCallback(frame -> {
-            if (!gameRunning) {
+            if (!syncUtil.isGameRunning()) {
                 return;
             }
 
@@ -59,7 +58,7 @@ public class MCioClientSync {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
-            MCioSyncUtil.getInstance().tellServerToTick();
+            syncUtil.tellServerToTick();
         });
 
         // For testing
@@ -68,20 +67,11 @@ public class MCioClientSync {
         }
     }
 
-    void checkGameRunning(MinecraftClient client) {
-        if (gameRunning) { return; }
-
-        // currentScreen is null when the game window is up.
-        if (client.currentScreen == null) {
-            gameRunning = true;
-        }
-    }
-
     void processAction() {
         // XXX Make window responsive while waiting for an action. At least allow it to be brought to the foreground.
         // XXX Hangs if you go to the menu
 
-        if (!gameRunning) {
+        if (!syncUtil.isGameRunning()) {
             return;
         }
         if (waitingForFirstAction) {
@@ -105,7 +95,7 @@ public class MCioClientSync {
 
     // XXX Ideally this would include the update from the server
     void generateObservation() {
-        if (!gameRunning) {
+        if (!syncUtil.isGameRunning()) {
             return;
         }
         Optional<ObservationPacket> opt = observationHandler.collectObservation(lastActionSequence);

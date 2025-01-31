@@ -8,7 +8,7 @@ import java.util.concurrent.Semaphore;
 public class MCioSyncUtil {
     private static final Logger LOGGER = LogUtils.getLogger();
     private boolean gameRunning = false;
-    private final Semaphore tickSem = new Semaphore(0);
+    private final Semaphore serverTickSem = new Semaphore(0);
 
     // Singleton instance
     private static final MCioSyncUtil INSTANCE = new MCioSyncUtil();
@@ -32,15 +32,15 @@ public class MCioSyncUtil {
 
     public void waitForClientTick() {
         try {
-            tickSem.acquire();
+            serverTickSem.acquire();
         } catch (InterruptedException e) {
             LOGGER.warn("Interrupted", e);
         }
     }
 
     public void tellServerToTick() {
-        tickSem.drainPermits();
-        tickSem.release();
+        serverTickSem.drainPermits();
+        serverTickSem.release();
     }
 
 }
