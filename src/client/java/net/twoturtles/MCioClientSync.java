@@ -62,7 +62,7 @@ public class MCioClientSync {
             MCioSyncUtil.getInstance().tellServerToTick();
         });
 
-//		new MCioClientUtil.SpeedTest();
+//		new SpeedTest();
     }
 
     void checkGameRunning(MinecraftClient client) {
