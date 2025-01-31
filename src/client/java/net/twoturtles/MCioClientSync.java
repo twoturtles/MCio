@@ -61,6 +61,8 @@ public class MCioClientSync {
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             MCioSyncUtil.getInstance().tellServerToTick();
         });
+
+//		new MCioClientUtil.SpeedTest();
     }
 
     void checkGameRunning(MinecraftClient client) {
