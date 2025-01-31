@@ -27,6 +27,7 @@ public class MCioConfig {
     public int observationPort;
     public boolean hideMinecraftWindow;
     public boolean doRetinaHack;
+    public boolean doSyncSpeedTest;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -37,7 +38,8 @@ public class MCioConfig {
     public static final int DEFAULT_ACTION_PORT = 4001; // For receiving 4ctions
     public static final int DEFAULT_OBSERVATION_PORT = 8001;    // For sending 8bservations
     public static final boolean DEFAULT_HIDE_MINECRAFT_WINDOW = false;
-    public static final boolean DEFAULT_DO_RETINA_HACK = true;  // Disable retina double resolution
+    public static final boolean DEFAULT_RETINA_HACK = true;  // Disable retina double resolution
+    public static final boolean DEFAULT_SYNC_SPEED_TEST = false;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -63,7 +65,8 @@ public class MCioConfig {
         actionPort = getEnvInt("MCIO_ACTION_PORT", DEFAULT_ACTION_PORT);
         observationPort = getEnvInt("MCIO_OBSERVATION_PORT", DEFAULT_OBSERVATION_PORT);
         hideMinecraftWindow = getEnvBoolean("MCIO_HIDE_WINDOW", DEFAULT_HIDE_MINECRAFT_WINDOW);
-        doRetinaHack = getEnvBoolean("MCIO_DO_RETINA_HACK", DEFAULT_DO_RETINA_HACK);
+        doRetinaHack = getEnvBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
+        doSyncSpeedTest = getEnvBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -74,7 +77,8 @@ public class MCioConfig {
         LOGGER.info("MCIO_ACTION_PORT={}", actionPort);
         LOGGER.info("MCIO_OBSERVATION_PORT={}", observationPort);
         LOGGER.info("MCIO_HIDE_WINDOW={}", hideMinecraftWindow);
-        LOGGER.info("MCIO_DO_RETINA_HACK={}", doRetinaHack);
+        LOGGER.info("MCIO_RETINA_HACK={}", doRetinaHack);
+        LOGGER.info("MCIO_SYNC_SPEED_TEST={}", doSyncSpeedTest);
     }
 
     // Helper methods for parsing environment variables
