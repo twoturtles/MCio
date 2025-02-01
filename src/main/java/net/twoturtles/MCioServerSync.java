@@ -11,12 +11,14 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 
 class MCioServerSync {
     private final Logger LOGGER = LogUtils.getLogger();
+    private final MCioSyncUtil syncUtil = MCioSyncUtil.getInstance();
     private MCioConfig config;
 
     public MCioServerSync(MCioConfig config) {
         this.config = config;
         ServerLifecycleEvents.SERVER_STARTED.register(this::init);
         ServerTickEvents.START_SERVER_TICK.register(this::startTickCB);
+        ServerTickEvents.END_SERVER_TICK.register(this::endTickCB);
     }
 
     void init(MinecraftServer server) {
@@ -30,9 +32,10 @@ class MCioServerSync {
     }
 
     void startTickCB(MinecraftServer server) {
-        if (MCioSyncUtil.getInstance().isGameRunning()) {
-            MCioSyncUtil.getInstance().waitForClientTick();
-        }
+        syncUtil.serverStartTick();
+    }
+    void endTickCB(MinecraftServer server) {
+        syncUtil.serverEndTick();
     }
 
     void stop() { }

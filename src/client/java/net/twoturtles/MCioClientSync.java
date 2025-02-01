@@ -43,22 +43,23 @@ public class MCioClientSync {
         ClientTickEvents.START_CLIENT_TICK.register(client_cb -> {
             ticks++;
             MCioClientSyncUtil.checkAndSetGameRunning();
-            processAction();
+            syncUtil.clientStartTick();
+            if (syncUtil.isGameRunning()) {
+                processAction();
+            }
         });
 
         MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
         frameCapture.registerCaptureCallback(frame -> {
-            if (!syncUtil.isGameRunning()) {
-                return;
+            if (syncUtil.isGameRunning()) {
+                // Capture happens just before swapBuffers. Client ticks happen before the render.
+                // So this happens after the end of the client tick.
+                generateObservation();
             }
-
-            // Capture happens just before swapBuffers. Client ticks happen before the render.
-            // So this happens after the end of the client tick.
-            generateObservation();
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
-            syncUtil.tellServerToTick();
+            syncUtil.clientEndTick();
         });
 
         // For testing
@@ -71,9 +72,6 @@ public class MCioClientSync {
         // XXX Make window responsive while waiting for an action. At least allow it to be brought to the foreground.
         // XXX Hangs if you go to the menu
 
-        if (!syncUtil.isGameRunning()) {
-            return;
-        }
         if (waitingForFirstAction) {
             LOGGER.info("Waiting for first action");
         }
@@ -95,9 +93,6 @@ public class MCioClientSync {
 
     // XXX Ideally this would include the update from the server
     void generateObservation() {
-        if (!syncUtil.isGameRunning()) {
-            return;
-        }
         Optional<ObservationPacket> opt = observationHandler.collectObservation(lastActionSequence);
         if (opt.isPresent()) {
             connection.sendObservationPacket(opt.get(), false);
