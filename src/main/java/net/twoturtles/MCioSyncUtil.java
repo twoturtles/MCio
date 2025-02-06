@@ -20,6 +20,15 @@ import java.util.concurrent.Semaphore;
  * observation is generated is to run two client ticks and one server tick for every step -
  * Action arrives - client tick - server tick (update the client) - client tick again to integrate server updates,
  * and generate the observation. It would be nice to avoid this.
+ *
+ * Order of events (once the game is running)
+ * MinecraftClient.run() -> game loop ->
+ *     MinecraftClient.render() [Mojang calls this runTick()] -> MinecraftClient.tick() ->
+ *     START_CLIENT_TICK -> Wait for previous server to finish tick -> wait for action -> process action -> client tick ->
+ *     continue render() -> frame capture callback -> generateObservation() ->
+ *     END_CLIENT_TICK -> START_SERVER_TICK (waiting for end client tick) ->
+ *     END_SERVER_TICK (signal client to start) -> ...
+ *
  */
 public class MCioSyncUtil {
     private static final Logger LOGGER = LogUtils.getLogger();

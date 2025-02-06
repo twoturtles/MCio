@@ -8,8 +8,6 @@ import net.minecraft.client.MinecraftClient;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
-// XXX XXX Synchronize server tick completion with observations.
-
 public class MCioClientSync {
     private final Logger LOGGER = LogUtils.getLogger();
     private final MinecraftClient client;
@@ -24,11 +22,8 @@ public class MCioClientSync {
     private int lastActionSequence = 0;
     private int ticks = 0;
 
-    /*
-     * Order of events:
-     * START_CLIENT_TICK -> wait for action -> process action -> client tick -> END_CLIENT_TICK ->
-     *      serverStep (unknown completion) -> Render -> Capture callback (beforeSwap) -> generate observation
-     *
+    /**
+     * See MCioServerSync for more info.
      */
     MCioClientSync(MCioConfig config) {
         client = MinecraftClient.getInstance();
