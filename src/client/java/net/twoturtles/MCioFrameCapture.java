@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
+import com.mojang.blaze3d.platform.GlConst;
+import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.client.gl.*;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -20,8 +23,8 @@ import org.lwjgl.stb.STBIWriteCallback;
 /* Interface and state storage for WindowMixin:beforeSwap. beforeSwap does the actual capture
  * and stores the frame here. ObservationHandler picks up the most recent frame at the end of every tick */
 public final class MCioFrameCapture {
-    public final int ASYNC_CAPTURE_EVERY_N_FRAMES = 2;
-    public final int BYTES_PER_PIXEL = 3;    // GL_RGB
+    public final int ASYNC_CAPTURE_EVERY_N_FRAMES = 1;
+    public final int BYTES_PER_PIXEL = 3;  // GL_RGB
 
     private final Logger LOGGER = LogUtils.getLogger();
     private final TrackPerSecond frameFPS = new TrackPerSecond("Frames");
@@ -29,9 +32,14 @@ public final class MCioFrameCapture {
     private final MCioConfig config = MCioConfig.getInstance();
     private boolean enabled = false;
 
-    private int frameSequence = 0;     // Total number of frames so far
+    private int frameSequence = 0;  // Total number of frames so far
     private int frameCaptureSequence = 0;  // Number of frames
     private MCioFrame lastCapturedFrame = null;
+
+    private int width = 1280;
+    private int height = 720;
+    private GpuBuffer pixelBuffer = null;
+    private GlFenceSync fenceSync = null;
 
     // Singleton instance
     private static final MCioFrameCapture INSTANCE = new MCioFrameCapture();
@@ -51,15 +59,52 @@ public final class MCioFrameCapture {
             ByteBuffer frame
     ) { }
 
+    private GpuBuffer getPixelBuffer() {
+        // Call of opengl too early (eg: initialization of fabric mod) will cause error.
+        if (this.pixelBuffer == null) {
+            this.pixelBuffer = new GpuBuffer(GlBufferTarget.PIXEL_PACK, GlUsage.STREAM_READ, 0);
+            this.pixelBuffer.resize(this.width * this.height * this.BYTES_PER_PIXEL);
+        }
+        return this.pixelBuffer;
+    }
+
     // Called by WindowMixin to hand off a new frame
-    public void capture(ByteBuffer pixelBuffer, int width, int height) {
-        frameCaptureSequence++;
-        captureFPS.count();
-        pixelBuffer.rewind();
-        MCioFrame frame = new MCioFrame(frameSequence, frameCaptureSequence,
-                width, height, BYTES_PER_PIXEL, pixelBuffer);
-        lastCapturedFrame = frame;
-        invokeCaptureCallbacks(frame);
+    public void capture(Framebuffer framebuffer) {
+        if (this.fenceSync == null) {
+            if (framebuffer.textureWidth != this.width || framebuffer.textureHeight != this.height) {
+                this.width = framebuffer.textureWidth;
+                this.height = framebuffer.textureHeight;
+                this.getPixelBuffer().resize(this.width * this.height * this.BYTES_PER_PIXEL);
+            }
+
+            frameCaptureSequence++;
+            captureFPS.count();
+
+            this.getPixelBuffer().bind();
+            GlStateManager._glBindFramebuffer(GlConst.GL_READ_FRAMEBUFFER, framebuffer.fbo);
+            GlStateManager._readPixels(0, 0, this.width, this.height,
+                    GlConst.GL_RGB, GlConst.GL_UNSIGNED_BYTE, 0L);
+            GlStateManager._glBindFramebuffer(GlConst.GL_READ_FRAMEBUFFER, 0);
+            this.fenceSync = new GlFenceSync();
+        }
+    }
+
+    public void upload() {
+        // Read and send the captured frame within an observation packet.
+        if (this.fenceSync != null) {
+            if (this.fenceSync.wait(0L)) {
+                this.fenceSync = null;
+
+                try (GpuBuffer.ReadResult readResult = this.getPixelBuffer().read()) {
+                    if (readResult != null) {
+                        MCioFrame frame = new MCioFrame(frameSequence, frameCaptureSequence, this.width, this.height,
+                                this.BYTES_PER_PIXEL, readResult.getBuf());
+                        lastCapturedFrame = frame;
+                        invokeCaptureCallbacks(frame);
+                    }
+                }
+            }
+        }
     }
 
     public void captureDebug(String name, ByteBuffer pixelBuffer, int width, int height) {
@@ -151,6 +196,10 @@ public final class MCioFrameCapture {
         return flippedBuffer;
     }
 
+    public ByteBuffer getFrameRaw(MCioFrame frame) {
+        return frame.frame();
+    }
+
     private ByteBuffer writeFrame(MCioFrame frame, FrameWriter frameWriter) {
         frame.frame().rewind(); // Ensure the buffer is at the start
 
@@ -204,12 +253,14 @@ class MCioFrameSave {
         // Use for initial setup.
         getInstance();
     }
+
     public static MCioFrameSave getInstance() {
         if (instance == null) {
             instance = new MCioFrameSave();
         }
         return instance;
     }
+
     private MCioFrameSave() {
         // Register the keybinding (default to V)
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -231,6 +282,7 @@ class MCioFrameSave {
         String fileName = String.format("frame_%03d.png", frame.frame_sequence());
         saveFrame(frame, fileName);
     }
+
     // Allow fileName override
     public void saveFrame(MCioFrameCapture.MCioFrame frame, String fileName) {
         frame.frame().rewind();  // Make sure we're at the start of the buffer
@@ -256,4 +308,3 @@ class MCioFrameSave {
     }
 
 }
-

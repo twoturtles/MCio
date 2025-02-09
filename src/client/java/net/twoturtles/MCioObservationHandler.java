@@ -63,10 +63,10 @@ public class MCioObservationHandler {
                 observationSequence++,
                 config.mode.toString(),
                 lastFullTickActionSequence,
-                frameRV.frame_sequence,
-                frameRV.frame_height,
-                frameRV.frame_width,
-                frameRV.frame_type.toString(),
+                frameRV.sequence,
+                frameRV.height,
+                frameRV.width,
+                frameRV.type.toString(),
 
                 frameRV.frame,
                 cursorMode,
@@ -99,10 +99,10 @@ public class MCioObservationHandler {
 
     /* Return type for getFrame */
     record FrameRV(
-            int frame_sequence,
-            int frame_height,
-            int frame_width,
-            MCioConfig.MCioFrameType frame_type,
+            int sequence,
+            int height,
+            int width,
+            MCioConfig.MCioFrameType type,
             ByteBuffer frame
     ){
         public static FrameRV empty() {

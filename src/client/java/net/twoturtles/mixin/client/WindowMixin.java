@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import java.nio.ByteBuffer;
 
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.Window;
 
 import org.lwjgl.glfw.GLFW;
-import static org.lwjgl.opengl.GL11.*;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
@@ -44,24 +42,10 @@ public class WindowMixin {
             return;
         }
 
-        Window window = (Window)(Object)this;
-        int width = window.getFramebufferWidth();
-        int height = window.getFramebufferHeight();
-
-        ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * frameCapture.BYTES_PER_PIXEL);
-        pixelBuffer.clear(); // Reset position to 0
-
-        // Need alignment set to 1 to properly read frame sizes that are not multiples of 4.
-        int[] alignment = new int[1];
-        glGetIntegerv(GL_PACK_ALIGNMENT, alignment);
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glReadBuffer(GL_BACK);
-        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer);
-        // Reset alignment to previous value
-        glPixelStorei(GL_PACK_ALIGNMENT, alignment[0]);
-
+        MinecraftClient minecraftClient = MinecraftClient.getInstance();
+        frameCapture.upload();
         /* Bad synchronization, but works for now. Once this is handed off, this thread won't touch it again. */
-        frameCapture.capture(pixelBuffer, width, height);
+        frameCapture.capture(minecraftClient.getFramebuffer());
     }
 
     // Intercepts the call to glfwDefaultWindowHints() so we can make modifications to the hints.
