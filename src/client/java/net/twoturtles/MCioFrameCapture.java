@@ -69,7 +69,18 @@ public final class MCioFrameCapture {
     }
 
     // Called by WindowMixin to hand off a new frame
-    public void capture(Framebuffer framebuffer) {
+    public void capture(ByteBuffer pixelBuffer, int width, int height) {
+        frameCaptureSequence++;
+        captureFPS.count();
+        pixelBuffer.rewind();
+        MCioFrame frame = new MCioFrame(frameSequence, frameCaptureSequence,
+                width, height, BYTES_PER_PIXEL, pixelBuffer);
+        lastCapturedFrame = frame;
+        invokeCaptureCallbacks(frame);
+    }
+
+    // Experimental higher performance frame capture
+    public void captureExp(Framebuffer framebuffer) {
         if (this.fenceSync == null) {
             if (framebuffer.textureWidth != this.width || framebuffer.textureHeight != this.height) {
                 this.width = framebuffer.textureWidth;

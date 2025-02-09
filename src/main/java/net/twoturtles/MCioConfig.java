@@ -26,8 +26,9 @@ public class MCioConfig {
     public int actionPort;
     public int observationPort;
     public boolean hideMinecraftWindow;
-    public boolean doRetinaHack;
-    public boolean doSyncSpeedTest;
+    public boolean retinaHack;
+    public boolean syncSpeedTest;
+    public boolean mcioExp1;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -40,6 +41,7 @@ public class MCioConfig {
     public static final boolean DEFAULT_HIDE_MINECRAFT_WINDOW = false;
     public static final boolean DEFAULT_RETINA_HACK = true;  // Disable retina double resolution
     public static final boolean DEFAULT_SYNC_SPEED_TEST = false;
+    public static final boolean DEFAULT_MCIO_EXP1 = false;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -65,8 +67,9 @@ public class MCioConfig {
         actionPort = getEnvInt("MCIO_ACTION_PORT", DEFAULT_ACTION_PORT);
         observationPort = getEnvInt("MCIO_OBSERVATION_PORT", DEFAULT_OBSERVATION_PORT);
         hideMinecraftWindow = getEnvBoolean("MCIO_HIDE_WINDOW", DEFAULT_HIDE_MINECRAFT_WINDOW);
-        doRetinaHack = getEnvBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
-        doSyncSpeedTest = getEnvBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
+        retinaHack = getEnvBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
+        syncSpeedTest = getEnvBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
+        mcioExp1 = getEnvBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -77,8 +80,9 @@ public class MCioConfig {
         LOGGER.info("MCIO_ACTION_PORT={}", actionPort);
         LOGGER.info("MCIO_OBSERVATION_PORT={}", observationPort);
         LOGGER.info("MCIO_HIDE_WINDOW={}", hideMinecraftWindow);
-        LOGGER.info("MCIO_RETINA_HACK={}", doRetinaHack);
-        LOGGER.info("MCIO_SYNC_SPEED_TEST={}", doSyncSpeedTest);
+        LOGGER.info("MCIO_RETINA_HACK={}", retinaHack);
+        LOGGER.info("MCIO_SYNC_SPEED_TEST={}", syncSpeedTest);
+        LOGGER.info("MCIO_EXP1={}", mcioExp1);
     }
 
     // Helper methods for parsing environment variables

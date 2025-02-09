@@ -55,9 +55,12 @@ public class MCioClientAsync {
             }
         });
 
+        /* XXX Every render seems too much for an agent? Game state is only updated after a tick. */
         /* Send observation at the end of render tick */
-        MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
-        frameCapture.registerCaptureCallback(frame -> {
+//        MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
+//        frameCapture.registerCaptureCallback(frame -> {
+        /* Send observation at the end of every tick */
+        ClientTickEvents.END_CLIENT_TICK.register(client_cb -> {
             Optional<ObservationPacket> opt = observationHandler.collectObservation(lastFullTickActionSequence);
             opt.ifPresent(packet -> connection.sendObservationPacket(packet, false));
         });

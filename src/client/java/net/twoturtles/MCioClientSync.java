@@ -58,7 +58,7 @@ public class MCioClientSync {
         });
 
         // For testing
-        if (config.doSyncSpeedTest) {
+        if (config.syncSpeedTest) {
             new SpeedTest();
         }
     }

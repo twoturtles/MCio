@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.Window;
@@ -21,6 +20,10 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 import net.twoturtles.MCioFrameCapture;
 import net.twoturtles.MCioConfig;
+
+import java.nio.ByteBuffer;
+
+import static org.lwjgl.opengl.GL11.*;
 
 @Mixin(Window.class)
 public class WindowMixin {
@@ -42,10 +45,39 @@ public class WindowMixin {
             return;
         }
 
+        MCioConfig config = MCioConfig.getInstance();
+        if (config.mcioExp1) {
+            doCaptureExp(frameCapture);
+        } else {
+            doCapture(frameCapture);
+        }
+
+    }
+
+    private void doCapture(MCioFrameCapture frameCapture) {
+        Window window = (Window)(Object)this;
+        int width = window.getFramebufferWidth();
+        int height = window.getFramebufferHeight();
+
+        ByteBuffer pixelBuffer = ByteBuffer.allocateDirect(width * height * frameCapture.BYTES_PER_PIXEL);
+        pixelBuffer.clear(); // Reset position to 0
+
+        // Need alignment set to 1 to properly read frame sizes that are not multiples of 4.
+        int[] alignment = new int[1];
+        glGetIntegerv(GL_PACK_ALIGNMENT, alignment);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glReadBuffer(GL_BACK);
+        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixelBuffer);
+        // Reset alignment to previous value
+        glPixelStorei(GL_PACK_ALIGNMENT, alignment[0]);
+
+        frameCapture.capture(pixelBuffer, width, height);
+    }
+
+    private void doCaptureExp(MCioFrameCapture frameCapture) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         frameCapture.upload();
-        /* Bad synchronization, but works for now. Once this is handed off, this thread won't touch it again. */
-        frameCapture.capture(minecraftClient.getFramebuffer());
+        frameCapture.captureExp(minecraftClient.getFramebuffer());
     }
 
     // Intercepts the call to glfwDefaultWindowHints() so we can make modifications to the hints.
@@ -60,7 +92,7 @@ public class WindowMixin {
         if (config.hideMinecraftWindow) {
             GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
         }
-        if (config.doRetinaHack) {
+        if (config.retinaHack) {
             retinaHack();
         }
     }
