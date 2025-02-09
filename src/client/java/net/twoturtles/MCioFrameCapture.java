@@ -196,10 +196,6 @@ public final class MCioFrameCapture {
         return flippedBuffer;
     }
 
-    public ByteBuffer getFrameRaw(MCioFrame frame) {
-        return frame.frame();
-    }
-
     private ByteBuffer writeFrame(MCioFrame frame, FrameWriter frameWriter) {
         frame.frame().rewind(); // Ensure the buffer is at the start
 
