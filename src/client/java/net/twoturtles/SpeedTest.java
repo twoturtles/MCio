@@ -11,6 +11,8 @@ import java.io.IOException;
 /**
  * Run steps as fast as possible. Uses threads to send / recv actions and observations
  * to the MCio ports.
+ * MCIO_HIDE_WINDOW=true MCIO_SYNC_SPEED_TEST=true MCIO_MODE=sync - ObservationsSent per-second=320.5
+ * MCIO_SYNC_SPEED_TEST=true MCIO_MODE=sync - ObservationsSent per-second=305.7
  */
 public class SpeedTest {
     private final Logger LOGGER = LogUtils.getLogger();
