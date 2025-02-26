@@ -2,7 +2,6 @@ package net.twoturtles;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import com.mojang.blaze3d.platform.GlConst;
@@ -16,9 +15,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.stb.STBImageWrite;
-import org.lwjgl.stb.STBIWriteCallback;
 
 /* Interface and state storage for WindowMixin:beforeSwap. beforeSwap does the actual capture
  * and stores the frame here. ObservationHandler picks up the most recent frame at the end of every tick */
@@ -118,16 +115,7 @@ public final class MCioFrameCapture {
         }
     }
 
-    public void captureDebug(String name, ByteBuffer pixelBuffer, int width, int height) {
-        pixelBuffer.rewind();
-        MCioFrame frame = new MCioFrame(frameSequence, frameCaptureSequence,
-                width, height, BYTES_PER_PIXEL, pixelBuffer);
-        String fileName = String.format("%03d-%s.png", frame.frame_sequence(), name);
-        MCioFrameSave.getInstance().saveFrame(frame, fileName);
-    }
-
     public void incrementFrameSequence() { frameSequence++; }
-    public int getFrameSequence() { return frameSequence; }
 
     public boolean shouldCaptureFrame() {
         frameFPS.count();
@@ -143,46 +131,6 @@ public final class MCioFrameCapture {
 
     public MCioFrame getLastCapturedFrame() { return lastCapturedFrame; }
 
-
-    /*
-     * Convert the pixels in the frame to a PNG / JPEG
-     */
-
-    @FunctionalInterface
-    private interface FrameWriter {
-        boolean convert_write(STBIWriteCallback writeToStreamCb);
-    }
-
-    public ByteBuffer getFramePNG(MCioFrame frame) {
-        return writeFrame(frame, writeToStreamCb ->
-                STBImageWrite.stbi_write_png_to_func(
-                        writeToStreamCb,
-                        0L,
-                        frame.width(),
-                        frame.height(),
-                        BYTES_PER_PIXEL,
-                        frame.frame(),
-                        frame.width() * BYTES_PER_PIXEL
-                )
-        );
-    }
-
-    public ByteBuffer getFrameJPEG(MCioFrame frame) {
-        return getFrameJPEG(frame, MCioConfig.DEFAULT_FRAME_QUALITY);
-    }
-    public ByteBuffer getFrameJPEG(MCioFrame frame, int quality) {
-        return writeFrame(frame, writeToStreamCb ->
-                STBImageWrite.stbi_write_jpg_to_func(
-                        writeToStreamCb,
-                        0L,
-                        frame.width(),
-                        frame.height(),
-                        BYTES_PER_PIXEL,
-                        frame.frame(),
-                        quality
-                ) != 0  // Convert return to boolean. stbi_write_png_to_func() already does this
-        );
-    }
     public ByteBuffer getFrameRAW(MCioFrame frame) {
 //      return flipFrame(frame);
         return frame.frame;
@@ -205,27 +153,6 @@ public final class MCioFrameCapture {
         }
 
         return flippedBuffer;
-    }
-
-    private ByteBuffer writeFrame(MCioFrame frame, FrameWriter frameWriter) {
-        frame.frame().rewind(); // Ensure the buffer is at the start
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        STBIWriteCallback writeToStreamCb = STBIWriteCallback.create((context, data, size) -> {
-            byte[] bytes = new byte[size];
-            MemoryUtil.memByteBuffer(data, size).get(bytes);
-            outputStream.write(bytes, 0, size);
-        });
-
-        /* Flip the OpenGL frame */
-        STBImageWrite.stbi_flip_vertically_on_write(true);
-
-        boolean success = frameWriter.convert_write(writeToStreamCb);
-        if (!success) {
-            throw new RuntimeException("Failed to write frame");
-        }
-
-        return ByteBuffer.wrap(outputStream.toByteArray());
     }
 
     /**
@@ -254,7 +181,7 @@ public final class MCioFrameCapture {
 class MCioFrameSave {
     private static MCioFrameSave instance;
     private final Logger LOGGER = LogUtils.getLogger();
-    private KeyBinding captureKey;
+    private final KeyBinding captureKey;
 
     public static void initialize() {
         // Use for initial setup.

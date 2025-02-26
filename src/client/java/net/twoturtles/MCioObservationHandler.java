@@ -125,8 +125,6 @@ public class MCioObservationHandler {
         sendFPS.count();
         MCioConfig config = MCioConfig.getInstance();
         ByteBuffer frameBuf = switch (config.frameType) {
-            case JPEG -> MCioFrameCapture.getInstance().getFrameJPEG(frame, config.frameQuality);
-            case PNG -> MCioFrameCapture.getInstance().getFramePNG(frame);
             case RAW -> MCioFrameCapture.getInstance().getFrameRAW(frame);
         };
         return new FrameRV(

@@ -7,10 +7,10 @@ public class MCioConfig {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public enum MCioMode {
-        OFF, SYNC, ASYNC;
+        OFF, SYNC, ASYNC
     }
     public enum MCioFrameType {
-        RAW, PNG, JPEG;
+        RAW
     }
 
     // Constants
@@ -21,7 +21,6 @@ public class MCioConfig {
     // Configurable
     public MCioMode mode;
     public MCioFrameType frameType;
-    public int frameQuality;
     public boolean unlimitedFPS;   // Disable Minecraft FPS limiting
     public int actionPort;
     public int observationPort;
@@ -33,7 +32,6 @@ public class MCioConfig {
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
     public static final MCioFrameType DEFAULT_MCIO_FRAME_TYPE = MCioFrameType.RAW;
-    public static final int DEFAULT_FRAME_QUALITY = 85; // Only used for JPEG frames
     public static final boolean DEFAULT_UNLIMITED_FPS_SYNC = true;
     public static final boolean DEFAULT_UNLIMITED_FPS_ASYNC = false;
     public static final int DEFAULT_ACTION_PORT = 4001; // For receiving 4ctions
@@ -52,8 +50,6 @@ public class MCioConfig {
     private MCioConfig() {
         mode = getEnvEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
         frameType = getEnvEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
-        frameQuality = getEnvInt("MCIO_FRAME_QUALITY", DEFAULT_FRAME_QUALITY);
-        frameQuality = Math.clamp(frameQuality, 1, 100);
 
         // The default depends on the mode. In sync mode we want to go as fast as possible.
         // Async mode can use however Minecraft is configured.
@@ -73,9 +69,6 @@ public class MCioConfig {
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
-        if (frameType == MCioFrameType.JPEG) {
-            LOGGER.info("MCIO_FRAME_QUALITY={}", frameQuality);
-        }
         LOGGER.info("MCIO_UNLIMITED_FPS={}", unlimitedFPS);
         LOGGER.info("MCIO_ACTION_PORT={}", actionPort);
         LOGGER.info("MCIO_OBSERVATION_PORT={}", observationPort);
@@ -92,6 +85,8 @@ public class MCioConfig {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
+            LOGGER.error("Invalid config number: key={} value={}", key, value);
+            System.exit(1);
             return defaultValue;
         }
     }
@@ -110,6 +105,8 @@ public class MCioConfig {
         try {
             return Enum.valueOf(defaultValue.getDeclaringClass(), value.toUpperCase());
         } catch (IllegalArgumentException e) {
+            LOGGER.error("Invalid config enum value: key={} value={}", key, value);
+            System.exit(1);
             return defaultValue;
         }
     }
