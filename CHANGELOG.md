@@ -8,6 +8,7 @@
 - Add raw frame support and make it the default.
   Raw frames are currently exported upside-down for
   performance reasons.
+- Removed jpeg and png frame export. Too slow.
 - Client and server tick fast in sync mode
 - MCIO_PROTOCOL_VERSION = 3
 
