@@ -41,9 +41,6 @@ public class WindowMixin {
         frameCapture.incrementFrameSequence();
 
         if (!frameCapture.isEnabled()) return;
-        if (!frameCapture.shouldCaptureFrame()) {
-            return;
-        }
 
         MCioConfig config = MCioConfig.getInstance();
         if (config.mcioExp1) {

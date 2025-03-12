@@ -20,13 +20,10 @@ import org.lwjgl.stb.STBImageWrite;
 /* Interface and state storage for WindowMixin:beforeSwap. beforeSwap does the actual capture
  * and stores the frame here. ObservationHandler picks up the most recent frame at the end of every tick */
 public final class MCioFrameCapture {
-    public final int ASYNC_CAPTURE_EVERY_N_FRAMES = 1;
     public final int BYTES_PER_PIXEL = 3;  // GL_RGB
 
     private final Logger LOGGER = LogUtils.getLogger();
-    private final TrackPerSecond frameFPS = new TrackPerSecond("Frames");
     private final TrackPerSecond captureFPS = new TrackPerSecond("FrameCaptures");
-    private final MCioConfig config = MCioConfig.getInstance();
     private boolean enabled = false;
 
     private int frameSequence = 0;  // Total number of frames so far
@@ -116,18 +113,6 @@ public final class MCioFrameCapture {
     }
 
     public void incrementFrameSequence() { frameSequence++; }
-
-    public boolean shouldCaptureFrame() {
-        frameFPS.count();
-        if (config.mode == MCioConfig.MCioMode.ASYNC) {
-            // In async mode we're running real time. As optimization only capture every other frame.
-            // Probably not necessary
-            return frameSequence % ASYNC_CAPTURE_EVERY_N_FRAMES == 0;
-        } else {
-            // In sync mode every frame is a tick, so always capture.
-            return true;
-        }
-    }
 
     public MCioFrame getLastCapturedFrame() { return lastCapturedFrame; }
 

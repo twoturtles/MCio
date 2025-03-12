@@ -36,7 +36,7 @@ public class MCioConfig {
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
     public static final MCioFrameType DEFAULT_MCIO_FRAME_TYPE = MCioFrameType.RAW;
-    public static final MCioAsyncObsTrigger DEFAULT_ASYNC_OBSERVATION_TRIGGER = MCioAsyncObsTrigger.TICK;
+    public static final MCioAsyncObsTrigger DEFAULT_ASYNC_OBSERVATION_TRIGGER = MCioAsyncObsTrigger.FRAME;
     public static final boolean DEFAULT_UNLIMITED_FPS_SYNC = true;
     public static final boolean DEFAULT_UNLIMITED_FPS_ASYNC = false;
     public static final int DEFAULT_ACTION_PORT = 4001; // For receiving 4ctions
