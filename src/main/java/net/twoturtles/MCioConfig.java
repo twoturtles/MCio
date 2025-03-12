@@ -12,6 +12,9 @@ public class MCioConfig {
     public enum MCioFrameType {
         RAW
     }
+    public enum MCioAsyncObsTrigger {
+        TICK, FRAME
+    }
 
     // Constants
     public static final int MCIO_PROTOCOL_VERSION = 3;
@@ -21,6 +24,7 @@ public class MCioConfig {
     // Configurable
     public MCioMode mode;
     public MCioFrameType frameType;
+    public MCioAsyncObsTrigger observationTrigger;
     public boolean unlimitedFPS;   // Disable Minecraft FPS limiting
     public int actionPort;
     public int observationPort;
@@ -32,6 +36,7 @@ public class MCioConfig {
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
     public static final MCioFrameType DEFAULT_MCIO_FRAME_TYPE = MCioFrameType.RAW;
+    public static final MCioAsyncObsTrigger DEFAULT_ASYNC_OBSERVATION_TRIGGER = MCioAsyncObsTrigger.TICK;
     public static final boolean DEFAULT_UNLIMITED_FPS_SYNC = true;
     public static final boolean DEFAULT_UNLIMITED_FPS_ASYNC = false;
     public static final int DEFAULT_ACTION_PORT = 4001; // For receiving 4ctions
@@ -50,6 +55,7 @@ public class MCioConfig {
     private MCioConfig() {
         mode = getEnvEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
         frameType = getEnvEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
+        observationTrigger = getEnvEnum("MCIO_ASYNC_OBSERVATION_TRIGGER", DEFAULT_ASYNC_OBSERVATION_TRIGGER);
 
         // The default depends on the mode. In sync mode we want to go as fast as possible.
         // Async mode can use however Minecraft is configured.
@@ -69,6 +75,7 @@ public class MCioConfig {
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
+        LOGGER.info("MCIO_ASYNC_OBSERVATION_TRIGGER={}", observationTrigger);
         LOGGER.info("MCIO_UNLIMITED_FPS={}", unlimitedFPS);
         LOGGER.info("MCIO_ACTION_PORT={}", actionPort);
         LOGGER.info("MCIO_OBSERVATION_PORT={}", observationPort);
