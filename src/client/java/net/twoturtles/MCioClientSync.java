@@ -23,7 +23,7 @@ public class MCioClientSync {
     private int ticks = 0;
 
     /**
-     * See MCioServerSync for more info.
+     * See MCioSyncUtil for more info.
      */
     MCioClientSync(MCioConfig config) {
         client = MinecraftClient.getInstance();
