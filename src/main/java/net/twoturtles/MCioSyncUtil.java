@@ -37,15 +37,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MCioSyncUtil {
     private static final Logger LOGGER = LogUtils.getLogger();
     private volatile boolean gameRunning = false;
-    private final AtomicInteger cycleCount = new AtomicInteger();
+    private final AtomicInteger cycleCount = new AtomicInteger();   // Track the loops through client/server ticks
 
     // Synchronize the transition to gameRunning
     private volatile boolean readyToSyncThreads = false;
-    private final CyclicBarrier threadSyncBarrier = new CyclicBarrier(2,this::threadSyncDone);
+    private final CyclicBarrier threadSyncBarrier = new CyclicBarrier(2, this::threadSyncDone);
 
-    // Alternate ticks once gameRunning is true
-    private final Semaphore clientTickSem = new Semaphore(1);   // client thread goes first
+    // Semaphores for tick control
+    // Alternate client/server ticks once gameRunning is true
+    private final Semaphore clientTickSem = new Semaphore(1);  // client goes first
     private final Semaphore serverTickSem = new Semaphore(0);
+
+    // Create a context for each tick that defines its logic
+    private final TickContext CLIENT_TICK = new TickContext("Client", clientTickSem, serverTickSem, true);
+    private final TickContext SERVER_TICK = new TickContext("Server", serverTickSem, clientTickSem, false);
 
     // Singleton instance
     private static final MCioSyncUtil INSTANCE = new MCioSyncUtil();
@@ -60,17 +65,19 @@ public class MCioSyncUtil {
     }
 
     public void clientStartTick() {
-        startTick("Client", clientTickSem, "Client", true);   // Acquire client
+        startTick(CLIENT_TICK);
     }
+
     public void clientEndTick() {
-        endTick("Client", serverTickSem, "Server");     // Release server
+        endTick(CLIENT_TICK);
     }
 
     public void serverStartTick() {
-        startTick("Server", serverTickSem, "Server", false);   // Acquire server
+        startTick(SERVER_TICK);
     }
+
     public void serverEndTick() {
-        endTick("Server", clientTickSem, "Client");     // Release client
+        endTick(SERVER_TICK);
     }
 
     // This should be called via MCioClientSyncUtil.checkAndSetGameRunning().
@@ -101,26 +108,41 @@ public class MCioSyncUtil {
         readyToSyncThreads = false;
     }
 
-    private void startTick(String tickLabel, Semaphore sem, String semLabel, boolean increment) {
+    private void startTick(TickContext ctx) {
         handleThreadSyncTransition();
         if (gameRunning) {
             try {
-                LOGGER.debug("Wait startTick={} sem={}", tickLabel, semLabel);
-                sem.acquire();
-                if (increment) {
+                LOGGER.debug("{}-Waiting", ctx.label);
+                ctx.acquireSem.acquire();
+                if (ctx.incrementCycle) {
                     cycleCount.incrementAndGet();
                 }
-                LOGGER.debug("cycle={} Acquired startTick={} sem={}", cycleCount.get(), tickLabel, semLabel);
+                LOGGER.debug("Cycle={} {}-Start-Tick", cycleCount.get(), ctx.label);
             } catch (InterruptedException e) {
                 LOGGER.warn("Interrupted", e);
             }
         }
     }
-    private void endTick(String tickLabel, Semaphore sem, String semLabel) {
+
+    private void endTick(TickContext ctx) {
         if (gameRunning) {
-            LOGGER.debug("cycle={} Release endTick={} releaseSem={}", cycleCount.get(), tickLabel, semLabel);
-            sem.release();
+            LOGGER.debug("Cycle={} {}-End-Tick", cycleCount.get(), ctx.label);
+            ctx.releaseSem.release();
         }
     }
 
+    // TickContext to encapsulate tick-specific info
+    private static class TickContext {
+        final String label;
+        final Semaphore acquireSem;
+        final Semaphore releaseSem;
+        final boolean incrementCycle;
+
+        TickContext(String label, Semaphore acquireSem, Semaphore releaseSem, boolean incrementCycle) {
+            this.label = label;
+            this.acquireSem = acquireSem;
+            this.releaseSem = releaseSem;
+            this.incrementCycle = incrementCycle;
+        }
+    }
 }
