@@ -6,6 +6,7 @@ import com.mojang.logging.LogUtils;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MCIO_MODE=sync refers to the agent and Minecraft being synchronized.
@@ -24,15 +25,19 @@ import java.util.concurrent.Semaphore;
  * Order of events (once the game is running)
  * MinecraftClient.run() -> game loop ->
  *     MinecraftClient.render() [Mojang calls this runTick()] -> MinecraftClient.tick() ->
- *     START_CLIENT_TICK -> Wait for previous server to finish tick -> wait for action -> process action -> client tick ->
- *     continue render() -> frame capture callback -> generateObservation() ->
- *     END_CLIENT_TICK -> START_SERVER_TICK (waiting for end client tick) ->
- *     END_SERVER_TICK (signal client to start) -> ...
+ *     1. START_CLIENT_TICK -> acquire client sem (Wait for previous server to finish tick) ->
+ *       wait for action -> process action -> client tick ->
+ *       continue render() -> frame capture callback -> generateObservation() ->
+ *     2. END_CLIENT_TICK -> release server sem
+ *     3. START_SERVER_TICK -> acquire server sem
+ *     4. END_SERVER_TICK  -> release client sem
+ *     ...
  *
  */
 public class MCioSyncUtil {
     private static final Logger LOGGER = LogUtils.getLogger();
     private volatile boolean gameRunning = false;
+    private final AtomicInteger cycleCount = new AtomicInteger();
 
     // Synchronize the transition to gameRunning
     private volatile boolean readyToSyncThreads = false;
@@ -54,18 +59,18 @@ public class MCioSyncUtil {
         return gameRunning;
     }
 
-    public void serverStartTick() {
-        startTick(serverTickSem, "Server");   // Acquire server
-    }
-    public void serverEndTick() {
-        endTick(clientTickSem, "Client");     // Release client
-    }
-
     public void clientStartTick() {
-        startTick(clientTickSem, "Client");   // Acquire client
+        startTick("Client", clientTickSem, "Client", true);   // Acquire client
     }
     public void clientEndTick() {
-        endTick(serverTickSem, "Server");     // Release server
+        endTick("Client", serverTickSem, "Server");     // Release server
+    }
+
+    public void serverStartTick() {
+        startTick("Server", serverTickSem, "Server", false);   // Acquire server
+    }
+    public void serverEndTick() {
+        endTick("Server", clientTickSem, "Client");     // Release client
     }
 
     // This should be called via MCioClientSyncUtil.checkAndSetGameRunning().
@@ -96,21 +101,24 @@ public class MCioSyncUtil {
         readyToSyncThreads = false;
     }
 
-    private void startTick(Semaphore sem, String label) {
+    private void startTick(String tickLabel, Semaphore sem, String semLabel, boolean increment) {
         handleThreadSyncTransition();
         if (gameRunning) {
             try {
-                LOGGER.debug("Wait semaphore={} thread={}", label, Thread.currentThread().getName());
+                LOGGER.debug("Wait startTick={} sem={}", tickLabel, semLabel);
                 sem.acquire();
-                LOGGER.debug("Acquired semaphore={} thread={}", label, Thread.currentThread().getName());
+                if (increment) {
+                    cycleCount.incrementAndGet();
+                }
+                LOGGER.debug("cycle={} Acquired startTick={} sem={}", cycleCount.get(), tickLabel, semLabel);
             } catch (InterruptedException e) {
                 LOGGER.warn("Interrupted", e);
             }
         }
     }
-    private void endTick(Semaphore sem, String label) {
+    private void endTick(String tickLabel, Semaphore sem, String semLabel) {
         if (gameRunning) {
-            LOGGER.debug("Release semaphore={} thread={}", label, Thread.currentThread().getName());
+            LOGGER.debug("cycle={} Release endTick={} releaseSem={}", cycleCount.get(), tickLabel, semLabel);
             sem.release();
         }
     }

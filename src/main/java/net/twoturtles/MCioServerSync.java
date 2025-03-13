@@ -12,10 +12,8 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 class MCioServerSync {
     private final Logger LOGGER = LogUtils.getLogger();
     private final MCioSyncUtil syncUtil = MCioSyncUtil.getInstance();
-    private MCioConfig config;
 
     public MCioServerSync(MCioConfig config) {
-        this.config = config;
         ServerLifecycleEvents.SERVER_STARTED.register(this::init);
         ServerTickEvents.START_SERVER_TICK.register(this::startTickCB);
         ServerTickEvents.END_SERVER_TICK.register(this::endTickCB);
