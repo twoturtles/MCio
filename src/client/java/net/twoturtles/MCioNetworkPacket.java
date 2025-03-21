@@ -88,8 +88,7 @@ record ActionPacket(
         boolean stop,   // Tell Minecraft to exit
 
         // Action
-        int[][] keys,           // Array of (key, action) pairs. E.g., (GLFW.GLFW_KEY_W, GLFW.GLFW_PRESS)
-        int[][] mouse_buttons,    //  Array of (button, action) pairs. E.g., (GLFW.GLFW_MOUSE_BUTTON_1, GLFW.GLFW_PRESS)
+        Input[] input,          // Array of key/mouse button inputs
         int[][] cursor_pos// Array of length 1 of (xpos, ypos) pairs. Array just for consistency. Also, the list makes it easy to leave empty.
 ) {
     // Helper for debugging to print the double arrays nicely
@@ -97,6 +96,17 @@ record ActionPacket(
         return Arrays.deepToString(array);
     }
 }
+
+enum InputType {
+    KEY,    // 0
+    MOUSE   // 1
+}
+
+record Input(
+        InputType type,
+        int code,   // GLFW key/button code, e.g. GLFW.GLFW_KEY_LEFT_SHIFT or GLFW.GLFW_MOUSE_BUTTON_LEFT
+        int action  // GLFW.GLFW_RELEASE or GLFW.GLFW_PRESS
+) {}
 
 /* Deserialize ActionPacket */
 class ActionPacketUnpacker {

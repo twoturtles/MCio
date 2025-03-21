@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0+1.21.3 - 2025-03-XX
+- Change protocol to combine keys and mouse buttons in the same list
+- MCIO_PROTOCOL_VERSION = 4
+
 ## 0.4.0+1.21.3 - 2025-03-11
 - Add key/button tracking
 - Add clean_input action

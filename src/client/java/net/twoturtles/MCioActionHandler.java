@@ -53,19 +53,14 @@ class MCioActionHandler {
             }
         }
 
-        /* Keyboard handler */
-        for (int[] tuple : action.keys()) {
-            int keyCode = tuple[0];
-            int actionCode = tuple[1];
-            keyManager.update(keyCode, actionCode);
+        // Key / Mouse button handling
+        for (Input input: action.input()) {
+            switch (input.type()) {
+                case KEY -> keyManager.update(input.code(), input.action());
+                case MOUSE -> buttonManager.update(input.code(), input.action());
+            }
         }
 
-        /* Mouse handler */
-        for (int[] tuple : action.mouse_buttons()) {
-            int buttonCode = tuple[0];
-            int actionCode = tuple[1];
-            buttonManager.update(buttonCode, actionCode);
-        }
         for (int[] tuple : action.cursor_pos()) {
             client.execute(() -> {
                 ((MouseMixinInterface) client.mouse).onCursorPosAgent$Mixin(

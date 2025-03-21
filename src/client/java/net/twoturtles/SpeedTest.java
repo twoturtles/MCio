@@ -39,8 +39,7 @@ public class SpeedTest {
                 new String[0],
                 false,
                 false,
-                new int[0][],
-                new int[0][],
+                new Input[]{},
                 new int[0][]
         );
 
