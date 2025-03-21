@@ -88,7 +88,7 @@ record ActionPacket(
         boolean stop,   // Tell Minecraft to exit
 
         // Action
-        Input[] input,          // Array of key/mouse button inputs
+        Input[] inputs,          // Array of key/mouse button inputs
         int[][] cursor_pos// Array of length 1 of (xpos, ypos) pairs. Array just for consistency. Also, the list makes it easy to leave empty.
 ) {
     // Helper for debugging to print the double arrays nicely
