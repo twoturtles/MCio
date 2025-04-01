@@ -45,6 +45,7 @@ dependencies {
 	// https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
 	include(implementation('com.fasterxml.jackson.core:jackson-core:2.18.1'))
 	include(implementation('com.fasterxml.jackson.core:jackson-databind:2.18.1'))
+	include(implementation("com.fasterxml.jackson.core:jackson-annotations:2.18.1"))
 	include(implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.18.1'))
 
 	// Testing
