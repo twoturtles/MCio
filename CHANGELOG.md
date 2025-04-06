@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0+1.21.3 - 2025-03-XX
+## 0.5.0+1.21.3 - 2025-04-06
 - Change protocol to combine keys and mouse buttons in the same list
 - MCIO_PROTOCOL_VERSION = 4
 
