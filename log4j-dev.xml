@@ -6,10 +6,8 @@
     <Logger name="net.twoturtles" level="info" additivity="false">
       <AppenderRef ref="SysOut" />
     </Logger>
-    <!--
-    <Logger name="net.twoturtles.MCioSyncUtil" level="debug" additivity="false">
+    <Logger name="net.twoturtles.MCioActionHandler" level="debug" additivity="false">
       <AppenderRef ref="SysOut" />
     </Logger>
-    -->
   </Loggers>
 </Configuration>

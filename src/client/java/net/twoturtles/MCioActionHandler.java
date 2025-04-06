@@ -31,6 +31,7 @@ class MCioActionHandler {
 
     void processAction(ActionPacket action) {
         recvPPS.count();
+        LOGGER.debug("ActionPacket: {}", action);
 
         /* Stop */
         if (action.stop()) {
