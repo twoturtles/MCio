@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import java.io.PrintStream;
 import java.util.Arrays;
 
+/* XXX Refactor */
 
 public class MCioConfig {
     /**
@@ -17,9 +18,11 @@ public class MCioConfig {
     public enum MCioMode {
         OFF, SYNC, ASYNC
     }
+
     public enum MCioFrameType {
         RAW
     }
+
     public enum MCioAsyncObsTrigger {
         TICK, FRAME
     }
@@ -56,6 +59,7 @@ public class MCioConfig {
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
+
     public static MCioConfig getInstance() {
         return INSTANCE;
     }
@@ -139,50 +143,50 @@ public class MCioConfig {
 
     public static String getHelp() {
         return """
-    
-    MCio Configuration Options:
-    ===========================
-    
-    General Options:
-      MCIO_HELP                      [boolean] Default: false
-        Show this help message and exit
-    
-      MCIO_MODE                      [%s] Default: %s
-        Set the operation mode
-    
-    Communication Options:
-      MCIO_OBSERVATION_PORT          [int] Default: %d
-        Port for sending observations
-    
-      MCIO_ACTION_PORT               [int] Default: %d
-        Port for receiving actions
-    
-    Display Options:
-      MCIO_HIDE_WINDOW               [boolean] Default: %b
-        Hide the Minecraft window
-    
-      MCIO_DO_RETINA_HACK            [boolean] Default: %b
-        Disable retina double resolution
-    
-    Performance Options:
-      MCIO_UNLIMITED_FPS             [boolean] Default: SYNC=%b, ASYNC=%b
-        Disable Minecraft FPS limiting.
-        Note that the default depends on MCIO_MODE.
-    
-      MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
-        Enable sync mode speed testing
-    
-    Experimental / Misc Options:
-      MCIO_ASYNC_OBSERVATION_TRIGGER [%s] Default: %s
-        Trigger method for async observations
-    
-      MCIO_EXP1                      [boolean] Default: %b
-        Enable experimental feature 1
-    
-      MCIO_FRAME_TYPE                [%s] Default: %s
-        Set the frame type format (unused)
-    
-    """.formatted(
+                
+                MCio Configuration Options
+                ==========================
+                
+                General Options:
+                  MCIO_HELP                      [boolean] Default: false
+                    Show this help message and exit
+                
+                  MCIO_MODE                      [%s] Default: %s
+                    Set the operation mode
+                
+                Communication Options:
+                  MCIO_OBSERVATION_PORT          [int] Default: %d
+                    Port for sending observations
+                
+                  MCIO_ACTION_PORT               [int] Default: %d
+                    Port for receiving actions
+                
+                Display Options:
+                  MCIO_HIDE_WINDOW               [boolean] Default: %b
+                    Hide the Minecraft window
+                
+                  MCIO_DO_RETINA_HACK            [boolean] Default: %b
+                    Disable retina double resolution
+                
+                Performance Options:
+                  MCIO_UNLIMITED_FPS             [boolean] Default: SYNC=%b, ASYNC=%b
+                    Disable Minecraft FPS limiting
+                    Note: default depends on MCIO_MODE setting
+                
+                  MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
+                    Enable sync mode speed testing
+                
+                Advanced Options:
+                  MCIO_ASYNC_OBSERVATION_TRIGGER [%s] Default: %s
+                    Trigger method for async observations
+                
+                  MCIO_EXP1                      [boolean] Default: %b
+                    Enable experimental feature 1
+                
+                  MCIO_FRAME_TYPE                [%s] Default: %s
+                    Set the frame type format
+                
+                """.formatted(
                 Arrays.toString(MCioMode.values()),
                 DEFAULT_MCIO_MODE,
                 DEFAULT_OBSERVATION_PORT,
@@ -199,5 +203,4 @@ public class MCioConfig {
                 DEFAULT_MCIO_FRAME_TYPE
         );
     }
-
 }
