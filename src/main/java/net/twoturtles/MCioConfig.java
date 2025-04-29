@@ -175,9 +175,8 @@ public class MCioConfig {
                     Disable Minecraft FPS limiting
                     Note: default depends on MCIO_MODE setting
                 
-                  __GLX_VENDOR_LIBRARY_NAME
+                  __GLX_VENDOR_LIBRARY_NAME      [nvidia, amd, mesa]
                     Use to enable a gpu in headless mode on Linux.
-                    Possible values: nvidia, amd, mesa
                 
                   MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
                     Enable sync mode speed testing
