@@ -3,7 +3,15 @@ package net.twoturtles;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
+import java.io.PrintStream;
+import java.util.Arrays;
+
+
 public class MCioConfig {
+    /**
+     * Load config from System Properties or environment variables.
+     * The priority is System Property > Env var > default
+     */
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public enum MCioMode {
@@ -53,9 +61,15 @@ public class MCioConfig {
     }
 
     private MCioConfig() {
-        mode = getEnvEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
-        frameType = getEnvEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
-        observationTrigger = getEnvEnum("MCIO_ASYNC_OBSERVATION_TRIGGER", DEFAULT_ASYNC_OBSERVATION_TRIGGER);
+        if (getBoolean("MCIO_HELP", false)) {
+            PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
+            stdout.println(getHelp());
+            System.exit(0);
+        }
+
+        mode = getEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
+        frameType = getEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
+        observationTrigger = getEnum("MCIO_ASYNC_OBSERVATION_TRIGGER", DEFAULT_ASYNC_OBSERVATION_TRIGGER);
 
         // The default depends on the mode. In sync mode we want to go as fast as possible.
         // Async mode can use however Minecraft is configured.
@@ -64,14 +78,14 @@ public class MCioConfig {
             case SYNC -> DEFAULT_UNLIMITED_FPS_SYNC;
             case ASYNC -> DEFAULT_UNLIMITED_FPS_ASYNC;
         };
-        unlimitedFPS = getEnvBoolean("MCIO_UNLIMITED_FPS", defaultUnlimitedFPS);
+        unlimitedFPS = getBoolean("MCIO_UNLIMITED_FPS", defaultUnlimitedFPS);
 
-        actionPort = getEnvInt("MCIO_ACTION_PORT", DEFAULT_ACTION_PORT);
-        observationPort = getEnvInt("MCIO_OBSERVATION_PORT", DEFAULT_OBSERVATION_PORT);
-        hideMinecraftWindow = getEnvBoolean("MCIO_HIDE_WINDOW", DEFAULT_HIDE_MINECRAFT_WINDOW);
-        retinaHack = getEnvBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
-        syncSpeedTest = getEnvBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
-        mcioExp1 = getEnvBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
+        actionPort = getInt("MCIO_ACTION_PORT", DEFAULT_ACTION_PORT);
+        observationPort = getInt("MCIO_OBSERVATION_PORT", DEFAULT_OBSERVATION_PORT);
+        hideMinecraftWindow = getBoolean("MCIO_HIDE_WINDOW", DEFAULT_HIDE_MINECRAFT_WINDOW);
+        retinaHack = getBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
+        syncSpeedTest = getBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
+        mcioExp1 = getBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -85,9 +99,9 @@ public class MCioConfig {
         LOGGER.info("MCIO_EXP1={}", mcioExp1);
     }
 
-    // Helper methods for parsing environment variables
-    private static int getEnvInt(String key, int defaultValue) {
-        String value = System.getenv(key);
+    // Helper methods for parsing config values from system properties or env vars
+    private static int getInt(String key, int defaultValue) {
+        String value = getConfigValue(key);
         if (value == null) return defaultValue;
         try {
             return Integer.parseInt(value);
@@ -98,16 +112,16 @@ public class MCioConfig {
         }
     }
 
-    private static boolean getEnvBoolean(String key, boolean defaultValue) {
-        String value = System.getenv(key);
+    private static boolean getBoolean(String key, boolean defaultValue) {
+        String value = getConfigValue(key);
         if (value == null) return defaultValue;
 
         value = value.toLowerCase().trim();
         return value.equals("true") || value.equals("1");
     }
 
-    private static <T extends Enum<T>> T getEnvEnum(String key, T defaultValue) {
-        String value = System.getenv(key);
+    private static <T extends Enum<T>> T getEnum(String key, T defaultValue) {
+        String value = getConfigValue(key);
         if (value == null) return defaultValue;
         try {
             return Enum.valueOf(defaultValue.getDeclaringClass(), value.toUpperCase());
@@ -116,6 +130,74 @@ public class MCioConfig {
             System.exit(1);
             return defaultValue;
         }
+    }
+
+    private static String getConfigValue(String key) {
+        // Priority: System Property > Environment Variable > null
+        return System.getProperty(key, System.getenv(key));
+    }
+
+    public static String getHelp() {
+        return """
+    
+    MCio Configuration Options:
+    ===========================
+    
+    General Options:
+      MCIO_HELP                      [boolean] Default: false
+        Show this help message and exit
+    
+      MCIO_MODE                      [%s] Default: %s
+        Set the operation mode
+    
+    Communication Options:
+      MCIO_OBSERVATION_PORT          [int] Default: %d
+        Port for sending observations
+    
+      MCIO_ACTION_PORT               [int] Default: %d
+        Port for receiving actions
+    
+    Display Options:
+      MCIO_HIDE_WINDOW               [boolean] Default: %b
+        Hide the Minecraft window
+    
+      MCIO_DO_RETINA_HACK            [boolean] Default: %b
+        Disable retina double resolution
+    
+    Performance Options:
+      MCIO_UNLIMITED_FPS             [boolean] Default: SYNC=%b, ASYNC=%b
+        Disable Minecraft FPS limiting.
+        Note that the default depends on MCIO_MODE.
+    
+      MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
+        Enable sync mode speed testing
+    
+    Experimental / Misc Options:
+      MCIO_ASYNC_OBSERVATION_TRIGGER [%s] Default: %s
+        Trigger method for async observations
+    
+      MCIO_EXP1                      [boolean] Default: %b
+        Enable experimental feature 1
+    
+      MCIO_FRAME_TYPE                [%s] Default: %s
+        Set the frame type format (unused)
+    
+    """.formatted(
+                Arrays.toString(MCioMode.values()),
+                DEFAULT_MCIO_MODE,
+                DEFAULT_OBSERVATION_PORT,
+                DEFAULT_ACTION_PORT,
+                DEFAULT_HIDE_MINECRAFT_WINDOW,
+                DEFAULT_RETINA_HACK,
+                DEFAULT_UNLIMITED_FPS_SYNC,
+                DEFAULT_UNLIMITED_FPS_ASYNC,
+                DEFAULT_SYNC_SPEED_TEST,
+                Arrays.toString(MCioAsyncObsTrigger.values()),
+                DEFAULT_ASYNC_OBSERVATION_TRIGGER,
+                DEFAULT_MCIO_EXP1,
+                Arrays.toString(MCioFrameType.values()),
+                DEFAULT_MCIO_FRAME_TYPE
+        );
     }
 
 }
