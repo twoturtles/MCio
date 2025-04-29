@@ -146,6 +146,8 @@ public class MCioConfig {
                 
                 MCio Configuration Options
                 ==========================
+                These can be set by environment variable (MCIO_MODE=SYNC) or
+                Java system property (-DMCIO_MODE=SYNC)
                 
                 General Options:
                   MCIO_HELP                      [boolean] Default: false
@@ -172,6 +174,10 @@ public class MCioConfig {
                   MCIO_UNLIMITED_FPS             [boolean] Default: SYNC=%b, ASYNC=%b
                     Disable Minecraft FPS limiting
                     Note: default depends on MCIO_MODE setting
+                
+                  __GLX_VENDOR_LIBRARY_NAME=<gpu>
+                    Use to enable a gpu in headless mode on Linux.
+                    Possible values: nvidia, amd, mesa
                 
                   MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
                     Enable sync mode speed testing
