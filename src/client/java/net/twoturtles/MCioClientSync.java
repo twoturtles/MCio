@@ -103,7 +103,7 @@ public class MCioClientSync {
     private void socketStateCallback(MCioNetworkConnection.MCioSocketType type, boolean connected) {
         if (type == MCioNetworkConnection.MCioSocketType.ACTION && !connected) {
             LOGGER.info("Clearing Input (Disconnect)");
-            actionHandler.clearInput();
+            actionHandler.requestClearInput();
         }
     }
 

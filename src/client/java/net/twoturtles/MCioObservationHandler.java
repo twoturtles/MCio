@@ -189,8 +189,8 @@ public class MCioObservationHandler {
         }
 
         // Mouse position - these are relative to the window.
-        int mouseX = (int) ((MouseMixin.MouseAccessor) client.mouse).getX();
-        int mouseY = (int) ((MouseMixin.MouseAccessor) client.mouse).getY();
+        int mouseX = (int) client.mouse.getX();
+        int mouseY = (int) client.mouse.getY();
 
         // Scale mouse position to frame.
         // This only matters for high DPI displays (Retina), but doing this works either way.

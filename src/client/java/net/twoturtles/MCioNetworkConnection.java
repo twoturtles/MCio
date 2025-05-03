@@ -90,6 +90,7 @@ class MCioNetworkConnection {
 
     /**
      * Provide a callback interface for socket status
+     * The callback is invoked on connect and disconnect as signified by the `connected` argument.
      * The callbacks will run on a zmq io thread.
      */
     @FunctionalInterface

@@ -22,6 +22,7 @@ class MCioActionHandler {
     // Track keys and buttons that are currently pressed so we can clear them on reset.
     private final InputManager keyManager;
     private final InputManager buttonManager;
+    private volatile boolean pendingClearInput = false;
 
     MCioActionHandler(MinecraftClient client) {
         this.client = client;
@@ -29,19 +30,31 @@ class MCioActionHandler {
         buttonManager = new InputManager(InputManager.Type.BUTTON, client);
     }
 
+    /**
+     * Sync mode calls this from the Render (client) thread.
+     * Async mode calls this from the ActionThread.
+     * When on the Render thread, tasks passed to client.execute() will run immediately and synchronously.
+     * Tasks passed from the ActionThread will run at a future time (not necessarily the next tick?) on the
+     * Render thread
+     */
     void processAction(ActionPacket action) {
         recvPPS.count();
         LOGGER.debug("ActionPacket: {}", action);
 
         /* Stop */
         if (action.stop()) {
-            LOGGER.info("Received Stop command");
+            LOGGER.info("Received-Stop-Command");
             client.scheduleStop();
         }
 
         /* Clear input
            Intentionally done before processing new keys / buttons in this pkt. */
         if (action.clear_input()) {
+            pendingClearInput = true;
+        }
+        if (pendingClearInput) {
+            LOGGER.info("Running-Clear-Input");
+            pendingClearInput = false;
             clearInput();
         }
 
@@ -49,7 +62,7 @@ class MCioActionHandler {
         ClientPlayerEntity player = client.player;
         if (player != null) {
             for (String command : action.commands()) {
-                LOGGER.info("Run Command: {}", command);
+                LOGGER.info("Run-Command: {}", command);
                 player.networkHandler.sendChatCommand(command);
             }
         }
@@ -71,12 +84,25 @@ class MCioActionHandler {
     }
 
     /**
-     * Clear all key / button presses
+     * Clear all key / button presses and set cursor to 0,0
      */
-    void clearInput() {
+    private void clearInput() {
         keyManager.clear();
         buttonManager.clear();
+        client.execute(() -> {
+            ((MouseMixin.MouseAccessor) client.mouse).setX(0.0);
+            ((MouseMixin.MouseAccessor) client.mouse).setY(0.0);
+        });
     }
+
+    /**
+     * Call from any thread to request that processAction clear inputs.
+     * This is called from networking threads when connections go up/down.
+     */
+    public void requestClearInput() {
+        pendingClearInput = true;
+    }
+
 }
 
 // Send key/button events and track which are currently pressed.

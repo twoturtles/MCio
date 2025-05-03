@@ -25,13 +25,13 @@ public class MouseMixin implements MouseMixinInterface {
     @Unique
     private boolean isAgentMovement = false;
 
-    // Public accessors for the private x and y fields
+    // Public setters for the private x and y fields (there are already public getters).
     @Mixin(Mouse.class)
     public interface MouseAccessor {
         @Accessor("x")
-        double getX();
+        void setX(double x);
         @Accessor("y")
-        double getY();
+        void setY(double y);
     }
 
     // Access to onMouseButton for the agent.
