@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1+1.21.3 - 2025-05-03
+- Update readme for mcio_ctrl
+- MCIO_PROTOCOL_VERSION = 4
+
 ## 0.6.0+1.21.3 - 2025-05-03
 - More consistent clear input behavior in sync mode
 - Clear input also sets the mouse to a default position
