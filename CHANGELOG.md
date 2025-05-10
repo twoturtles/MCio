@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0+1.21.3 - 2025-05-09
+- MCIO_PROTOCOL_VERSION = 4
+
 ## 0.6.1+1.21.3 - 2025-05-05
 - Update readme for mcio_ctrl
 - MCIO_PROTOCOL_VERSION = 4
