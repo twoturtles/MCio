@@ -1,5 +1,7 @@
 # Minecraft Input/Output (MCio)
 
+### [MCio mod](https://github.com/twoturtles/MCio) | [mcio_ctrl](https://github.com/twoturtles/mcio_ctrl) | [Documentation](https://github.com/twoturtles/mcio_ctrl/wiki) | [Discord](https://discord.gg/vaFEBynG)
+
 MCio is a Fabric mod that provides a streamlined, high-performance network interface to Minecraft, specifically tailored for AI research. It allows for seamless programmatic control via simulated keyboard and mouse inputs and delivers real-time video frames and game state information through a ZeroMQ (ZMQ) interface.
 
 ## Key Features
