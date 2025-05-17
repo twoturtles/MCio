@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0+1.21.3 - 2025-05-09
+## 1.1.0+1.21.3 - 2025-05-16
 - Fractional cursor positions. This allows for POV changes
   of < 0.15 degrees, matching MineRL.
 - MCIO_PROTOCOL_VERSION = 5
