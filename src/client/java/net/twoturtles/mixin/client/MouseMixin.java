@@ -43,7 +43,7 @@ public class MouseMixin implements MouseMixinInterface {
 
     /* Everything below is a convoluted path to allow the agent to update the cursor position.
      * The call path for the agent is:
-     * MouseMixinInterface.onCursorPosAgent -> MouseMixin.OnCursorPosAgent ->
+     * MouseMixinInterface.onCursorPosAgent$Mixin -> MouseMixin.OnCursorPosAgent$Mixin ->
      * MouseMixin.invokeOnCursorPos -> Mouse.onCursorPos
      */
 
