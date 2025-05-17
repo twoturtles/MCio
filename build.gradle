@@ -156,7 +156,7 @@ loom {
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
 	projectId = "MCio"
-	versionNumber = "1.0.1.dev0+1.21.3"
+	versionNumber = "1.1.0+1.21.3"
 	changelog = file("CHANGELOG.md").text
 	versionType = "release"
 	uploadFile = remapJar
