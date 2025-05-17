@@ -40,7 +40,7 @@ public class SpeedTest {
                 false,
                 false,
                 new Input[]{},
-                new int[0][]
+                new double[0][]
         );
 
         byte[] pBytes;

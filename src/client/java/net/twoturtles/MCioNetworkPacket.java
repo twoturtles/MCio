@@ -32,7 +32,7 @@ record ObservationPacket(
         // Observation
         ByteBuffer frame,
         int cursor_mode,
-        int[] cursor_pos,    // [x, y]
+        double[] cursor_pos,    // [x, y]
         float health,
         float[] player_pos,   // [x, y, z]
         float player_pitch,
@@ -89,7 +89,10 @@ record ActionPacket(
 
         // Action
         Input[] inputs,          // Array of key/mouse button inputs
-        int[][] cursor_pos// Array of length 1 of (xpos, ypos) pairs. Array just for consistency. Also, the list makes it easy to leave empty.
+
+        // Array of length 1 of (xpos, ypos) pairs. Array just for consistency.
+        // Also, the list makes it easy to leave empty.
+        double[][] cursor_pos
 ) {
     // Helper for debugging to print the double arrays nicely
     public String arrayToString(int[][] array) {

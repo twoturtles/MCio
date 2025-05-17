@@ -70,7 +70,7 @@ public class MCioObservationHandler {
 
                 frameRV.frame,
                 cursorMode,
-                new int[] {cursorPosRV.x, cursorPosRV.y},
+                new double[] {cursorPosRV.x, cursorPosRV.y},
                 player.getHealth(),
                 fPlayerPos,
                 player.getPitch(),
@@ -179,27 +179,22 @@ public class MCioObservationHandler {
     }
 
     record getCursorPosRV(
-            int x,
-            int y
+            double x,
+            double y
     ){}
     private getCursorPosRV getCursorPos(MinecraftClient client) {
         Window window = client.getWindow();
         if (window == null) {
-            return new getCursorPosRV(0, 0);
+            return new getCursorPosRV(0.0, 0.0);
         }
-
-        // Mouse position - these are relative to the window.
-        int mouseX = (int) client.mouse.getX();
-        int mouseY = (int) client.mouse.getY();
 
         // Scale mouse position to frame.
         // This only matters for high DPI displays (Retina), but doing this works either way.
-        long winWidth = window.getWidth();
-        long winHeight = window.getHeight();
-        int winFrameWidth = window.getFramebufferWidth();
-        int winFrameHeight = window.getFramebufferHeight();
-        int frameMouseX = (int) (mouseX * (double)winFrameWidth / winWidth);
-        int frameMouseY = (int) (mouseY * (double)winFrameHeight / winHeight);
+        double scaleX = (double) window.getFramebufferWidth() / window.getWidth();
+        double scaleY = (double) window.getFramebufferHeight() / window.getHeight();
+        // Mouse positions are relative to the window.
+        double frameMouseX = client.mouse.getX() * scaleX;
+        double frameMouseY = client.mouse.getY() * scaleY;
 
         return new getCursorPosRV(frameMouseX, frameMouseY);
     }

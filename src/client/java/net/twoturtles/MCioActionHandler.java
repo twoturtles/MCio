@@ -75,7 +75,7 @@ class MCioActionHandler {
             }
         }
 
-        for (int[] tuple : action.cursor_pos()) {
+        for (double[] tuple : action.cursor_pos()) {
             client.execute(() -> {
                 ((MouseMixinInterface) client.mouse).onCursorPosAgent$Mixin(
                         client.getWindow().getHandle(), tuple[0], tuple[1]);
