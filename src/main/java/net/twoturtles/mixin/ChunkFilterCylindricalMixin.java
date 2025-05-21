@@ -1,41 +1,61 @@
+//package net.minecraft.server.network;
 package net.twoturtles.mixin;
 
 import java.util.function.Consumer;
 
-
-import com.llamalad7.mixinextras.sugar.Local;
+import net.minecraft.server.network.ChunkFilter;
 import net.minecraft.util.math.ChunkPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(targets = "net.minecraft.server.network.ChunkFilter$Cylindrical")
-public class ChunkFilterCylindricalMixin {
+@Mixin(ChunkFilter.Cylindrical.class)
+abstract public class ChunkFilterCylindricalMixin {
     @Unique
     private static final Logger LOGGER = LoggerFactory.getLogger("net.twoturtles.mixin.main.ChunkFilterCylindricalMixin");
     @Unique
-    private static boolean runningForEach = false;
+    private static boolean firstSelect = true;
+    @Unique
+    private int nSelected;
+
+
+    /* The recommended use of Shadow is to declare the class and methods abstract */
+    @Shadow
+    abstract int getLeft();
+    @Shadow
+    abstract int getRight();
+    @Shadow
+    abstract int getBottom();
+    @Shadow
+    abstract int getTop();
 
     @Inject(method = "forEach", at = @At("HEAD"))
     private void beforeForEachStart(Consumer<ChunkPos> consumer, CallbackInfo ci) {
-        runningForEach = true;
-        LOGGER.info("forEach Started");
+        ChunkFilter.Cylindrical cyl = ((ChunkFilter.Cylindrical)(Object) this);
+        LOGGER.info("Select-Chunks Started center={} range-x={}:{} range-z={}:{} viewDistance={}",
+                cyl.center(), getLeft(), getRight(), getBottom(), getTop(), cyl.viewDistance());
+    }
+
+    @Inject(method = "forEach",
+            at = @At(value = "INVOKE",
+                    target = "Ljava/util/function/Consumer;accept(Ljava/lang/Object;)V")
+    )
+    private void beforeAcceptCall(Consumer<ChunkPos> consumer, CallbackInfo ci,
+                                  @Local(ordinal = 0) int i, @Local(ordinal = 1) int j ) {
+        LOGGER.debug("Select-Chunk {} {}", i, j);
+        nSelected++;
     }
 
     @Inject(method = "forEach", at = @At("TAIL"))
     private void afterForEachEnd(Consumer<ChunkPos> consumer, CallbackInfo ci) {
-        runningForEach = false;
-        LOGGER.info("forEach Ended");
+        LOGGER.info("Select-Chunks Ended nSelected={}", nSelected);
     }
 
-    @Inject(method = "forEach", at = @At(value = "INVOKE", target = "Ljava/util/function/Consumer;accept(Ljava/lang/Object;)V"))
-    private void beforeAcceptCall(Consumer<ChunkPos> consumer, CallbackInfo ci,
-                                  @Local(ordinal = 0) int i, @Local(ordinal = 1) int j ) {
-        System.out.println("[Mixin] Before accepting chunk");
-        LOGGER.info("AddChunk {} {}", i, j);
-    }
 }

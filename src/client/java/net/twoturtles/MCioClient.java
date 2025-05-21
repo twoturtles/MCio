@@ -4,7 +4,9 @@
 
 package net.twoturtles;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.math.ChunkPos;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -20,6 +22,10 @@ public class MCioClient implements ClientModInitializer {
 	private MCioClientSync clientSync;
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
 	MCioConfig config;
+
+	// XXX
+	private int nChunks;
+	private double start = System.nanoTime() / 1_000_000_000.0;
 
 	// Used by MinecraftClientMixin and MouseMixin
 	public static boolean MCioWindowFocused;
@@ -54,6 +60,9 @@ public class MCioClient implements ClientModInitializer {
 			clientAsync = new MCioClientAsync(config);
 		}
 		MCioFrameCapture.getInstance().setEnabled(true);
+
+		// XXX
+		debug();
 	}
 
 	void stop() {
@@ -62,5 +71,21 @@ public class MCioClient implements ClientModInitializer {
 		} else if (config.mode == MCioConfig.MCioMode.ASYNC) {
 			clientAsync.stop();
 		}
+	}
+
+	// XXX
+	void debug() {
+		ClientChunkEvents.CHUNK_LOAD.register((world, chunk) -> {
+			nChunks++;
+			double now = System.nanoTime() / 1_000_000_000.0;
+			LOGGER.info("Client-Load-Chunk pos=[{}, {}] n={} time={}",
+					chunk.getPos().x, chunk.getPos().z,
+					nChunks, String.format("%.2f", now-start));
+		});
+
+		ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> {
+			LOGGER.info("Client-Unload-Chunk pos=[{}, {}]",
+					chunk.getPos().x, chunk.getPos().z);
+		});
 	}
 }
