@@ -14,14 +14,19 @@ public class MCioUtil {
             e.printStackTrace();
         }
     }
+    /* Return current time in seconds. */
+    static double now() {
+        return System.nanoTime() / 1_000_000_000.0;
+    }
 }
 
 /* Track and log some event per second */
 class TrackPerSecond {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final double A_BILLION = 1_000_000_000.0;
-    private double start = System.nanoTime() / A_BILLION;
+    private double start = 0.0;
+    private double startTotal = 0.0;
     private int count = 0;
+    private int countTotal = 0;
     private double logTime = 10.0;
     private String name = "";
 
@@ -33,17 +38,27 @@ class TrackPerSecond {
 
     /* Count frames. Log every logTime seconds. Return true when logged. */
     boolean count() {
-        double end = System.nanoTime() / A_BILLION;
+        if (start == 0.0) {
+            start = MCioUtil.now();
+            startTotal = start;
+        }
+        double end = MCioUtil.now();
         count++;
+        countTotal++;
         if (end - start >= logTime) {
-            double pps = count / (end - start);
-            LOGGER.info("{} per-second={}", name, String.format("%.1f", pps));
+            double perSec = count / (end - start);
+            LOGGER.info("{} per-second={}", name, String.format("%.1f", perSec));
             start = end;
             count = 0;
             return true;
         }
         return false;
     }
+
+    public double getTotalPerSec() {
+        return countTotal / (MCioUtil.now() - startTotal);
+    }
+    public int getTotal() {return countTotal;}
 }
 
 /* Keep only the most recent item. If a new item is added before the previous is removed,

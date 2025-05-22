@@ -8,11 +8,9 @@ package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.GameRules;
 import org.slf4j.Logger;
 
@@ -22,10 +20,6 @@ public class MCioServer implements ModInitializer {
 	private MCioConfig config;
 	private MCioServerSync serverSync;
 	private MCioServerAsync serverAsync;
-
-	// XXX
-	private int nChunks;
-	private double start = System.nanoTime() / 1_000_000_000.0;
 
 	@Override
 	public void onInitialize() {
@@ -58,7 +52,7 @@ public class MCioServer implements ModInitializer {
 		}
 
 		// XXX
-		debug();
+		ChunksDebug.getInstance().serverDebugSetup();
 	}
 
 	void stop() {
@@ -67,23 +61,6 @@ public class MCioServer implements ModInitializer {
 		} else if (config.mode == MCioConfig.MCioMode.ASYNC) {
 			serverAsync.stop();
 		}
-	}
-
-	// XXX
-	void debug() {
-		ServerChunkEvents.CHUNK_LOAD.register((world, chunk) -> {
-			nChunks++;
-			double now = System.nanoTime() / 1_000_000_000.0;
-			ChunkPos pos = chunk.getPos();
-			LOGGER.info("Server-Load-Chunk x={} z={} n={} time={}",
-					pos.x, pos.z, nChunks, String.format("%.2f", now-start));
-		});
-
-		ServerChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> {
-			ChunkPos pos = chunk.getPos();
-			LOGGER.info("Server-Unload-Chunk {} {}", pos.x, pos.z);
-		});
-
 	}
 }
 
