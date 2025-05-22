@@ -43,6 +43,7 @@ public class MCioConfig {
     public boolean retinaHack;
     public boolean syncSpeedTest;
     public boolean mcioExp1;
+    public boolean mcioPreloadChunks;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -56,6 +57,7 @@ public class MCioConfig {
     public static final boolean DEFAULT_RETINA_HACK = true;  // Disable retina double resolution
     public static final boolean DEFAULT_SYNC_SPEED_TEST = false;
     public static final boolean DEFAULT_MCIO_EXP1 = false;
+    public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = false;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -90,6 +92,7 @@ public class MCioConfig {
         retinaHack = getBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
         syncSpeedTest = getBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
         mcioExp1 = getBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
+        mcioPreloadChunks = getBoolean("MCIO_PRELOAD_CHUNKS", DEFAULT_MCIO_PRELOAD_CHUNKS);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -101,6 +104,7 @@ public class MCioConfig {
         LOGGER.info("MCIO_RETINA_HACK={}", retinaHack);
         LOGGER.info("MCIO_SYNC_SPEED_TEST={}", syncSpeedTest);
         LOGGER.info("MCIO_EXP1={}", mcioExp1);
+        LOGGER.info("MCIO_PRELOAD_CHUNKS={}", mcioPreloadChunks);
     }
 
     // Helper methods for parsing config values from system properties or env vars
@@ -178,6 +182,10 @@ public class MCioConfig {
                   __GLX_VENDOR_LIBRARY_NAME      [nvidia, amd, mesa]
                     Use to enable a gpu in headless mode on Linux.
                 
+                  MCIO_PRELOAD_CHUNKS           [boolean] Default: %b
+                    Pre-load the initial chunks around the player.
+                    Only applies in SYNC mode.
+                
                   MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
                     Enable sync mode speed testing
                 
@@ -200,6 +208,7 @@ public class MCioConfig {
                 DEFAULT_RETINA_HACK,
                 DEFAULT_UNLIMITED_FPS_SYNC,
                 DEFAULT_UNLIMITED_FPS_ASYNC,
+                DEFAULT_MCIO_PRELOAD_CHUNKS,
                 DEFAULT_SYNC_SPEED_TEST,
                 Arrays.toString(MCioAsyncObsTrigger.values()),
                 DEFAULT_ASYNC_OBSERVATION_TRIGGER,

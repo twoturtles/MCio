@@ -59,6 +59,10 @@ class TrackPerSecond {
         return countTotal / (MCioUtil.now() - startTotal);
     }
     public int getTotal() {return countTotal;}
+    public void logTotal() {
+        LOGGER.info("{} total={} total-per-second={}", name,
+                getTotal(), String.format("%.1f", getTotalPerSec()));
+    }
 }
 
 /* Keep only the most recent item. If a new item is added before the previous is removed,

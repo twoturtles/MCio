@@ -9,8 +9,12 @@ public class MCioClientSyncUtil {
      */
     public static void checkAndSetGameRunning() {
         MinecraftClient client = MinecraftClient.getInstance();
+
+        boolean chunksReady = !MCioConfig.getInstance().mcioPreloadChunks ||
+                ChunksDebug.getInstance().clientInitialLoadComplete();
+
         // A "Screen" is an overlay, like "Loading", so currentScreen is null when the game window is up.
-        if (client.currentScreen == null) {
+        if (client.currentScreen == null && chunksReady) {
             MCioSyncUtil.getInstance().setGameRunning(true);
         }
     }

@@ -36,7 +36,7 @@ abstract public class ChunkFilterCylindricalMixin {
     @Inject(method = "forEach", at = @At("HEAD"))
     private void beforeForEachStart(Consumer<ChunkPos> consumer, CallbackInfo ci) {
         ChunkFilter.Cylindrical cyl = ((ChunkFilter.Cylindrical)(Object) this);
-        LOGGER.info("Select-Chunks Started center={} range-x={}:{} range-z={}:{} viewDistance={}",
+        LOGGER.info("SelectChunks Started center={} range-x={}:{} range-z={}:{} viewDistance={}",
                 cyl.center(), getLeft(), getRight(), getBottom(), getTop(), cyl.viewDistance());
         ChunksDebug.getInstance().selectStart();
     }
