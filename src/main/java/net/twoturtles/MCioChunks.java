@@ -40,7 +40,7 @@ public class MCioChunks {
     }
 
     // Server
-    void serverDebugSetup() {
+    void serverSetup() {
         ServerChunkEvents.CHUNK_LOAD.register((world, chunk) -> {
             serverLoad(chunk);
         });

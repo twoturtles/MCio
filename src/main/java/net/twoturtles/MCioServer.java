@@ -51,8 +51,7 @@ public class MCioServer implements ModInitializer {
 			serverAsync = new MCioServerAsync(config);
 		}
 
-		// XXX
-		MCioChunks.getInstance().serverDebugSetup();
+		MCioChunks.getInstance().serverSetup();
 	}
 
 	void stop() {

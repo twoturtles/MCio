@@ -12,7 +12,7 @@ public class MCioClientChunks {
     public static MCioClientChunks getInstance() { return INSTANCE; }
     private MCioClientChunks() { }
 
-    void clientDebugSetup() {
+    void clientSetup() {
         ClientChunkEvents.CHUNK_LOAD.register((world, chunk) -> {
             MCioChunks.getInstance().clientLoad(chunk);
         });

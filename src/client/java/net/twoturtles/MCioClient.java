@@ -55,8 +55,7 @@ public class MCioClient implements ClientModInitializer {
 		}
 		MCioFrameCapture.getInstance().setEnabled(true);
 
-		// XXX
-		MCioClientChunks.getInstance().clientDebugSetup();
+		MCioClientChunks.getInstance().clientSetup();
 	}
 
 	void stop() {
