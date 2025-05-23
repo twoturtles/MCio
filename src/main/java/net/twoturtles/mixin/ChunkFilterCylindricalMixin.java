@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 import net.minecraft.server.network.ChunkFilter;
 import net.minecraft.util.math.ChunkPos;
-import net.twoturtles.ChunksDebug;
+import net.twoturtles.MCioChunks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,7 @@ abstract public class ChunkFilterCylindricalMixin {
         ChunkFilter.Cylindrical cyl = ((ChunkFilter.Cylindrical)(Object) this);
         LOGGER.info("SelectChunks Started center={} range-x={}:{} range-z={}:{} viewDistance={}",
                 cyl.center(), getLeft(), getRight(), getBottom(), getTop(), cyl.viewDistance());
-        ChunksDebug.getInstance().selectStart();
+        MCioChunks.getInstance().selectStart();
     }
 
     @Inject(method = "forEach",
@@ -47,12 +47,12 @@ abstract public class ChunkFilterCylindricalMixin {
     )
     private void beforeAcceptCall(Consumer<ChunkPos> consumer, CallbackInfo ci,
                                   @Local(ordinal = 0) int i, @Local(ordinal = 1) int j ) {
-        ChunksDebug.getInstance().selectTrack(i, j);
+        MCioChunks.getInstance().selectTrack(i, j);
     }
 
     @Inject(method = "forEach", at = @At("TAIL"))
     private void afterForEachEnd(Consumer<ChunkPos> consumer, CallbackInfo ci) {
-        ChunksDebug.getInstance().selectEnd();
+        MCioChunks.getInstance().selectEnd();
     }
 
 }

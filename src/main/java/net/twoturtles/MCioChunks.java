@@ -6,7 +6,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.WorldChunk;
 import org.slf4j.Logger;
 
-public class ChunksDebug {
+public class MCioChunks {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private boolean selectStarted = false;
@@ -20,9 +20,9 @@ public class ChunksDebug {
     private final TrackPerSecond clientPerSec = new TrackPerSecond("ClientChunks");
 
     // Singleton instance
-    private static final ChunksDebug INSTANCE = new ChunksDebug();
-    public static ChunksDebug getInstance() { return INSTANCE; }
-    private ChunksDebug() { }
+    private static final MCioChunks INSTANCE = new MCioChunks();
+    public static MCioChunks getInstance() { return INSTANCE; }
+    private MCioChunks() { }
 
     // Select
     public synchronized void selectStart() {

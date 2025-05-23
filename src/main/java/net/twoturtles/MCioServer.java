@@ -52,7 +52,7 @@ public class MCioServer implements ModInitializer {
 		}
 
 		// XXX
-		ChunksDebug.getInstance().serverDebugSetup();
+		MCioChunks.getInstance().serverDebugSetup();
 	}
 
 	void stop() {

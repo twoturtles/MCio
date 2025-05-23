@@ -11,7 +11,7 @@ public class MCioClientSyncUtil {
         MinecraftClient client = MinecraftClient.getInstance();
 
         boolean chunksReady = !MCioConfig.getInstance().mcioPreloadChunks ||
-                ChunksDebug.getInstance().clientInitialLoadComplete();
+                MCioChunks.getInstance().clientInitialLoadComplete();
 
         // A "Screen" is an overlay, like "Loading", so currentScreen is null when the game window is up.
         if (client.currentScreen == null && chunksReady) {
