@@ -57,7 +57,7 @@ public class MCioConfig {
     public static final boolean DEFAULT_RETINA_HACK = true;  // Disable retina double resolution
     public static final boolean DEFAULT_SYNC_SPEED_TEST = false;
     public static final boolean DEFAULT_MCIO_EXP1 = false;
-    public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = false;
+    public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = true;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
