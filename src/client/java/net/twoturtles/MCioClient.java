@@ -5,6 +5,8 @@
 package net.twoturtles;
 
 import net.minecraft.client.MinecraftClient;
+import net.twoturtles.mixin.client.DefaultSkinHelperMixin;
+import net.twoturtles.mixin.client.MouseMixin;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -32,7 +34,8 @@ public class MCioClient implements ClientModInitializer {
 		MCioFrameSave.initialize();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
-			LOGGER.info("Client Started mode={}", config.mode);
+			config.printSkins(MCioClientUtil.getDefaultSkins());
+			LOGGER.info("Client-Started mode={}", config.mode);
 			if (config.unlimitedFPS) {
 				// Normal FPS limiting is disabled by RenderSystemMixin. This disables vsync.
 				LOGGER.info("Disabling FPS limiting and VSYNC");

@@ -3,6 +3,8 @@
   "package": "net.twoturtles.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "DefaultSkinHelperMixin",
+    "DefaultSkinHelperMixin$SkinAccessor",
     "MinecraftClientMixin",
     "MouseMixin",
     "MouseMixin$MouseAccessor",

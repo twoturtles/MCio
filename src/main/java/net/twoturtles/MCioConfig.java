@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.List;
 
 /* XXX Refactor */
 
@@ -44,6 +45,7 @@ public class MCioConfig {
     public boolean syncSpeedTest;
     public boolean mcioExp1;
     public boolean mcioPreloadChunks;
+    public int skin;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -58,6 +60,7 @@ public class MCioConfig {
     public static final boolean DEFAULT_SYNC_SPEED_TEST = false;
     public static final boolean DEFAULT_MCIO_EXP1 = false;
     public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = true;
+    public static final int DEFAULT_MCIO_SKIN = 15; // wide/steve
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -71,6 +74,9 @@ public class MCioConfig {
             PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
             stdout.println(getHelp());
             System.exit(0);
+        }
+        if (getBoolean("MCIO_HELP_SKINS", false)) {
+            printSkinHelp = true;
         }
 
         mode = getEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
@@ -93,6 +99,7 @@ public class MCioConfig {
         syncSpeedTest = getBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
         mcioExp1 = getBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
         mcioPreloadChunks = getBoolean("MCIO_PRELOAD_CHUNKS", DEFAULT_MCIO_PRELOAD_CHUNKS);
+        skin = getInt("MCIO_SKIN", DEFAULT_MCIO_SKIN);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -105,6 +112,7 @@ public class MCioConfig {
         LOGGER.info("MCIO_SYNC_SPEED_TEST={}", syncSpeedTest);
         LOGGER.info("MCIO_EXP1={}", mcioExp1);
         LOGGER.info("MCIO_PRELOAD_CHUNKS={}", mcioPreloadChunks);
+        LOGGER.info("MCIO_SKIN={}", skin);
     }
 
     // Helper methods for parsing config values from system properties or env vars
@@ -145,6 +153,19 @@ public class MCioConfig {
         return System.getProperty(key, System.getenv(key));
     }
 
+    // Hack to get skin names from the client namespace to main namespace.
+    private boolean printSkinHelp = false;
+    public void printSkins(List<String> skins) {
+        if (printSkinHelp) {
+            PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
+            stdout.printf("\n\nDefault Skins:\n");
+            for (int i = 0; i < skins.size(); i++) {
+                stdout.printf("%2d %s\n", i, skins.get(i));
+            }
+            System.exit(0);
+        }
+    }
+
     public static String getHelp() {
         return """
                 
@@ -156,6 +177,9 @@ public class MCioConfig {
                 General Options:
                   MCIO_HELP                      [boolean] Default: false
                     Show this help message and exit
+                
+                  MCIO_HELP_SKINS                [boolean] Default: false
+                    List the default skins and exit
                 
                   MCIO_MODE                      [%s] Default: %s
                     Set the operation mode
@@ -199,6 +223,9 @@ public class MCioConfig {
                   MCIO_FRAME_TYPE                [%s] Default: %s
                     Set the frame type format
                 
+                Other Options:
+                  MCIO_SKIN                      [int] Default: %d
+                    Skin selection
                 """.formatted(
                 Arrays.toString(MCioMode.values()),
                 DEFAULT_MCIO_MODE,
@@ -214,7 +241,8 @@ public class MCioConfig {
                 DEFAULT_ASYNC_OBSERVATION_TRIGGER,
                 DEFAULT_MCIO_EXP1,
                 Arrays.toString(MCioFrameType.values()),
-                DEFAULT_MCIO_FRAME_TYPE
+                DEFAULT_MCIO_FRAME_TYPE,
+                DEFAULT_MCIO_SKIN
         );
     }
 }
