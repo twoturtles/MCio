@@ -112,7 +112,7 @@ public class MCioSyncUtil {
         // I think we only need to handle the transition to running
         if (!this.gameRunning && gameRunning) {
             // Trigger the transition
-            LOGGER.info("gameRunning=true");
+            LOGGER.info("Ready-To-Sync");
             readyToSyncThreads = true;
         }
     }
@@ -126,7 +126,7 @@ public class MCioSyncUtil {
 
             try {
                 // Both threads block here and then threadSyncDone() is called
-                LOGGER.info("Synchronizing Threads: {}", Thread.currentThread().getName());
+                LOGGER.info("Synchronizing-Threads: {}", Thread.currentThread().getName());
                 threadSyncBarrier.await();
             } catch (InterruptedException | BrokenBarrierException e) {
                 throw new RuntimeException(e);
@@ -135,7 +135,7 @@ public class MCioSyncUtil {
     }
 
     private void threadSyncDone() {
-        LOGGER.info("Client-Server Sync Complete");
+        LOGGER.info("Client-Server-Sync-Complete");
         gameRunning = true;
         readyToSyncThreads = false;
     }
