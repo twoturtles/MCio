@@ -45,7 +45,7 @@ public class MCioServer implements ModInitializer {
 		/* Server Ticks */
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			serverTPS.count();
-			LOGGER.debug("Server Tick End");
+			LOGGER.debug("Server-Tick-End");
 		});
 
 		if (config.mode == MCioConfig.MCioMode.SYNC) {

@@ -5,8 +5,6 @@
 package net.twoturtles;
 
 import net.minecraft.client.MinecraftClient;
-import net.twoturtles.mixin.client.DefaultSkinHelperMixin;
-import net.twoturtles.mixin.client.MouseMixin;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -22,6 +20,7 @@ public class MCioClient implements ClientModInitializer {
 	private MCioClientSync clientSync;
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
 	MCioConfig config;
+	boolean lanOpened = false;
 
 	// Used by MinecraftClientMixin and MouseMixin
 	public static boolean MCioWindowFocused;
@@ -49,6 +48,15 @@ public class MCioClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTPS.count();
+
+			/* Open to LAN */
+			boolean serverReady = client.getServer() != null && client.getNetworkHandler() != null;
+			if (config.openToLan && serverReady && !lanOpened) {
+				LOGGER.info("Open-To-LAN port={}", config.openLanToPort);
+				// Even though it's a server method, Minecraft calls this from the Render thread.
+				client.getServer().openToLan(config.openToLanMode, true, config.openLanToPort);
+				lanOpened = true;
+			}
 		});
 
 		if (config.mode == MCioConfig.MCioMode.SYNC) {

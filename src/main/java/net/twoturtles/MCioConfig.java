@@ -1,6 +1,7 @@
 package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 
 import java.io.PrintStream;
@@ -46,6 +47,9 @@ public class MCioConfig {
     public boolean mcioExp1;
     public boolean mcioPreloadChunks;
     public int skin;
+    public boolean openToLan;
+    public int openLanToPort;
+    public GameMode openToLanMode;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -61,6 +65,9 @@ public class MCioConfig {
     public static final boolean DEFAULT_MCIO_EXP1 = false;
     public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = true;
     public static final int DEFAULT_MCIO_SKIN = 15; // wide/steve
+    public static final boolean DEFAULT_OPEN_TO_LAN = true;
+    public static final int DEFAULT_OPEN_TO_LAN_PORT = 12001;
+    public static final GameMode DEFAULT_OPEN_TO_LAN_MODE = GameMode.SPECTATOR;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -100,6 +107,9 @@ public class MCioConfig {
         mcioExp1 = getBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
         mcioPreloadChunks = getBoolean("MCIO_PRELOAD_CHUNKS", DEFAULT_MCIO_PRELOAD_CHUNKS);
         skin = getInt("MCIO_SKIN", DEFAULT_MCIO_SKIN);
+        openToLan = getBoolean("MCIO_OPEN_TO_LAN", DEFAULT_OPEN_TO_LAN);
+        openLanToPort = getInt("MCIO_OPEN_TO_LAN_PORT", DEFAULT_OPEN_TO_LAN_PORT);
+        openToLanMode = getEnum("MCIO_OPEN_TO_LAN_MODE", DEFAULT_OPEN_TO_LAN_MODE);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -113,6 +123,9 @@ public class MCioConfig {
         LOGGER.info("MCIO_EXP1={}", mcioExp1);
         LOGGER.info("MCIO_PRELOAD_CHUNKS={}", mcioPreloadChunks);
         LOGGER.info("MCIO_SKIN={}", skin);
+        LOGGER.info("MCIO_OPEN_TO_LAN={}", openToLan);
+        LOGGER.info("MCIO_OPEN_TO_LAN_PORT={}", openLanToPort);
+        LOGGER.info("MCIO_OPEN_TO_LAN_MODE={}", openToLanMode);
     }
 
     // Helper methods for parsing config values from system properties or env vars
@@ -181,7 +194,7 @@ public class MCioConfig {
                   MCIO_HELP_SKINS                [boolean] Default: false
                     List the default skins and exit
                 
-                  MCIO_MODE                      [%s] Default: %s
+                  MCIO_MODE                      %s Default: %s
                     Set the operation mode
                 
                 Communication Options:
@@ -190,6 +203,15 @@ public class MCioConfig {
                 
                   MCIO_ACTION_PORT               [int] Default: %d
                     Port for receiving actions
+                
+                  MCIO_OPEN_TO_LAN               [boolean] Default: %b
+                    Enable LAN multiplayer
+                
+                  MCIO_OPEN_TO_LAN_PORT          [int] Default: %d
+                    Server listen port
+                
+                  MCIO_OPEN_TO_LAN_MODE          %s Default: %s
+                    Initial multiplayer mode
                 
                 Display Options:
                   MCIO_HIDE_WINDOW               [boolean] Default: %b
@@ -214,13 +236,13 @@ public class MCioConfig {
                     Enable sync mode speed testing
                 
                 Advanced Options:
-                  MCIO_ASYNC_OBSERVATION_TRIGGER [%s] Default: %s
+                  MCIO_ASYNC_OBSERVATION_TRIGGER %s Default: %s
                     Trigger method for async observations
                 
                   MCIO_EXP1                      [boolean] Default: %b
                     Enable experimental feature 1
                 
-                  MCIO_FRAME_TYPE                [%s] Default: %s
+                  MCIO_FRAME_TYPE                %s Default: %s
                     Set the frame type format
                 
                 Other Options:
@@ -231,6 +253,10 @@ public class MCioConfig {
                 DEFAULT_MCIO_MODE,
                 DEFAULT_OBSERVATION_PORT,
                 DEFAULT_ACTION_PORT,
+                DEFAULT_OPEN_TO_LAN,
+                DEFAULT_OPEN_TO_LAN_PORT,
+                Arrays.toString(GameMode.values()),
+                DEFAULT_OPEN_TO_LAN_MODE,
                 DEFAULT_HIDE_MINECRAFT_WINDOW,
                 DEFAULT_RETINA_HACK,
                 DEFAULT_UNLIMITED_FPS_SYNC,
