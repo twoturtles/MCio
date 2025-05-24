@@ -65,7 +65,7 @@ public class MCioConfig {
     public static final boolean DEFAULT_MCIO_EXP1 = false;
     public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = true;
     public static final int DEFAULT_MCIO_SKIN = 15; // wide/steve
-    public static final boolean DEFAULT_OPEN_TO_LAN = true;
+    public static final boolean DEFAULT_OPEN_TO_LAN = false;
     public static final int DEFAULT_OPEN_TO_LAN_PORT = 12001;
     public static final GameMode DEFAULT_OPEN_TO_LAN_MODE = GameMode.SPECTATOR;
 
