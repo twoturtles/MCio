@@ -55,6 +55,8 @@ public class MCioClient implements ClientModInitializer {
 				LOGGER.info("Open-To-LAN port={}", config.openLanToPort);
 				// Even though it's a server method, Minecraft calls this from the Render thread.
 				client.getServer().openToLan(config.openToLanMode, true, config.openLanToPort);
+				// Normally the integrated server forces online mode.
+				client.getServer().setOnlineMode(false);
 				lanOpened = true;
 			}
 		});
