@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0+1.21.3 - 2025-05-XX
+- Pre-load initial chunks in sync mode.
+- Add Open-To-LAN support
+- Default to the Steve skin.
+  Also allow selection among default skins.
+- MCIO_PROTOCOL_VERSION = 5
+
 ## 1.1.0+1.21.3 - 2025-05-16
 - Fractional cursor positions. This allows for POV changes
   of < 0.15 degrees, matching MineRL.
