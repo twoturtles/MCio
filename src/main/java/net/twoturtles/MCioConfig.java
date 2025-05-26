@@ -191,9 +191,6 @@ public class MCioConfig {
                   MCIO_HELP                      [boolean] Default: false
                     Show this help message and exit
                 
-                  MCIO_HELP_SKINS                [boolean] Default: false
-                    List the default skins and exit
-                
                   MCIO_MODE                      %s Default: %s
                     Set the operation mode
                 
@@ -235,6 +232,13 @@ public class MCioConfig {
                   MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
                     Enable sync mode speed testing
                 
+                Other Options:
+                  MCIO_SKIN                      [int] Default: %d
+                    Skin selection
+                
+                  MCIO_HELP_SKINS                [boolean] Default: false
+                    List the default skins and exit
+                
                 Advanced Options:
                   MCIO_ASYNC_OBSERVATION_TRIGGER %s Default: %s
                     Trigger method for async observations
@@ -245,9 +249,6 @@ public class MCioConfig {
                   MCIO_FRAME_TYPE                %s Default: %s
                     Set the frame type format
                 
-                Other Options:
-                  MCIO_SKIN                      [int] Default: %d
-                    Skin selection
                 """.formatted(
                 Arrays.toString(MCioMode.values()),
                 DEFAULT_MCIO_MODE,
@@ -263,12 +264,12 @@ public class MCioConfig {
                 DEFAULT_UNLIMITED_FPS_ASYNC,
                 DEFAULT_MCIO_PRELOAD_CHUNKS,
                 DEFAULT_SYNC_SPEED_TEST,
+                DEFAULT_MCIO_SKIN,
                 Arrays.toString(MCioAsyncObsTrigger.values()),
                 DEFAULT_ASYNC_OBSERVATION_TRIGGER,
                 DEFAULT_MCIO_EXP1,
                 Arrays.toString(MCioFrameType.values()),
-                DEFAULT_MCIO_FRAME_TYPE,
-                DEFAULT_MCIO_SKIN
+                DEFAULT_MCIO_FRAME_TYPE
         );
     }
 }
