@@ -1,7 +1,7 @@
 # Changelog
 
-## 1.2.0+1.21.3 - 2025-05-XX
-- Pre-load initial chunks in sync mode.
+## 1.2.0+1.21.3 - 2025-05-26
+- Preload initial chunks in sync mode.
 - Add Open-To-LAN support
 - Default to the Steve skin.
   Also allow selection among default skins.
