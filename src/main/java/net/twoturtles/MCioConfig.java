@@ -1,10 +1,12 @@
 package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.List;
 
 /* XXX Refactor */
 
@@ -43,6 +45,11 @@ public class MCioConfig {
     public boolean retinaHack;
     public boolean syncSpeedTest;
     public boolean mcioExp1;
+    public boolean mcioPreloadChunks;
+    public int skin;
+    public boolean openToLan;
+    public int openLanToPort;
+    public GameMode openToLanMode;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -56,6 +63,11 @@ public class MCioConfig {
     public static final boolean DEFAULT_RETINA_HACK = true;  // Disable retina double resolution
     public static final boolean DEFAULT_SYNC_SPEED_TEST = false;
     public static final boolean DEFAULT_MCIO_EXP1 = false;
+    public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = true;
+    public static final int DEFAULT_MCIO_SKIN = 15; // wide/steve
+    public static final boolean DEFAULT_OPEN_TO_LAN = false;
+    public static final int DEFAULT_OPEN_TO_LAN_PORT = 12001;
+    public static final GameMode DEFAULT_OPEN_TO_LAN_MODE = GameMode.SPECTATOR;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -69,6 +81,9 @@ public class MCioConfig {
             PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
             stdout.println(getHelp());
             System.exit(0);
+        }
+        if (getBoolean("MCIO_HELP_SKINS", false)) {
+            printSkinHelp = true;
         }
 
         mode = getEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
@@ -90,6 +105,11 @@ public class MCioConfig {
         retinaHack = getBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
         syncSpeedTest = getBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
         mcioExp1 = getBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
+        mcioPreloadChunks = getBoolean("MCIO_PRELOAD_CHUNKS", DEFAULT_MCIO_PRELOAD_CHUNKS);
+        skin = getInt("MCIO_SKIN", DEFAULT_MCIO_SKIN);
+        openToLan = getBoolean("MCIO_OPEN_TO_LAN", DEFAULT_OPEN_TO_LAN);
+        openLanToPort = getInt("MCIO_OPEN_TO_LAN_PORT", DEFAULT_OPEN_TO_LAN_PORT);
+        openToLanMode = getEnum("MCIO_OPEN_TO_LAN_MODE", DEFAULT_OPEN_TO_LAN_MODE);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -101,6 +121,11 @@ public class MCioConfig {
         LOGGER.info("MCIO_RETINA_HACK={}", retinaHack);
         LOGGER.info("MCIO_SYNC_SPEED_TEST={}", syncSpeedTest);
         LOGGER.info("MCIO_EXP1={}", mcioExp1);
+        LOGGER.info("MCIO_PRELOAD_CHUNKS={}", mcioPreloadChunks);
+        LOGGER.info("MCIO_SKIN={}", skin);
+        LOGGER.info("MCIO_OPEN_TO_LAN={}", openToLan);
+        LOGGER.info("MCIO_OPEN_TO_LAN_PORT={}", openLanToPort);
+        LOGGER.info("MCIO_OPEN_TO_LAN_MODE={}", openToLanMode);
     }
 
     // Helper methods for parsing config values from system properties or env vars
@@ -141,6 +166,19 @@ public class MCioConfig {
         return System.getProperty(key, System.getenv(key));
     }
 
+    // Hack to get skin names from the client namespace to main namespace.
+    private boolean printSkinHelp = false;
+    public void printSkins(List<String> skins) {
+        if (printSkinHelp) {
+            PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
+            stdout.printf("\n\nDefault Skins:\n");
+            for (int i = 0; i < skins.size(); i++) {
+                stdout.printf("%2d %s\n", i, skins.get(i));
+            }
+            System.exit(0);
+        }
+    }
+
     public static String getHelp() {
         return """
                 
@@ -153,7 +191,7 @@ public class MCioConfig {
                   MCIO_HELP                      [boolean] Default: false
                     Show this help message and exit
                 
-                  MCIO_MODE                      [%s] Default: %s
+                  MCIO_MODE                      %s Default: %s
                     Set the operation mode
                 
                 Communication Options:
@@ -162,6 +200,15 @@ public class MCioConfig {
                 
                   MCIO_ACTION_PORT               [int] Default: %d
                     Port for receiving actions
+                
+                  MCIO_OPEN_TO_LAN               [boolean] Default: %b
+                    Enable LAN multiplayer
+                
+                  MCIO_OPEN_TO_LAN_PORT          [int] Default: %d
+                    Server listen port
+                
+                  MCIO_OPEN_TO_LAN_MODE          %s Default: %s
+                    Initial multiplayer mode
                 
                 Display Options:
                   MCIO_HIDE_WINDOW               [boolean] Default: %b
@@ -178,17 +225,28 @@ public class MCioConfig {
                   __GLX_VENDOR_LIBRARY_NAME      [nvidia, amd, mesa]
                     Use to enable a gpu in headless mode on Linux.
                 
+                  MCIO_PRELOAD_CHUNKS           [boolean] Default: %b
+                    Pre-load the initial chunks around the player.
+                    Only applies in SYNC mode.
+                
                   MCIO_SYNC_SPEED_TEST           [boolean] Default: %b
                     Enable sync mode speed testing
                 
+                Other Options:
+                  MCIO_SKIN                      [int] Default: %d
+                    Skin selection
+                
+                  MCIO_HELP_SKINS                [boolean] Default: false
+                    List the default skins and exit
+                
                 Advanced Options:
-                  MCIO_ASYNC_OBSERVATION_TRIGGER [%s] Default: %s
+                  MCIO_ASYNC_OBSERVATION_TRIGGER %s Default: %s
                     Trigger method for async observations
                 
                   MCIO_EXP1                      [boolean] Default: %b
                     Enable experimental feature 1
                 
-                  MCIO_FRAME_TYPE                [%s] Default: %s
+                  MCIO_FRAME_TYPE                %s Default: %s
                     Set the frame type format
                 
                 """.formatted(
@@ -196,11 +254,17 @@ public class MCioConfig {
                 DEFAULT_MCIO_MODE,
                 DEFAULT_OBSERVATION_PORT,
                 DEFAULT_ACTION_PORT,
+                DEFAULT_OPEN_TO_LAN,
+                DEFAULT_OPEN_TO_LAN_PORT,
+                Arrays.toString(GameMode.values()),
+                DEFAULT_OPEN_TO_LAN_MODE,
                 DEFAULT_HIDE_MINECRAFT_WINDOW,
                 DEFAULT_RETINA_HACK,
                 DEFAULT_UNLIMITED_FPS_SYNC,
                 DEFAULT_UNLIMITED_FPS_ASYNC,
+                DEFAULT_MCIO_PRELOAD_CHUNKS,
                 DEFAULT_SYNC_SPEED_TEST,
+                DEFAULT_MCIO_SKIN,
                 Arrays.toString(MCioAsyncObsTrigger.values()),
                 DEFAULT_ASYNC_OBSERVATION_TRIGGER,
                 DEFAULT_MCIO_EXP1,

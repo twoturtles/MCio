@@ -26,7 +26,10 @@ public class MCioServer implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-		LOGGER.info("Main Init");
+		/* Note This is called by the Main thread, which eventually becomes the Render (client) thread.
+		 * But most code in the main namespace is used by the Server thread or shared.
+		 */
+		LOGGER.info("Main-Init");
 		config = MCioConfig.getInstance();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
@@ -42,7 +45,7 @@ public class MCioServer implements ModInitializer {
 		/* Server Ticks */
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			serverTPS.count();
-			LOGGER.debug("Server Tick End");
+			LOGGER.debug("Server-Tick-End");
 		});
 
 		if (config.mode == MCioConfig.MCioMode.SYNC) {
@@ -51,6 +54,7 @@ public class MCioServer implements ModInitializer {
 			serverAsync = new MCioServerAsync(config);
 		}
 
+		MCioChunks.getInstance().serverSetup();
 	}
 
 	void stop() {

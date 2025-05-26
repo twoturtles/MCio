@@ -8,7 +8,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.math.Vec3d;
-import net.twoturtles.mixin.client.MouseMixin;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 

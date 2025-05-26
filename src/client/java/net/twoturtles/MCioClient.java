@@ -20,6 +20,7 @@ public class MCioClient implements ClientModInitializer {
 	private MCioClientSync clientSync;
 	private final TrackPerSecond clientTPS = new TrackPerSecond("ClientTicks");
 	MCioConfig config;
+	boolean lanOpened = false;
 
 	// Used by MinecraftClientMixin and MouseMixin
 	public static boolean MCioWindowFocused;
@@ -32,7 +33,8 @@ public class MCioClient implements ClientModInitializer {
 		MCioFrameSave.initialize();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
-			LOGGER.info("Client Started mode={}", config.mode);
+			config.printSkins(MCioClientUtil.getDefaultSkins());
+			LOGGER.info("Client-Started mode={}", config.mode);
 			if (config.unlimitedFPS) {
 				// Normal FPS limiting is disabled by RenderSystemMixin. This disables vsync.
 				LOGGER.info("Disabling FPS limiting and VSYNC");
@@ -46,6 +48,17 @@ public class MCioClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTPS.count();
+
+			/* Open to LAN */
+			boolean serverReady = client.getServer() != null && client.getNetworkHandler() != null;
+			if (config.openToLan && serverReady && !lanOpened) {
+				LOGGER.info("Open-To-LAN port={}", config.openLanToPort);
+				// Even though it's a server method, Minecraft calls this from the Render thread.
+				client.getServer().openToLan(config.openToLanMode, true, config.openLanToPort);
+				// Normally the integrated server forces online mode.
+				client.getServer().setOnlineMode(false);
+				lanOpened = true;
+			}
 		});
 
 		if (config.mode == MCioConfig.MCioMode.SYNC) {
@@ -54,6 +67,8 @@ public class MCioClient implements ClientModInitializer {
 			clientAsync = new MCioClientAsync(config);
 		}
 		MCioFrameCapture.getInstance().setEnabled(true);
+
+		MCioClientChunks.getInstance().clientSetup();
 	}
 
 	void stop() {

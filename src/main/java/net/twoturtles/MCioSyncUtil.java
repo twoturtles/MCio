@@ -1,5 +1,6 @@
 package net.twoturtles;
 
+import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -7,6 +8,10 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import net.minecraft.server.ServerTickManager;
+
+import net.twoturtles.mixin.ServerTickManagerAccessor;
 
 /**
  * MCIO_MODE=sync refers to the agent and Minecraft being synchronized.
@@ -38,6 +43,7 @@ public class MCioSyncUtil {
     private static final Logger LOGGER = LogUtils.getLogger();
     private volatile boolean gameRunning = false;
     private final AtomicInteger cycleCount = new AtomicInteger();   // Track the loops through client/server ticks
+    private MinecraftServer server;
 
     // Synchronize the transition to gameRunning
     private volatile boolean readyToSyncThreads = false;
@@ -60,9 +66,7 @@ public class MCioSyncUtil {
 
     private MCioSyncUtil() { }
 
-    public boolean isGameRunning() {
-        return gameRunning;
-    }
+    public boolean isGameRunning() { return gameRunning; }
 
     public void clientStartTick() {
         startTick(CLIENT_TICK);
@@ -80,21 +84,49 @@ public class MCioSyncUtil {
         endTick(SERVER_TICK);
     }
 
+    /**
+     * Sets the server to frozen. This prevents the world from ticking
+     * before the agent is ready. Call at SERVER_STARTED.
+     */
+    public void serverInit(MinecraftServer svr) {
+        server = svr;
+        ServerTickManager tickManager = server.getTickManager();
+        tickManager.setFrozen(true);
+    }
+
+    /**
+     * For sync mode run Minecraft in sprint mode. This way there's no artificial delay between ticks.
+     * It will go as fast as we step.
+     */
+    private void serverStartSprint() {
+        ServerTickManager tickManager = server.getTickManager();
+        tickManager.setFrozen(false);
+        // Start the sprint with the normal API, then set the sprint to go forever.
+        tickManager.startSprint(1);
+        ((ServerTickManagerAccessor) tickManager).setSprintTicks(Long.MAX_VALUE);
+        ((ServerTickManagerAccessor) tickManager).setScheduledSprintTicks(Long.MAX_VALUE);
+    }
+
     // This should be called via MCioClientSyncUtil.checkAndSetGameRunning().
     public void setGameRunning(boolean gameRunning) {
         // I think we only need to handle the transition to running
         if (!this.gameRunning && gameRunning) {
             // Trigger the transition
-            LOGGER.info("gameRunning=true");
+            LOGGER.info("Ready-To-Sync");
             readyToSyncThreads = true;
         }
     }
 
     private void handleThreadSyncTransition() {
         if (!gameRunning && readyToSyncThreads) {
+            if (server.isOnThread()) {
+                // About to transition to running. Set the server to sprint.
+                serverStartSprint();
+            }
+
             try {
                 // Both threads block here and then threadSyncDone() is called
-                LOGGER.info("Synchronizing Threads: {}", Thread.currentThread().getName());
+                LOGGER.info("Synchronizing-Threads: {}", Thread.currentThread().getName());
                 threadSyncBarrier.await();
             } catch (InterruptedException | BrokenBarrierException e) {
                 throw new RuntimeException(e);
@@ -103,7 +135,7 @@ public class MCioSyncUtil {
     }
 
     private void threadSyncDone() {
-        LOGGER.info("Client-Server Sync Complete");
+        LOGGER.info("Client-Server-Sync-Complete");
         gameRunning = true;
         readyToSyncThreads = false;
     }
@@ -132,17 +164,9 @@ public class MCioSyncUtil {
     }
 
     // TickContext to encapsulate tick-specific info
-    private static class TickContext {
-        final String label;
-        final Semaphore acquireSem;
-        final Semaphore releaseSem;
-        final boolean incrementCycle;
-
-        TickContext(String label, Semaphore acquireSem, Semaphore releaseSem, boolean incrementCycle) {
-            this.label = label;
-            this.acquireSem = acquireSem;
-            this.releaseSem = releaseSem;
-            this.incrementCycle = incrementCycle;
-        }
-    }
+    private record TickContext(
+            String label,
+            Semaphore acquireSem,
+            Semaphore releaseSem,
+            boolean incrementCycle) { }
 }

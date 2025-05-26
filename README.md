@@ -19,11 +19,11 @@ MCio is a Fabric mod that provides a streamlined, high-performance network inter
 ## Quick Links
 
 * **Documentation:** Explore detailed documentation and user guides on our [Wiki](https://github.com/twoturtles/mcio_ctrl/wiki).
-* **MCio Mod:**
 
+* **MCio Mod:**
   * [GitHub Repository](https://github.com/twoturtles/MCio)
   * [Modrinth Project Page](https://modrinth.com/mod/mcio)
-* **Python Interface (`mcio_ctrl`):**
 
+* **Python Interface (`mcio_ctrl`):**
   * [GitHub Repository](https://github.com/twoturtles/mcio_ctrl)
   * [PyPI Package](https://pypi.org/project/mcio_ctrl/)
