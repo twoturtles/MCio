@@ -55,6 +55,7 @@ public class MCioServer implements ModInitializer {
 		}
 
 		MCioChunks.getInstance().serverSetup();
+		MCioStats.getInstance();
 	}
 
 	void stop() {
