@@ -85,6 +85,10 @@ public class MCioConfig {
         if (getBoolean("MCIO_HELP_SKINS", false)) {
             printSkinHelp = true;
         }
+        if (getBoolean("MCIO_HELP_STATS", false)) {
+            // Triggers when the player connects to the server
+            MCioStats.getInstance().setDoFullStats();
+        }
 
         mode = getEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
         frameType = getEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
@@ -168,6 +172,7 @@ public class MCioConfig {
 
     // Hack to get skin names from the client namespace to main namespace.
     private boolean printSkinHelp = false;
+    // Triggered when the client starts.
     public void printSkins(List<String> skins) {
         if (printSkinHelp) {
             PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
@@ -238,6 +243,11 @@ public class MCioConfig {
                 
                   MCIO_HELP_SKINS                [boolean] Default: false
                     List the default skins and exit
+                
+                  MCIO_HELP_STATS                [boolean] Default: false
+                    Dump all possible stats to a file and exit
+                    The player must enter a world to trigger
+                    For development, to see what stats are available
                 
                 Advanced Options:
                   MCIO_ASYNC_OBSERVATION_TRIGGER %s Default: %s

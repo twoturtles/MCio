@@ -14,15 +14,18 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonElement;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import net.twoturtles.mixin.ServerStatHandlerMixin;
 
 public class MCioStats {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static ServerPlayerEntity player;
 
     // Singleton instance
     private static final MCioStats INSTANCE = new MCioStats();
@@ -30,31 +33,55 @@ public class MCioStats {
         return INSTANCE;
     }
 
+    private ServerPlayerEntity player;
+    private boolean doFullStats = false;
+    // Signal the client thread to exit. Trigger in END_CLIENT_TICK.
+    public volatile boolean stopRequested = false;
+
     private MCioStats() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             if (player == null) {
                 // The first connection is the local player
                 player = handler.getPlayer();
-                writeFullStatsJson(player);
+                if (doFullStats) {
+                    writeFullStatsJson(player);
+                }
             }
         });
     }
 
     /**
+     * Mark that the full stats dump should be done.
+     * We have to wait until the player connects before the write can happen.
+     */
+    public void setDoFullStats() {
+        doFullStats = true;
+    }
+
+    /**
      * Write the complete stats set to a file and exit
+     * For development, to see what's available
      */
     private void writeFullStatsJson(ServerPlayerEntity player) {
         initializeAllStatsForPlayer(player, 0);
         ServerStatHandler statHandler = player.getStatHandler();
-        String result = ((ServerStatHandlerMixin.asStringInvoker) statHandler).invokeAsString();
+        String resultJson = ((ServerStatHandlerMixin.asStringInvoker) statHandler).invokeAsString();
 
-        JsonElement element = JsonParser.parseString(result);
+        // Redo json with pretty print
+        JsonElement element = JsonParser.parseString(resultJson);
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        result = gson.toJson(element);
+        resultJson = gson.toJson(element);
 
+        Path path = player.server.getPath("full_stats.json");
         PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
-        stdout.println(result);
-        System.exit(0);
+        stdout.printf("\n\n\nWriting Full Stats Set: %s\n\n\n", path.toString());
+        try {
+            Files.writeString(path, resultJson, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOGGER.error("Failed-To-Write-Stats {}", path, e);
+        }
+
+        stopRequested = true;
     }
 
     /**
