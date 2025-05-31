@@ -35,10 +35,9 @@ public class MCioStats {
 
     private ServerPlayerEntity player;
     private boolean doFullStats = false;
-    // Signal the client thread to exit. Trigger in END_CLIENT_TICK.
-    public volatile boolean stopRequested = false;
 
     private MCioStats() {
+        // Register JOIN callback to initialize when the player is available
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             if (player == null) {
                 // The first connection is the local player
@@ -81,7 +80,11 @@ public class MCioStats {
             LOGGER.error("Failed-To-Write-Stats {}", path, e);
         }
 
-        stopRequested = true;
+        // Hard exit to prevent the player's stats file from
+        // being overwritten with the zeros
+        System.out.flush();
+        System.err.flush();
+        Runtime.getRuntime().halt(0);
     }
 
     /**

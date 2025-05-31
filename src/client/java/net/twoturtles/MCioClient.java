@@ -49,11 +49,6 @@ public class MCioClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			clientTPS.count();
 
-			// The server thread can't exit, so it will signal when an exit is needed
-			if (MCioStats.getInstance().stopRequested) {
-				client.scheduleStop();
-			}
-
 			/* Open to LAN */
 			boolean serverReady = client.getServer() != null && client.getNetworkHandler() != null;
 			if (config.openToLan && serverReady && !lanOpened) {

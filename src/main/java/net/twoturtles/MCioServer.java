@@ -55,7 +55,7 @@ public class MCioServer implements ModInitializer {
 		}
 
 		MCioChunks.getInstance().serverSetup();
-		MCioStats.getInstance();
+		MCioStats.getInstance();	// Instantiate singleton
 	}
 
 	void stop() {
