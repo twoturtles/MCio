@@ -245,9 +245,8 @@ public class MCioConfig {
                     List the default skins and exit
                 
                   MCIO_HELP_STATS                [boolean] Default: false
-                    Dump all possible stats to a file and exit
-                    The player must enter a world to trigger
-                    For development, to see what stats are available
+                    Generate a sample stats file containing all possible stat entries, then exit
+                    The player must enter a world to trigger the generation
                 
                 Advanced Options:
                   MCIO_ASYNC_OBSERVATION_TRIGGER %s Default: %s

@@ -119,6 +119,7 @@ loom {
 //					'--width', '640',
 //					'--height', '480',
 					'--quickPlaySingleplayer', 'New World',
+					"--username", "MCioTest",
 					//'--fullscreen'
 			)
 			vmArgs (

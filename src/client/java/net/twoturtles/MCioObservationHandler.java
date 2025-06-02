@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 
 // Collect information to send to the agent
-// All information is client side?
 public class MCioObservationHandler {
     private final MinecraftClient client;
     private final MCioConfig config;
@@ -46,6 +45,8 @@ public class MCioObservationHandler {
         /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
+//        getStatsUpdate();
+        getStatsFull();
         getCursorPosRV cursorPosRV = getCursorPos(client);
 
         Vec3d playerPos =  player.getPos();
@@ -85,6 +86,29 @@ public class MCioObservationHandler {
     /*
      * Methods for collecting observation data from Minecraft
      */
+
+
+    public record StatUpdate (
+            String type,
+            String id,
+            int value
+    ) {}
+
+    void getStatsUpdate() {
+        LOGGER.info("START -------------------------------");
+        MCioStats.getInstance().takePendingStats(true, (type, id, value) -> {
+            LOGGER.info("Stat-Update {} {} {}", type, id, value);
+        });
+        LOGGER.info("END -------------------------------");
+    }
+    void getStatsFull() {
+        LOGGER.info("START -------------------------------");
+        MCioStats.getInstance().statsForEach((type, id, value) -> {
+            LOGGER.info("Stat-Full {} {} {}", type, id, value);
+        });
+        LOGGER.info("END -------------------------------");
+    }
+
 
     float getYaw(ClientPlayerEntity player) {
         float yaw = player.getYaw();
@@ -134,7 +158,7 @@ public class MCioObservationHandler {
                 frameBuf);
     }
 
-    /* Return type for getInventoriesRV() */
+    /* Return type for getInventories() */
     record InventoriesRV(
             ArrayList<InventorySlot> main,
             ArrayList<InventorySlot> armor,
