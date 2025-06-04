@@ -15,6 +15,7 @@ MCio is a Fabric mod that provides a streamlined, high-performance network inter
 * **Synchronous Mode:** Optimized for high-speed AI training, allowing fast and efficient simulations.
 * **Asynchronous Mode:** Ideal for real-time interaction and play, allowing humans and AI agents to simultaneously engage within the same Minecraft environment.
 * **Headless Support:** Easily run Minecraft in headless mode with GPU acceleration, facilitating efficient, remote, and automated AI training setups.
+* **BONUS:** Easily [set up VPT and STEVE-1](https://github.com/jxiong21029/mcio-vpt-example) on modern Minecraft with support for [Sodium](https://modrinth.com/mod/sodium)!
 
 ## Quick Links
 

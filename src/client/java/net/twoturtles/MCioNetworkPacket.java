@@ -20,9 +20,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 
 /* Defines packet structure for Action and Observation packets */
 
-/* The JsonTypeInfo annotation adds a property to the object as it's encoded (into CBOR).
+/*
+ * Note: Each MCIO_TYPE class must have the same name as its corresponding @MCioType class in
+ * mcio_ctrl for proper type matching
+ * The JsonTypeInfo annotation adds a property to the object as it's encoded (into CBOR).
  * The property name is MCIO_TYPE ("__mcio_type__") and the value will be the MINIMAL_CLASS name,
- * which is the class name preceded by a dot (e.g. ".ObservationPacket"). */
+ * which is the class name preceded by a dot (e.g. ".ObservationPacket").
+ */
 
 /* Observation packets sent to agent */
 @JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
@@ -76,10 +80,7 @@ record InventorySlot(
         int count
 ) {}
 
-/* Options
- * Note: Each MCIO_TYPE class must have the same name as its corresponding @MCioType class in
- * mcio_ctrl for proper type matching
- */
+/* *** Options *** */
 
 @JsonTypeInfo(use = Id.MINIMAL_CLASS, include = As.PROPERTY, property = MCioConfig.MCIO_TYPE)
 interface Option { }
