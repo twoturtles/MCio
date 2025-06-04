@@ -30,9 +30,10 @@ public class MCioConfig {
     }
 
     // Constants
-    public static final int MCIO_PROTOCOL_VERSION = 5;
+    public static final int MCIO_PROTOCOL_VERSION = 6;
     public static final String KEY_CATEGORY = "MCio";
     public static final String DEFAULT_HOST = "localhost";
+    public static final String MCIO_TYPE = "__mcio_type__";
 
     // Configurable
     public MCioMode mode;

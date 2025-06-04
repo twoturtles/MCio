@@ -108,29 +108,17 @@ public class MCioStats {
         this.pendingStats = Sets.newHashSet(this.statMap.keySet());
     }
 
-    private static final Set<String> IGNORED_STATS = Set.of(
-            "minecraft:time_since_rest",
-            "minecraft:play_time",
-            "minecraft:time_since_death",
-            "minecraft:total_world_time"
-    );
-
     @FunctionalInterface
     public interface StatCallback {
-        void call(String type, String id, int value);
+        void call(String category, String id, int value);
     }
     // Called by the client to retrieve updated stats
     public synchronized void takePendingStats(boolean clear, StatCallback callback) {
         for (Stat<?> stat : pendingStats) {
-            String type = stat.getType().getRegistry().getKey().getValue().toString();
-            Object valueObj = stat.getValue();
-            String id = valueObj.toString();
-
-            // XXX
-            if (IGNORED_STATS.contains(id)) continue;
-
+            String category = getStatCategory(stat);
+            String id = getStatId(stat);
             int value = statMap.getInt(stat);
-            callback.call(type, id, value);
+            callback.call(category, id, value);
         }
         if (clear) {
             pendingStats.clear();
@@ -143,15 +131,10 @@ public class MCioStats {
             Stat<?> stat = entry.getKey();
             String category = getStatCategory(stat);
             String id = getStatId(stat);
-
-            // XXX
-            if (IGNORED_STATS.contains(id)) continue;
-
             int value = entry.getIntValue();
             callback.call(category, id, value);
         }
     }
-
 
     /* ******* */
 

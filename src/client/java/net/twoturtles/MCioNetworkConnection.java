@@ -70,7 +70,7 @@ class MCioNetworkConnection {
                 LOGGER.warn("SEND FAILED error={}", ZMQ.Error.findByCode(observationSM.socket.errno()));
             }
         } catch (IOException e) {
-            LOGGER.warn("ObservationPacketPacker failed");
+            LOGGER.error("ObservationPacketPacker failed", e);
         }
     }
 
