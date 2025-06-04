@@ -1,11 +1,8 @@
 package net.twoturtles.mixin;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.registry.Registries;
 import net.minecraft.stat.StatHandler;
-import net.minecraft.stat.StatType;
+import net.twoturtles.MCioConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
@@ -16,7 +13,6 @@ import net.minecraft.stat.ServerStatHandler;
 import net.minecraft.entity.player.PlayerEntity;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -61,8 +57,17 @@ abstract public class ServerStatHandlerMixin {
         MCioStats.getInstance().onServerStatHandlerInit((ServerStatHandler) (Object) this);
     }
 
+    /* Optionally skip the stats load to reset */
+    @Inject(method = "parse", at = @At("HEAD"), cancellable = true)
+    private void injectParseHead(CallbackInfo ci) {
+        if (MCioConfig.getInstance().statsReset) {
+            ci.cancel(); // Cancel the parse
+        }
+    }
+
+    /* Copy stats loaded from JSON to MCioStats */
     @Inject(method = "parse", at = @At("RETURN"))
-    private void onParseReturn(CallbackInfo ci) {
+    private void injectParseReturn(CallbackInfo ci) {
         MCioStats.getInstance().replaceStats(
                 (ServerStatHandler) (Object) this,
                 ((StatHandlerAccessor)(Object)this).getStatMap()

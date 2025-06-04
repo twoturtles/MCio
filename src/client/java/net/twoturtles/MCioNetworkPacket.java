@@ -76,7 +76,11 @@ record InventorySlot(
         int count
 ) {}
 
-/* Options */
+/* Options
+ * Note: Each MCIO_TYPE class must have the same name as its corresponding @MCioType class in
+ * mcio_ctrl for proper type matching
+ */
+
 @JsonTypeInfo(use = Id.MINIMAL_CLASS, include = As.PROPERTY, property = MCioConfig.MCIO_TYPE)
 interface Option { }
 

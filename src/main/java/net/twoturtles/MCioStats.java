@@ -90,7 +90,6 @@ public class MCioStats {
         }
     }
 
-
     /* ** Synchronized ** */
 
     // Called by server when a stat is updated

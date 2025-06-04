@@ -51,6 +51,7 @@ public class MCioConfig {
     public boolean openToLan;
     public int openLanToPort;
     public GameMode openToLanMode;
+    public boolean statsReset;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -69,6 +70,7 @@ public class MCioConfig {
     public static final boolean DEFAULT_OPEN_TO_LAN = false;
     public static final int DEFAULT_OPEN_TO_LAN_PORT = 12001;
     public static final GameMode DEFAULT_OPEN_TO_LAN_MODE = GameMode.SPECTATOR;
+    public static final boolean DEFAULT_STATS_RESET = true;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -115,6 +117,7 @@ public class MCioConfig {
         openToLan = getBoolean("MCIO_OPEN_TO_LAN", DEFAULT_OPEN_TO_LAN);
         openLanToPort = getInt("MCIO_OPEN_TO_LAN_PORT", DEFAULT_OPEN_TO_LAN_PORT);
         openToLanMode = getEnum("MCIO_OPEN_TO_LAN_MODE", DEFAULT_OPEN_TO_LAN_MODE);
+        statsReset = getBoolean("MCIO_STATS_RESET", DEFAULT_STATS_RESET);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -131,6 +134,7 @@ public class MCioConfig {
         LOGGER.info("MCIO_OPEN_TO_LAN={}", openToLan);
         LOGGER.info("MCIO_OPEN_TO_LAN_PORT={}", openLanToPort);
         LOGGER.info("MCIO_OPEN_TO_LAN_MODE={}", openToLanMode);
+        LOGGER.info("MCIO_STATS_RESET={}", statsReset);
     }
 
     // Helper methods for parsing config values from system properties or env vars
@@ -242,6 +246,10 @@ public class MCioConfig {
                   MCIO_SKIN                      [int] Default: %d
                     Skin selection
                 
+                  MCIO_STATS_RESET               [boolean] Default: %b
+                    Reset all stats to zero on player connect.
+                    This is done by skipping the stats json load.
+                
                   MCIO_HELP_SKINS                [boolean] Default: false
                     List the default skins and exit
                 
@@ -275,6 +283,7 @@ public class MCioConfig {
                 DEFAULT_MCIO_PRELOAD_CHUNKS,
                 DEFAULT_SYNC_SPEED_TEST,
                 DEFAULT_MCIO_SKIN,
+                DEFAULT_STATS_RESET,
                 Arrays.toString(MCioAsyncObsTrigger.values()),
                 DEFAULT_ASYNC_OBSERVATION_TRIGGER,
                 DEFAULT_MCIO_EXP1,

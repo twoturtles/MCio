@@ -52,9 +52,10 @@ public class MCioObservationHandler {
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
 
-        // XXX
+        // XXX For now just manually add the stats update.
+        // This will be based on the action packet in the future.
         options.add(getStatsUpdate());
-        options.add(getStatsFull());
+//        options.add(getStatsFull());
 
         getCursorPosRV cursorPosRV = getCursorPos(client);
 
