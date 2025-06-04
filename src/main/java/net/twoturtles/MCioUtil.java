@@ -3,10 +3,20 @@ package net.twoturtles;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
+import java.io.PrintStream;
+
+/**
+ * Misc small utilities
+ */
 public class MCioUtil {
+    // Minecraft somehow captures System.out, so make a new stdout available.
+    public static PrintStream stdout = new PrintStream(new java.io.FileOutputStream(
+            java.io.FileDescriptor.out));
+
     static void sleep(double seconds) {
         MCioUtil.msleep((long) (seconds * 1000));
     }
+
     static void msleep(long millis) {
         try {
             Thread.sleep(millis);
@@ -14,6 +24,7 @@ public class MCioUtil {
             e.printStackTrace();
         }
     }
+
     /* Return current time in seconds. */
     static double now() {
         return System.nanoTime() / 1_000_000_000.0;

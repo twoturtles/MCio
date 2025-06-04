@@ -4,7 +4,10 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 
-import java.io.PrintStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -81,16 +84,22 @@ public class MCioConfig {
 
     private MCioConfig() {
         if (getBoolean("MCIO_HELP", false)) {
-            PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
-            stdout.println(getHelp());
+            MCioUtil.stdout.println(getHelp());
             System.exit(0);
         }
         if (getBoolean("MCIO_HELP_SKINS", false)) {
             printSkinHelp = true;
         }
         if (getBoolean("MCIO_HELP_STATS", false)) {
-            // Triggers when the player connects to the server
-            MCioStats.getInstance().setDoFullStats();
+            Path path = Paths.get(System.getProperty("user.dir"), "stat_names.txt");
+            MCioUtil.stdout.printf("\n\n\nWriting all stat names: %s\n\n\n", path.toString());
+            String names = MCioStats.getAllStatNames();
+            try {
+                Files.writeString(path, names);
+            } catch (IOException e) {
+                LOGGER.error("Failed-To-Write-Stat-Names {}", path, e);
+            }
+            System.exit(0);
         }
 
         mode = getEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
@@ -180,10 +189,9 @@ public class MCioConfig {
     // Triggered when the client starts.
     public void printSkins(List<String> skins) {
         if (printSkinHelp) {
-            PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
-            stdout.printf("\n\nDefault Skins:\n");
+            MCioUtil.stdout.printf("\n\nDefault Skins:\n");
             for (int i = 0; i < skins.size(); i++) {
-                stdout.printf("%2d %s\n", i, skins.get(i));
+                MCioUtil.stdout.printf("%2d %s\n", i, skins.get(i));
             }
             System.exit(0);
         }
