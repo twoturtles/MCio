@@ -83,24 +83,7 @@ public class MCioConfig {
     }
 
     private MCioConfig() {
-        if (getBoolean("MCIO_HELP", false)) {
-            MCioUtil.stdout.println(getHelp());
-            System.exit(0);
-        }
-        if (getBoolean("MCIO_HELP_SKINS", false)) {
-            printSkinHelp = true;
-        }
-        if (getBoolean("MCIO_HELP_STATS", false)) {
-            Path path = Paths.get(System.getProperty("user.dir"), "stat_names.txt");
-            MCioUtil.stdout.printf("\n\n\nWriting all stat names: %s\n\n\n", path.toString());
-            String names = MCioStats.getAllStatNames();
-            try {
-                Files.writeString(path, names);
-            } catch (IOException e) {
-                LOGGER.error("Failed-To-Write-Stat-Names {}", path, e);
-            }
-            System.exit(0);
-        }
+        doHelp();
 
         mode = getEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
         frameType = getEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
@@ -184,8 +167,35 @@ public class MCioConfig {
         return System.getProperty(key, System.getenv(key));
     }
 
+
+    /* ****** Help Handling *****/
+
     // Hack to get skin names from the client namespace to main namespace.
     private boolean printSkinHelp = false;
+
+    private void doHelp() {
+        if (getBoolean("MCIO_HELP", false)) {
+            MCioUtil.stdout.println(getHelp());
+            System.exit(0);
+        }
+        if (getBoolean("MCIO_HELP_SKINS", false)) {
+            // Only the client-side namespace can access the skins.
+            // Signal MCioClient to do the skin help.
+            printSkinHelp = true;
+        }
+        if (getBoolean("MCIO_HELP_STATS", false)) {
+            Path path = Paths.get(System.getProperty("user.dir"), "stat_names.txt");
+            MCioUtil.stdout.printf("\n\n\nWriting all stat names: %s\n\n\n", path.toString());
+            String names = MCioStats.getAllStatNames();
+            try {
+                Files.writeString(path, names);
+            } catch (IOException e) {
+                LOGGER.error("Failed-To-Write-Stat-Names {}", path, e);
+            }
+            System.exit(0);
+        }
+    }
+
     // Triggered when the client starts.
     public void printSkins(List<String> skins) {
         if (printSkinHelp) {
