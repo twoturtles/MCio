@@ -39,16 +39,6 @@ public class MCioStats {
 
     private MCioStats() { }
 
-    // From ServerStatHandler.asString(). E.g., minecraft:mined
-    public String getStatCategory(Stat<?> stat) {
-        return Objects.toString(Registries.STAT_TYPE.getId(stat.getType()), "unknown");
-    }
-
-    // Based on ServerStatHandler.getId(). E.g., minecraft:grass_block
-    public <T> String getStatId(Stat<T> stat) {
-        return Objects.toString(stat.getType().getRegistry().getId(stat.getValue()), "unknown");
-    }
-
     // The first init is the handler associated with the local player.
     public void onServerStatHandlerInit(ServerStatHandler handler) {
         if (localHandler == null) {
@@ -100,7 +90,17 @@ public class MCioStats {
         }
     }
 
-    /* ******* */
+    /* *** Utilities *** */
+
+    // From ServerStatHandler.asString(). E.g., minecraft:mined
+    public static String getStatCategory(Stat<?> stat) {
+        return Objects.toString(Registries.STAT_TYPE.getId(stat.getType()), "unknown");
+    }
+
+    // Based on ServerStatHandler.getId(). E.g., minecraft:grass_block
+    public static <T> String getStatId(Stat<T> stat) {
+        return Objects.toString(stat.getType().getRegistry().getId(stat.getValue()), "unknown");
+    }
 
     /**
      * Returns a newline separated list of all stat names. E.g.,
@@ -122,8 +122,7 @@ public class MCioStats {
                 StatType<Object> statType = (StatType<Object>) field.get(null);
                 for (Object value : statType.getRegistry()) {
                     Stat<Object> stat = statType.getOrCreateStat(value);
-                    sb.append(stat.getName());
-                    sb.append("\n");
+                    sb.append(String.format("%s %s\n", getStatCategory(stat), getStatId(stat)));
                 }
             } catch (IllegalAccessException e) {
                 LOGGER.error("Failed to get stats for type: {}", field.getName(), e);
