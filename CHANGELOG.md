@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0+1.21.3 - 2025-06-05
+- Track built-in Minecraft stats and send updates to the agent
+- Moving protocol to use options. This should help with performance
+  as new data is added, and ease backward compatibility
+- MCIO_PROTOCOL_VERSION = 6
+
 ## 1.2.0+1.21.3 - 2025-05-26
 - Preload initial chunks in sync mode.
 - Add Open-To-LAN support
