@@ -4,6 +4,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ChunkFilterCylindricalMixin",
+    "ServerStatHandlerMixin",
+    "ServerStatHandlerMixin$asStringInvoker",
+    "ServerStatHandlerMixin$StatHandlerAccessor",
     "ServerTickManagerAccessor"
   ],
   "injectors": {

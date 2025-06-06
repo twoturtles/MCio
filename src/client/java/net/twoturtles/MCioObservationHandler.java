@@ -1,5 +1,12 @@
 package net.twoturtles;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -11,13 +18,9 @@ import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 // Collect information to send to the agent
-// All information is client side?
+// XXX Use static packet fields to reduce memory operations?
 public class MCioObservationHandler {
     private final MinecraftClient client;
     private final MCioConfig config;
@@ -43,9 +46,17 @@ public class MCioObservationHandler {
             return Optional.empty();
         }
 
+        ArrayList<Option> options = new ArrayList<>();
+
         /* Gather information */
         FrameRV frameRV = getFrame();
         InventoriesRV inventoriesRV = getInventories();
+
+        // XXX For now just manually add the stats update.
+        // This will be based on the action packet in the future.
+        options.add(getStatsUpdate());
+//        options.add(getStatsFull());
+
         getCursorPosRV cursorPosRV = getCursorPos(client);
 
         Vec3d playerPos =  player.getPos();
@@ -76,7 +87,9 @@ public class MCioObservationHandler {
                 getYaw(player),
                 inventoriesRV.main,
                 inventoriesRV.armor,
-                inventoriesRV.offHand);
+                inventoriesRV.offHand,
+                options
+        );
         LOGGER.debug("ObservationPacket: {}", observationPkt);
 
         return Optional.of(observationPkt);
@@ -85,6 +98,34 @@ public class MCioObservationHandler {
     /*
      * Methods for collecting observation data from Minecraft
      */
+
+
+    StatsUpdateOption getStatsUpdate() {
+        Map<String, ArrayList<Stat>> grouped = new HashMap<>();
+        MCioStats.getInstance().takePendingStats(true, (category, id, value) -> {
+            grouped.computeIfAbsent(category, k -> new ArrayList<>())
+                    .add(new Stat(id, value));
+        });
+        ArrayList<StatCategory> updates = new ArrayList<>();
+        for (Map.Entry<String, ArrayList<Stat>> entry : grouped.entrySet()) {
+            updates.add(new StatCategory(entry.getKey(), entry.getValue()));
+        }
+        return new StatsUpdateOption(updates);
+    }
+
+    StatsFullOption getStatsFull() {
+        Map<String, ArrayList<Stat>> grouped = new HashMap<>();
+        MCioStats.getInstance().statsForEach((category, id, value) -> {
+            grouped.computeIfAbsent(category, k -> new ArrayList<>())
+                    .add(new Stat(id, value));
+        });
+        ArrayList<StatCategory> updates = new ArrayList<>();
+        for (Map.Entry<String, ArrayList<Stat>> entry : grouped.entrySet()) {
+            updates.add(new StatCategory(entry.getKey(), entry.getValue()));
+        }
+        return new StatsFullOption(updates);
+    }
+
 
     float getYaw(ClientPlayerEntity player) {
         float yaw = player.getYaw();
@@ -134,7 +175,7 @@ public class MCioObservationHandler {
                 frameBuf);
     }
 
-    /* Return type for getInventoriesRV() */
+    /* Return type for getInventories() */
     record InventoriesRV(
             ArrayList<InventorySlot> main,
             ArrayList<InventorySlot> armor,

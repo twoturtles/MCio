@@ -4,7 +4,10 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 
-import java.io.PrintStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,9 +33,11 @@ public class MCioConfig {
     }
 
     // Constants
-    public static final int MCIO_PROTOCOL_VERSION = 5;
+    public static final int MCIO_PROTOCOL_VERSION = 6;
     public static final String KEY_CATEGORY = "MCio";
     public static final String DEFAULT_HOST = "localhost";
+    // Used by MCio and mcio_ctrl to annotate protocol classes
+    public static final String MCIO_TYPE = "__mcio_type__";
 
     // Configurable
     public MCioMode mode;
@@ -50,6 +55,7 @@ public class MCioConfig {
     public boolean openToLan;
     public int openLanToPort;
     public GameMode openToLanMode;
+    public boolean statsReset;
 
     // Defaults
     public static final MCioMode DEFAULT_MCIO_MODE = MCioMode.ASYNC;
@@ -68,6 +74,7 @@ public class MCioConfig {
     public static final boolean DEFAULT_OPEN_TO_LAN = false;
     public static final int DEFAULT_OPEN_TO_LAN_PORT = 12001;
     public static final GameMode DEFAULT_OPEN_TO_LAN_MODE = GameMode.SPECTATOR;
+    public static final boolean DEFAULT_STATS_RESET = true;
 
     // Singleton instance
     private static final MCioConfig INSTANCE = new MCioConfig();
@@ -77,14 +84,7 @@ public class MCioConfig {
     }
 
     private MCioConfig() {
-        if (getBoolean("MCIO_HELP", false)) {
-            PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
-            stdout.println(getHelp());
-            System.exit(0);
-        }
-        if (getBoolean("MCIO_HELP_SKINS", false)) {
-            printSkinHelp = true;
-        }
+        doHelp();
 
         mode = getEnum("MCIO_MODE", DEFAULT_MCIO_MODE);
         frameType = getEnum("MCIO_FRAME_TYPE", DEFAULT_MCIO_FRAME_TYPE);
@@ -110,6 +110,7 @@ public class MCioConfig {
         openToLan = getBoolean("MCIO_OPEN_TO_LAN", DEFAULT_OPEN_TO_LAN);
         openLanToPort = getInt("MCIO_OPEN_TO_LAN_PORT", DEFAULT_OPEN_TO_LAN_PORT);
         openToLanMode = getEnum("MCIO_OPEN_TO_LAN_MODE", DEFAULT_OPEN_TO_LAN_MODE);
+        statsReset = getBoolean("MCIO_STATS_RESET", DEFAULT_STATS_RESET);
 
         LOGGER.info("MCIO_MODE={}", mode);
         LOGGER.info("MCIO_FRAME_TYPE={}", frameType);
@@ -126,6 +127,7 @@ public class MCioConfig {
         LOGGER.info("MCIO_OPEN_TO_LAN={}", openToLan);
         LOGGER.info("MCIO_OPEN_TO_LAN_PORT={}", openLanToPort);
         LOGGER.info("MCIO_OPEN_TO_LAN_MODE={}", openToLanMode);
+        LOGGER.info("MCIO_STATS_RESET={}", statsReset);
     }
 
     // Helper methods for parsing config values from system properties or env vars
@@ -166,14 +168,41 @@ public class MCioConfig {
         return System.getProperty(key, System.getenv(key));
     }
 
+
+    /* ****** Help Handling *****/
+
     // Hack to get skin names from the client namespace to main namespace.
     private boolean printSkinHelp = false;
+
+    private void doHelp() {
+        if (getBoolean("MCIO_HELP", false)) {
+            MCioUtil.stdout.println(getHelp());
+            System.exit(0);
+        }
+        if (getBoolean("MCIO_HELP_SKINS", false)) {
+            // Only the client-side namespace can access the skins.
+            // Signal MCioClient to do the skin help.
+            printSkinHelp = true;
+        }
+        if (getBoolean("MCIO_HELP_STATS", false)) {
+            Path path = Paths.get(System.getProperty("user.dir"), "stat_names.txt");
+            MCioUtil.stdout.printf("\n\n\nWriting all stat names: %s\n\n\n", path.toString());
+            String names = MCioStats.getAllStatNames();
+            try {
+                Files.writeString(path, names);
+            } catch (IOException e) {
+                LOGGER.error("Failed-To-Write-Stat-Names {}", path, e);
+            }
+            System.exit(0);
+        }
+    }
+
+    // Triggered when the client starts.
     public void printSkins(List<String> skins) {
         if (printSkinHelp) {
-            PrintStream stdout = new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
-            stdout.printf("\n\nDefault Skins:\n");
+            MCioUtil.stdout.printf("\n\nDefault Skins:\n");
             for (int i = 0; i < skins.size(); i++) {
-                stdout.printf("%2d %s\n", i, skins.get(i));
+                MCioUtil.stdout.printf("%2d %s\n", i, skins.get(i));
             }
             System.exit(0);
         }
@@ -236,8 +265,16 @@ public class MCioConfig {
                   MCIO_SKIN                      [int] Default: %d
                     Skin selection
                 
+                  MCIO_STATS_RESET               [boolean] Default: %b
+                    Reset all stats to zero on player connect.
+                    This is done by skipping the stats json load.
+                
                   MCIO_HELP_SKINS                [boolean] Default: false
                     List the default skins and exit
+                
+                  MCIO_HELP_STATS                [boolean] Default: false
+                    Generate a sample stats file containing all possible stat entries, then exit
+                    The player must enter a world to trigger the generation
                 
                 Advanced Options:
                   MCIO_ASYNC_OBSERVATION_TRIGGER %s Default: %s
@@ -265,6 +302,7 @@ public class MCioConfig {
                 DEFAULT_MCIO_PRELOAD_CHUNKS,
                 DEFAULT_SYNC_SPEED_TEST,
                 DEFAULT_MCIO_SKIN,
+                DEFAULT_STATS_RESET,
                 Arrays.toString(MCioAsyncObsTrigger.values()),
                 DEFAULT_ASYNC_OBSERVATION_TRIGGER,
                 DEFAULT_MCIO_EXP1,

@@ -119,6 +119,7 @@ loom {
 //					'--width', '640',
 //					'--height', '480',
 					'--quickPlaySingleplayer', 'New World',
+					"--username", "MCioTest",
 					//'--fullscreen'
 			)
 			vmArgs (
@@ -156,7 +157,7 @@ loom {
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
 	projectId = "MCio"
-	versionNumber = "1.2.0+1.21.3"
+	versionNumber = "1.3.0+1.21.3"
 	changelog = file("CHANGELOG.md").text
 	versionType = "release"
 	uploadFile = remapJar

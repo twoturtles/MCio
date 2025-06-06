@@ -11,13 +11,25 @@ import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 
 /* Defines packet structure for Action and Observation packets */
 
+/*
+ * Note: Each MCIO_TYPE class must have the same name as its corresponding @MCioType class in
+ * mcio_ctrl for proper type matching
+ * The JsonTypeInfo annotation adds a property to the object as it's encoded (into CBOR).
+ * The property name is MCIO_TYPE ("__mcio_type__") and the value will be the MINIMAL_CLASS name,
+ * which is the class name preceded by a dot (e.g. ".ObservationPacket").
+ */
+
 /* Observation packets sent to agent */
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
 record ObservationPacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
@@ -39,7 +51,9 @@ record ObservationPacket(
         float player_yaw,
         ArrayList<InventorySlot> inventory_main,
         ArrayList<InventorySlot> inventory_armor,
-        ArrayList<InventorySlot> inventory_offhand
+        ArrayList<InventorySlot> inventory_offhand,
+
+        ArrayList<Option> options
 ) {
     ObservationPacket {
         Validate.check(version == MCioConfig.MCIO_PROTOCOL_VERSION, "Invalid version");
@@ -59,11 +73,38 @@ class Validate {
     }
 }
 
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
 record InventorySlot(
         int slot,
         String id,
         int count
 ) {}
+
+/* *** Options *** */
+
+@JsonTypeInfo(use = Id.MINIMAL_CLASS, include = As.PROPERTY, property = MCioConfig.MCIO_TYPE)
+interface Option { }
+
+/* Organize updates by category */
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
+record StatCategory (
+        String category,
+        ArrayList<Stat> stats
+) {}
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
+record Stat (
+        String id,
+        int value
+) {}
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
+record StatsUpdateOption(
+        ArrayList<StatCategory> categories
+) implements Option {}
+
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
+record StatsFullOption(
+        ArrayList<StatCategory> categories
+) implements Option {}
 
 /* Serialize ObservationPacket */
 class ObservationPacketPacker {
@@ -126,7 +167,7 @@ class ActionPacketUnpacker {
                 return Optional.empty();
             }
             if (actionPacket.version() != MCioConfig.MCIO_PROTOCOL_VERSION) {
-                LOGGER.error("MCio Protocol version mismatch: Action packet = {}, expected = {}",
+                LOGGER.error("MCIO_PROTOCOL_VERSION mismatch: got {}, expected {}",
                         actionPacket.version(), MCioConfig.MCIO_PROTOCOL_VERSION);
                 return Optional.empty();
             }
