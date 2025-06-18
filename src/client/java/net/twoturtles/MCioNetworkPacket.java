@@ -119,7 +119,11 @@ class ObservationPacketPacker {
 /* ActionPacket sent by agent to Minecraft
  * Keep types simple to ease CBOR translation between python and java.
  * XXX Everything is native order (little-endian).
+ *
+ * Note: Jackson doesn't seem to actually need the type annotation to decode. I think it only needs it
+ * for abstract types like Option. Python does need the annotations to decode.
  */
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
 record ActionPacket(
         // Control
         int version,    // MCIO_PROTOCOL_VERSION
@@ -129,11 +133,13 @@ record ActionPacket(
         boolean stop,   // Tell Minecraft to exit
 
         // Action
-        Input[] inputs,          // Array of key/mouse button inputs
+        InputEvent[] inputs,          // Array of key/mouse button inputs
 
         // Array of length 1 of (xpos, ypos) pairs. Array just for consistency.
         // Also, the list makes it easy to leave empty.
-        double[][] cursor_pos
+        double[][] cursor_pos,
+
+        ArrayList<Option> options
 ) {
     // Helper for debugging to print the double arrays nicely
     public String arrayToString(int[][] array) {
@@ -146,11 +152,12 @@ enum InputType {
     MOUSE   // 1
 }
 
-record Input(
+@JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property=MCioConfig.MCIO_TYPE)
+record InputEvent(
         InputType type,
         int code,   // GLFW key/button code, e.g. GLFW.GLFW_KEY_LEFT_SHIFT or GLFW.GLFW_MOUSE_BUTTON_LEFT
         int action  // GLFW.GLFW_RELEASE or GLFW.GLFW_PRESS
-) {}
+) implements Option {}
 
 /* Deserialize ActionPacket */
 class ActionPacketUnpacker {
@@ -162,6 +169,7 @@ class ActionPacketUnpacker {
     public static Optional<ActionPacket> unpack(byte[] data) {
         try {
             ActionPacket actionPacket = CBOR_MAPPER.readValue(data, ActionPacket.class);
+//            LOGGER.info("ACTION\n{}", actionPacket);
             if (actionPacket == null) {
                 LOGGER.error("Unpacked action packet is null");
                 return Optional.empty();

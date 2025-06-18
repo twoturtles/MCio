@@ -7,6 +7,7 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Run steps as fast as possible. Uses threads to send / recv actions and observations
@@ -39,8 +40,9 @@ public class SpeedTest {
                 new String[0],
                 false,
                 false,
-                new Input[]{},
-                new double[0][]
+                new InputEvent[]{},
+                new double[0][],
+                new ArrayList<>()
         );
 
         byte[] pBytes;

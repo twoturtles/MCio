@@ -68,7 +68,7 @@ class MCioActionHandler {
         }
 
         // Key / Mouse button handling
-        for (Input input: action.inputs()) {
+        for (InputEvent input: action.inputs()) {
             switch (input.type()) {
                 case KEY -> keyManager.update(input.code(), input.action());
                 case MOUSE -> buttonManager.update(input.code(), input.action());
