@@ -1,0 +1,8 @@
+#!/bin/bash
+# cp pre-commit .git/hooks/
+echo "Running spotlessCheck..."
+./gradlew spotlessCheck
+if [ $? -ne 0 ]; then
+  echo "Spotless check failed. Please run './gradlew spotlessApply' to fix formatting."
+  exit 1
+fi
