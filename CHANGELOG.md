@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0+1.21.3 - 2025-06-XX
+- Clean up protocol parsing
+- MCIO_PROTOCOL_VERSION = 7
+
 ## 1.3.0+1.21.3 - 2025-06-05
 - Track built-in Minecraft stats and send updates to the agent
 - Moving protocol to use options. This should help with performance

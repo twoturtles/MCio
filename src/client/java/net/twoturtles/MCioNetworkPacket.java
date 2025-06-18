@@ -167,7 +167,7 @@ class ActionPacketUnpacker {
     public static Optional<ActionPacket> unpack(byte[] data) {
         try {
             ActionPacket actionPacket = CBOR_MAPPER.readValue(data, ActionPacket.class);
-//            LOGGER.info("ACTION\n{}", actionPacket);
+            LOGGER.debug("ACTION\n{}", actionPacket);
             if (actionPacket == null) {
                 LOGGER.error("Unpacked action packet is null");
                 return Optional.empty();
