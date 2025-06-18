@@ -134,12 +134,10 @@ record ActionPacket(
 
         // Action
         InputEvent[] inputs,          // Array of key/mouse button inputs
-
         // Array of length 1 of (xpos, ypos) pairs. Array just for consistency.
         // Also, the list makes it easy to leave empty.
         double[][] cursor_pos,
-
-        ArrayList<Option> options
+        ArrayList<Option> options   // Future use
 ) {
     // Helper for debugging to print the double arrays nicely
     public String arrayToString(int[][] array) {
