@@ -1,13 +1,12 @@
 package net.twoturtles;
 
+import com.mojang.logging.LogUtils;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Map;
 import java.util.HashMap;
-
-import com.mojang.logging.LogUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.Window;
@@ -18,224 +17,211 @@ import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
-
 // Collect information to send to the agent
 // XXX Use static packet fields to reduce memory operations?
 public class MCioObservationHandler {
-    private final MinecraftClient client;
-    private final MCioConfig config;
+  private final MinecraftClient client;
+  private final MCioConfig config;
 
-    private final Logger LOGGER = LogUtils.getLogger();
-    private static final TrackPerSecond sendFPS = new TrackPerSecond("ObservationsSent");
-    private int observationSequence = 0;
+  private final Logger LOGGER = LogUtils.getLogger();
+  private static final TrackPerSecond sendFPS = new TrackPerSecond("ObservationsSent");
+  private int observationSequence = 0;
 
-    public MCioObservationHandler(MinecraftClient client, MCioConfig config) {
-        this.client = client;
-        this.config = config;
+  public MCioObservationHandler(MinecraftClient client, MCioConfig config) {
+    this.client = client;
+    this.config = config;
+  }
+
+  // TODO - more things in the observation packet
+  // Experience
+  // Enchantments
+  // Status effects
+
+  // Collect observation and package into an ObservationPacket
+  Optional<ObservationPacket> collectObservation(int lastFullTickActionSequence) {
+    ClientPlayerEntity player = client.player;
+    if (player == null) {
+      return Optional.empty();
     }
 
-    // TODO - more things in the observation packet
-    // Experience
-    // Enchantments
-    // Status effects
+    ArrayList<Option> options = new ArrayList<>();
 
-    // Collect observation and package into an ObservationPacket
-    Optional<ObservationPacket> collectObservation(int lastFullTickActionSequence) {
-        ClientPlayerEntity player = client.player;
-        if (player == null) {
-            return Optional.empty();
-        }
+    /* Gather information */
+    FrameRV frameRV = getFrame();
+    InventoriesRV inventoriesRV = getInventories();
 
-        ArrayList<Option> options = new ArrayList<>();
+    // XXX For now just manually add the stats update.
+    // This will be based on the action packet in the future.
+    options.add(getStatsUpdate());
+    //        options.add(getStatsFull());
 
-        /* Gather information */
-        FrameRV frameRV = getFrame();
-        InventoriesRV inventoriesRV = getInventories();
+    getCursorPosRV cursorPosRV = getCursorPos(client);
 
-        // XXX For now just manually add the stats update.
-        // This will be based on the action packet in the future.
-        options.add(getStatsUpdate());
-//        options.add(getStatsFull());
+    Vec3d playerPos = player.getPos();
+    float[] fPlayerPos =
+        new float[] {(float) playerPos.x, (float) playerPos.y, (float) playerPos.z};
 
-        getCursorPosRV cursorPosRV = getCursorPos(client);
+    Window window = client.getWindow();
+    int cursorMode = GLFW.glfwGetInputMode(window.getHandle(), GLFW.GLFW_CURSOR);
+    // There are other modes, but I believe these are the two used by Minecraft.
+    cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
-        Vec3d playerPos =  player.getPos();
-        float[] fPlayerPos = new float[] {(float) playerPos.x, (float) playerPos.y, (float) playerPos.z};
+    /* Create packet */
+    ObservationPacket observationPkt =
+        new ObservationPacket(
+            MCioConfig.MCIO_PROTOCOL_VERSION,
+            observationSequence++,
+            config.mode.toString(),
+            lastFullTickActionSequence,
+            frameRV.sequence,
+            frameRV.height,
+            frameRV.width,
+            frameRV.type.toString(),
+            frameRV.frame,
+            cursorMode,
+            new double[] {cursorPosRV.x, cursorPosRV.y},
+            player.getHealth(),
+            fPlayerPos,
+            player.getPitch(),
+            getYaw(player),
+            inventoriesRV.main,
+            inventoriesRV.armor,
+            inventoriesRV.offHand,
+            options);
+    LOGGER.debug("ObservationPacket: {}", observationPkt);
 
-        Window window = client.getWindow();
-        int cursorMode = GLFW.glfwGetInputMode(window.getHandle(), GLFW.GLFW_CURSOR);
-        // There are other modes, but I believe these are the two used by Minecraft.
-        cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
+    return Optional.of(observationPkt);
+  }
 
-        /* Create packet */
-        ObservationPacket observationPkt = new ObservationPacket(
-                MCioConfig.MCIO_PROTOCOL_VERSION,
-                observationSequence++,
-                config.mode.toString(),
-                lastFullTickActionSequence,
-                frameRV.sequence,
-                frameRV.height,
-                frameRV.width,
-                frameRV.type.toString(),
+  /*
+   * Methods for collecting observation data from Minecraft
+   */
 
-                frameRV.frame,
-                cursorMode,
-                new double[] {cursorPosRV.x, cursorPosRV.y},
-                player.getHealth(),
-                fPlayerPos,
-                player.getPitch(),
-                getYaw(player),
-                inventoriesRV.main,
-                inventoriesRV.armor,
-                inventoriesRV.offHand,
-                options
-        );
-        LOGGER.debug("ObservationPacket: {}", observationPkt);
+  StatsUpdateOption getStatsUpdate() {
+    Map<String, ArrayList<Stat>> grouped = new HashMap<>();
+    MCioStats.getInstance()
+        .takePendingStats(
+            true,
+            (category, id, value) -> {
+              grouped.computeIfAbsent(category, k -> new ArrayList<>()).add(new Stat(id, value));
+            });
+    ArrayList<StatCategory> updates = new ArrayList<>();
+    for (Map.Entry<String, ArrayList<Stat>> entry : grouped.entrySet()) {
+      updates.add(new StatCategory(entry.getKey(), entry.getValue()));
+    }
+    return new StatsUpdateOption(updates);
+  }
 
-        return Optional.of(observationPkt);
+  StatsFullOption getStatsFull() {
+    Map<String, ArrayList<Stat>> grouped = new HashMap<>();
+    MCioStats.getInstance()
+        .statsForEach(
+            (category, id, value) -> {
+              grouped.computeIfAbsent(category, k -> new ArrayList<>()).add(new Stat(id, value));
+            });
+    ArrayList<StatCategory> updates = new ArrayList<>();
+    for (Map.Entry<String, ArrayList<Stat>> entry : grouped.entrySet()) {
+      updates.add(new StatCategory(entry.getKey(), entry.getValue()));
+    }
+    return new StatsFullOption(updates);
+  }
+
+  float getYaw(ClientPlayerEntity player) {
+    float yaw = player.getYaw();
+    // Normalize yaw -180 to 180. Minecraft already normalizes pitch -90 to 90.
+    yaw = yaw % 360f;
+    if (yaw > 180f) {
+      yaw -= 360f;
+    }
+    return yaw;
+  }
+
+  /* Return type for getFrame */
+  record FrameRV(
+      int sequence, int height, int width, MCioConfig.MCioFrameType type, ByteBuffer frame) {
+    public static FrameRV empty() {
+      return new FrameRV(
+          0, // Maybe make this -1 to signify empty
+          0,
+          0,
+          MCioConfig.DEFAULT_MCIO_FRAME_TYPE,
+          ByteBuffer.allocate(0) // empty ByteBuffer
+          );
+    }
+  }
+
+  private FrameRV getFrame() {
+    MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getInstance().getLastCapturedFrame();
+    if (frame == null || frame.frame() == null) {
+      return FrameRV.empty();
     }
 
-    /*
-     * Methods for collecting observation data from Minecraft
-     */
-
-
-    StatsUpdateOption getStatsUpdate() {
-        Map<String, ArrayList<Stat>> grouped = new HashMap<>();
-        MCioStats.getInstance().takePendingStats(true, (category, id, value) -> {
-            grouped.computeIfAbsent(category, k -> new ArrayList<>())
-                    .add(new Stat(id, value));
-        });
-        ArrayList<StatCategory> updates = new ArrayList<>();
-        for (Map.Entry<String, ArrayList<Stat>> entry : grouped.entrySet()) {
-            updates.add(new StatCategory(entry.getKey(), entry.getValue()));
-        }
-        return new StatsUpdateOption(updates);
-    }
-
-    StatsFullOption getStatsFull() {
-        Map<String, ArrayList<Stat>> grouped = new HashMap<>();
-        MCioStats.getInstance().statsForEach((category, id, value) -> {
-            grouped.computeIfAbsent(category, k -> new ArrayList<>())
-                    .add(new Stat(id, value));
-        });
-        ArrayList<StatCategory> updates = new ArrayList<>();
-        for (Map.Entry<String, ArrayList<Stat>> entry : grouped.entrySet()) {
-            updates.add(new StatCategory(entry.getKey(), entry.getValue()));
-        }
-        return new StatsFullOption(updates);
-    }
-
-
-    float getYaw(ClientPlayerEntity player) {
-        float yaw = player.getYaw();
-        // Normalize yaw -180 to 180. Minecraft already normalizes pitch -90 to 90.
-        yaw = yaw % 360f;
-        if (yaw > 180f) {
-            yaw -= 360f;
-        }
-        return yaw;
-    }
-
-    /* Return type for getFrame */
-    record FrameRV(
-            int sequence,
-            int height,
-            int width,
-            MCioConfig.MCioFrameType type,
-            ByteBuffer frame
-    ){
-        public static FrameRV empty() {
-            return new FrameRV(
-                    0,  // Maybe make this -1 to signify empty
-                    0,
-                    0,
-                    MCioConfig.DEFAULT_MCIO_FRAME_TYPE,
-                    ByteBuffer.allocate(0)  // empty ByteBuffer
-            );
-        }
-    }
-    private FrameRV getFrame() {
-        MCioFrameCapture.MCioFrame frame = MCioFrameCapture.getInstance().getLastCapturedFrame();
-        if (frame == null || frame.frame() == null) {
-            return FrameRV.empty();
-        }
-
-        /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
-        sendFPS.count();
-        MCioConfig config = MCioConfig.getInstance();
-        ByteBuffer frameBuf = switch (config.frameType) {
-            case RAW -> MCioFrameCapture.getInstance().getFrameRAW(frame);
+    /* If FPS SEND > FPS CAPTURE, we'll be sending duplicate frames. */
+    sendFPS.count();
+    MCioConfig config = MCioConfig.getInstance();
+    ByteBuffer frameBuf =
+        switch (config.frameType) {
+          case RAW -> MCioFrameCapture.getInstance().getFrameRAW(frame);
         };
-        return new FrameRV(
-                frame.frame_sequence(),
-                frame.height(),
-                frame.width(),
-                config.frameType,
-                frameBuf);
+    return new FrameRV(
+        frame.frame_sequence(), frame.height(), frame.width(), config.frameType, frameBuf);
+  }
+
+  /* Return type for getInventories() */
+  record InventoriesRV(
+      ArrayList<InventorySlot> main,
+      ArrayList<InventorySlot> armor,
+      // Even though it's only one item, use array for consistency.
+      ArrayList<InventorySlot> offHand) {
+    public static InventoriesRV empty() {
+      return new InventoriesRV(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    }
+  }
+
+  private InventoriesRV getInventories() {
+    ClientPlayerEntity player = MinecraftClient.getInstance().player;
+    if (player == null) {
+      return InventoriesRV.empty();
     }
 
-    /* Return type for getInventories() */
-    record InventoriesRV(
-            ArrayList<InventorySlot> main,
-            ArrayList<InventorySlot> armor,
-            // Even though it's only one item, use array for consistency.
-            ArrayList<InventorySlot> offHand
-    ) {
-        public static InventoriesRV empty() {
-            return new InventoriesRV(
-                    new ArrayList<>(),
-                    new ArrayList<>(),
-                    new ArrayList<>()
-            );
-        }
-    }
-    private InventoriesRV getInventories() {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) {
-            return InventoriesRV.empty();
-        }
+    PlayerInventory inventory = player.getInventory();
+    // main includes hotBar (0-8) and regular inventory (9-35). Split these?
+    ArrayList<InventorySlot> main = readInventory(inventory.main);
+    ArrayList<InventorySlot> armor = readInventory(inventory.armor);
+    ArrayList<InventorySlot> offHand = readInventory(inventory.offHand);
+    return new InventoriesRV(main, armor, offHand);
+  }
 
-        PlayerInventory inventory = player.getInventory();
-        // main includes hotBar (0-8) and regular inventory (9-35). Split these?
-        ArrayList<InventorySlot> main = readInventory(inventory.main);
-        ArrayList<InventorySlot> armor = readInventory(inventory.armor);
-        ArrayList<InventorySlot> offHand = readInventory(inventory.offHand);
-        return new InventoriesRV(main, armor, offHand);
+  private ArrayList<InventorySlot> readInventory(List<ItemStack> inventoryList) {
+    ArrayList<InventorySlot> slots = new ArrayList<>();
+    for (int slot_num = 0; slot_num < inventoryList.size(); slot_num++) {
+      ItemStack stack = inventoryList.get(slot_num);
+      if (!stack.isEmpty()) {
+        InventorySlot inventorySlot =
+            new InventorySlot(
+                slot_num, Registries.ITEM.getId(stack.getItem()).toString(), stack.getCount());
+        slots.add(inventorySlot);
+      }
     }
+    return slots;
+  }
 
-    private ArrayList<InventorySlot> readInventory(List<ItemStack> inventoryList) {
-        ArrayList<InventorySlot> slots = new ArrayList<>();
-        for (int slot_num = 0; slot_num < inventoryList.size(); slot_num++) {
-            ItemStack stack = inventoryList.get(slot_num);
-            if (!stack.isEmpty()) {
-                InventorySlot inventorySlot = new InventorySlot(
-                        slot_num, Registries.ITEM.getId(stack.getItem()).toString(), stack.getCount()
-                );
-                slots.add(inventorySlot);
-            }
-        }
-        return slots;
+  record getCursorPosRV(double x, double y) {}
+
+  private getCursorPosRV getCursorPos(MinecraftClient client) {
+    Window window = client.getWindow();
+    if (window == null) {
+      return new getCursorPosRV(0.0, 0.0);
     }
 
-    record getCursorPosRV(
-            double x,
-            double y
-    ){}
-    private getCursorPosRV getCursorPos(MinecraftClient client) {
-        Window window = client.getWindow();
-        if (window == null) {
-            return new getCursorPosRV(0.0, 0.0);
-        }
+    // Scale mouse position to frame.
+    // This only matters for high DPI displays (Retina), but doing this works either way.
+    double scaleX = (double) window.getFramebufferWidth() / window.getWidth();
+    double scaleY = (double) window.getFramebufferHeight() / window.getHeight();
+    // Mouse positions are relative to the window.
+    double frameMouseX = client.mouse.getX() * scaleX;
+    double frameMouseY = client.mouse.getY() * scaleY;
 
-        // Scale mouse position to frame.
-        // This only matters for high DPI displays (Retina), but doing this works either way.
-        double scaleX = (double) window.getFramebufferWidth() / window.getWidth();
-        double scaleY = (double) window.getFramebufferHeight() / window.getHeight();
-        // Mouse positions are relative to the window.
-        double frameMouseX = client.mouse.getX() * scaleX;
-        double frameMouseY = client.mouse.getY() * scaleY;
-
-        return new getCursorPosRV(frameMouseX, frameMouseY);
-    }
+    return new getCursorPosRV(frameMouseX, frameMouseY);
+  }
 }
