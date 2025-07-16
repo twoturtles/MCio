@@ -2,19 +2,27 @@ package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
 import java.io.PrintStream;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 
 /** Misc small utilities */
 public class MCioUtil {
-  // Minecraft somehow captures System.out, so make a new stdout available.
+  /* Minecraft somehow captures System.out, so make a new stdout available. */
   public static PrintStream stdout =
       new PrintStream(new java.io.FileOutputStream(java.io.FileDescriptor.out));
 
-  static void sleep(double seconds) {
+  /* Return current time in seconds. */
+  public static double now() {
+    return System.nanoTime() / 1_000_000_000.0;
+  }
+
+  /* Sleep utils */
+  public static void sleep(double seconds) {
     MCioUtil.msleep((long) (seconds * 1000));
   }
 
-  static void msleep(long millis) {
+  public static void msleep(long millis) {
     try {
       Thread.sleep(millis);
     } catch (InterruptedException e) {
@@ -22,9 +30,49 @@ public class MCioUtil {
     }
   }
 
-  /* Return current time in seconds. */
-  static double now() {
-    return System.nanoTime() / 1_000_000_000.0;
+  /* I can never remember the right call for this */
+  public static void hardExit(int status) {
+    Runtime.getRuntime().halt(status);
+  }
+
+  /**
+   * To help with exploring code. Tracks unique stack traces to understand how a piece of code is
+   * called.
+   */
+  public static class StackTraceCounter {
+    private final Map<String, Integer> traceCounts = new ConcurrentHashMap<>();
+    PrintStream out = MCioUtil.stdout;
+
+    /**
+     * Records the current stack trace by slicing the trace from [start] to [end] (inclusive). This
+     * range helps skip internal frames and capture meaningful callers.
+     */
+    public void record(int start, int end) {
+      StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+      String key = formatTrace(stack, start, end);
+      traceCounts.merge(key, 1, Integer::sum);
+    }
+
+    /** Prints all collected trace counts to stdout. */
+    public void printStats() {
+      out.printf("=== Stack Trace Counts === %d unique traces\n", traceCounts.size());
+      traceCounts.entrySet().stream()
+          .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+          .forEach(
+              entry -> {
+                out.println("Count: " + entry.getValue());
+                out.println(entry.getKey());
+              });
+    }
+
+    private String formatTrace(StackTraceElement[] trace, int start, int end) {
+      StringBuilder sb = new StringBuilder();
+      if (end < 0) end = Integer.MAX_VALUE;
+      for (int i = start; i <= end && i < trace.length; i++) {
+        sb.append(String.format("%2d: %s%n", i, trace[i]));
+      }
+      return sb.toString();
+    }
   }
 }
 

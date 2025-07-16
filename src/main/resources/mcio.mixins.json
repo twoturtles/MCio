@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ChunkFilterCylindricalMixin",
+    "RandomSeedMixin",
     "ServerStatHandlerMixin",
     "ServerStatHandlerMixin$asStringInvoker",
     "ServerStatHandlerMixin$StatHandlerAccessor",
@@ -11,5 +12,5 @@
   ],
   "injectors": {
     "defaultRequire": 1
-	}
+  }
 }
