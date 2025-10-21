@@ -1,180 +1,180 @@
 plugins {
-	id 'fabric-loom' version '1.8-SNAPSHOT'
-	id 'maven-publish'
-	id "com.modrinth.minotaur" version "2.+"
-	id 'com.diffplug.spotless' version '7.0.4'
+    id 'fabric-loom' version '1.8-SNAPSHOT'
+    id 'maven-publish'
+    id "com.modrinth.minotaur" version "2.+"
+    id 'com.diffplug.spotless' version '7.0.4'
 }
 
 version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
+    archivesName = project.archives_base_name
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+    // Add repositories to retrieve artifacts from in here.
+    // You should only use this when depending on other mods because
+    // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
+    // for more information about repositories.
 }
 
 loom {
-	splitEnvironmentSourceSets()
+    splitEnvironmentSourceSets()
 
-	mods {
-		"mcio" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
+    mods {
+        "mcio" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
 
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    // To change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    // Fabric API. This is technically optional, but you probably want it anyway.
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// https://mvnrepository.com/artifact/org.zeromq/jeromq
-	include(implementation('org.zeromq:jeromq:0.6.0'))
-	// https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
-	include(implementation('com.fasterxml.jackson.core:jackson-core:2.18.1'))
-	include(implementation('com.fasterxml.jackson.core:jackson-databind:2.18.1'))
-	include(implementation("com.fasterxml.jackson.core:jackson-annotations:2.18.1"))
-	include(implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.18.1'))
+    // https://mvnrepository.com/artifact/org.zeromq/jeromq
+    include(implementation('org.zeromq:jeromq:0.6.0'))
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-cbor
+    include(implementation('com.fasterxml.jackson.core:jackson-core:2.18.1'))
+    include(implementation('com.fasterxml.jackson.core:jackson-databind:2.18.1'))
+    include(implementation("com.fasterxml.jackson.core:jackson-annotations:2.18.1"))
+    include(implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.18.1'))
 
-	// Testing
-	testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
-	testImplementation 'org.mockito:mockito-core:5.14.2'
+    // Testing
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
+    testImplementation 'org.mockito:mockito-core:5.14.2'
 }
 
 // Testing - Enable JUnit for fabric
 test {
-	useJUnitPlatform()
-	testLogging {
-		events "passed", "skipped", "failed", "standardOut", "standardError"
-		showStandardStreams = true
-	}
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        showStandardStreams = true
+    }
 }
 
 processResources {
-	inputs.property "version", project.version
+    inputs.property "version", project.version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+    it.options.release = 21
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
+    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+    // if it is present.
+    // If you remove this line, sources will not be generated.
+    withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}"}
-	}
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
 }
 
 // configure the maven publication
 publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
-			from components.java
-		}
-	}
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
+        }
+    }
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        // Add repositories to publish to here.
+        // Notice: This block does NOT have the same function as the block in the top level.
+        // The repositories here will be used for publishing your artifact, not for
+        // retrieving dependencies.
+    }
 }
 
 /* MCio config */
 loom {
-	// Add additional log4j config files
-	log4jConfigs.from(file("log4j-dev.xml"))
+    // Add additional log4j config files
+    log4jConfigs.from(file("log4j-dev.xml"))
 
-	runs {
-		client {
-			programArgs (
+    runs {
+        client {
+            programArgs(
 //					'--width', '640',
 //					'--height', '480',
-					'--quickPlaySingleplayer', 'New World',
-					"--username", "MCioTest",
-					//'--fullscreen'
-			)
-			vmArgs (
-					// Use log4j-dev.xml instead
-					// '-Dfabric.log.level=warn'  // trace, debug, info, warn, error
-			)
-		}
-		client1 {
-			client()  // Use client configuration as base
-			ideConfigGenerated(true)  // Generate IDE config
-			runDir "run1"
-			programArgs (
-					'--width', '640',
-					'--height', '640',
-					//'--quickPlaySingleplayer', 'New World',
-					//'--fullscreen'
-			)
-			property 'minecraft.clientPort', '25565'  // default port
-		}
-		client2 {
-			client()  // Use client configuration as base
-			ideConfigGenerated(true)  // Generate IDE config
-			runDir "run2"
-			programArgs (
-					'--width', '640',
-					'--height', '640',
-					//'--quickPlaySingleplayer', 'New World',
-					//'--fullscreen'
-			)
-			property 'minecraft.clientPort', '25566'  // different port
-		}
-	}
+                    '--quickPlaySingleplayer', 'New World',
+                    "--username", "MCioTest",
+                    //'--fullscreen'
+            )
+            vmArgs(
+                    // Use log4j-dev.xml instead
+                    // '-Dfabric.log.level=warn'  // trace, debug, info, warn, error
+            )
+        }
+        client1 {
+            client()  // Use client configuration as base
+            ideConfigGenerated(true)  // Generate IDE config
+            runDir "run1"
+            programArgs(
+                    '--width', '640',
+                    '--height', '640',
+                    //'--quickPlaySingleplayer', 'New World',
+                    //'--fullscreen'
+            )
+            property 'minecraft.clientPort', '25565'  // default port
+        }
+        client2 {
+            client()  // Use client configuration as base
+            ideConfigGenerated(true)  // Generate IDE config
+            runDir "run2"
+            programArgs(
+                    '--width', '640',
+                    '--height', '640',
+                    //'--quickPlaySingleplayer', 'New World',
+                    //'--fullscreen'
+            )
+            property 'minecraft.clientPort', '25566'  // different port
+        }
+    }
 }
 
 spotless {
-	java {
-		googleJavaFormat()
-	}
+    java {
+        googleJavaFormat()
+    }
 }
 
 modrinth {
-	token = System.getenv("MODRINTH_TOKEN")
-	projectId = "MCio"
-	versionNumber = "1.3.1+1.21.3"
-	changelog = file("CHANGELOG.md").text
-	versionType = "release"
-	uploadFile = remapJar
-	gameVersions = ["1.21.3"]
-	loaders = ["fabric"]
-	syncBodyFrom = rootProject.file("README.md").text
-	dependencies {
-		required.project "fabric-api"
-	}
-	debugMode = false
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = "MCio"
+    versionNumber = "1.4.0+1.21.3"
+    changelog = file("CHANGELOG.md").text
+    versionType = "release"
+    uploadFile = remapJar
+    gameVersions = ["1.21.3"]
+    loaders = ["fabric"]
+    syncBodyFrom = rootProject.file("README.md").text
+    dependencies {
+        required.project "fabric-api"
+    }
+    debugMode = false
 }
 // Automatically run the modrinthSyncBody when pushing new version
 tasks.modrinth.dependsOn(tasks.modrinthSyncBody)
