@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.0+1.21.3 - 2025-06-XX
+## 1.4.0+1.21.3 - 2025-10-22
 
 - Clean up protocol parsing
 - Auto-format code
