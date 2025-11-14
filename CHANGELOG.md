@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1+1.21.3 - 2025-XX-XX
+
+- Move disable command feedback to mcio_ctrl
+
 ## 1.4.0+1.21.3 - 2025-10-22
 
 - Clean up protocol parsing
