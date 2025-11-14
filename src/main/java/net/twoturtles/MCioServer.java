@@ -34,8 +34,6 @@ public class MCioServer implements ModInitializer {
     ServerLifecycleEvents.SERVER_STARTED.register(
         server -> {
           LOGGER.info("Server Started mode={}", config.mode);
-          // Automatically disable chat messages about commands
-          server.getGameRules().get(GameRules.SEND_COMMAND_FEEDBACK).set(false, server);
         });
     ServerLifecycleEvents.SERVER_STOPPING.register(
         server -> {
