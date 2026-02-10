@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+
 import net.minecraft.world.level.GameType;
 import org.slf4j.Logger;
 
@@ -299,7 +300,7 @@ public class MCioConfig {
             DEFAULT_ACTION_PORT,
             DEFAULT_OPEN_TO_LAN,
             DEFAULT_OPEN_TO_LAN_PORT,
-            Arrays.toString(GameMode.values()),
+            Arrays.toString(GameType.values()),
             DEFAULT_OPEN_TO_LAN_MODE,
             DEFAULT_HIDE_MINECRAFT_WINDOW,
             DEFAULT_RETINA_HACK,
