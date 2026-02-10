@@ -2,11 +2,11 @@ package net.twoturtles.mixin;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.io.File;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.ServerStatsCounter;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatsCounter;
+import net.minecraft.world.entity.player.Player;
 import net.twoturtles.MCioConfig;
 import net.twoturtles.MCioStats;
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public abstract class ServerStatsCounterMixin {
           @At(
               value = "FIELD",
               target =
-                      "Lnet/minecraft/stats/ServerStatsCounter;server:Lnet/minecraft/server/MinecraftServer;",
+                  "Lnet/minecraft/stats/ServerStatsCounter;server:Lnet/minecraft/server/MinecraftServer;",
               shift = At.Shift.AFTER))
   private void onInit(MinecraftServer server, File file, CallbackInfo ci) {
     MCioStats.getInstance().onServerStatHandlerInit((ServerStatsCounter) (Object) this);

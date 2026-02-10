@@ -2,10 +2,10 @@ package net.twoturtles.mixin.client;
 
 import static org.lwjgl.opengl.GL11.*;
 
+import com.mojang.blaze3d.platform.Window;
 import java.nio.ByteBuffer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
-import com.mojang.blaze3d.platform.Window;
 import net.twoturtles.MCioConfig;
 import net.twoturtles.MCioFrameCapture;
 import org.lwjgl.glfw.GLFW;

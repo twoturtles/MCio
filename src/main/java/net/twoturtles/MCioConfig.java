@@ -1,4 +1,5 @@
-// TODO(Ravel): Failed to fully resolve file: null cannot be cast to non-null type com.intellij.psi.PsiJavaCodeReferenceElement
+// TODO(Ravel): Failed to fully resolve file: null cannot be cast to non-null type
+// com.intellij.psi.PsiJavaCodeReferenceElement
 package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
@@ -8,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-
 import net.minecraft.world.level.GameType;
 import org.slf4j.Logger;
 

@@ -2,9 +2,9 @@ package net.twoturtles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import net.minecraft.server.Bootstrap;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.server.Bootstrap;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 

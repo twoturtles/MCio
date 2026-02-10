@@ -49,11 +49,14 @@ public class MCioClient implements ClientModInitializer {
           clientTPS.count();
 
           /* Open to LAN */
-          boolean serverReady = client.getSingleplayerServer() != null && client.getConnection() != null;
+          boolean serverReady =
+              client.getSingleplayerServer() != null && client.getConnection() != null;
           if (config.openToLan && serverReady && !lanOpened) {
             LOGGER.info("Open-To-LAN port={}", config.openLanToPort);
             // Even though it's a server method, Minecraft calls this from the Render thread.
-            client.getSingleplayerServer().publishServer(config.openToLanMode, true, config.openLanToPort);
+            client
+                .getSingleplayerServer()
+                .publishServer(config.openToLanMode, true, config.openLanToPort);
             // Normally the integrated server forces online mode.
             client.getSingleplayerServer().setUsesAuthentication(false);
             lanOpened = true;

@@ -1,5 +1,6 @@
 package net.twoturtles;
 
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.logging.LogUtils;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -9,10 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import com.mojang.blaze3d.platform.Window;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -199,7 +199,9 @@ public class MCioObservationHandler {
       if (!stack.isEmpty()) {
         InventorySlot inventorySlot =
             new InventorySlot(
-                slot_num, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), stack.getCount());
+                slot_num,
+                BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
+                stack.getCount());
         slots.add(inventorySlot);
       }
     }
