@@ -7,27 +7,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.util.Window;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import com.mojang.blaze3d.platform.Window;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 // Collect information to send to the agent
 // XXX Use static packet fields to reduce memory operations?
 public class MCioObservationHandler {
-  private final MinecraftClient client;
+  private final Minecraft client;
   private final MCioConfig config;
 
   private final Logger LOGGER = LogUtils.getLogger();
   private static final TrackPerSecond sendFPS = new TrackPerSecond("ObservationsSent");
   private int observationSequence = 0;
 
-  public MCioObservationHandler(MinecraftClient client, MCioConfig config) {
+  public MCioObservationHandler(Minecraft client, MCioConfig config) {
     this.client = client;
     this.config = config;
   }
@@ -39,7 +39,7 @@ public class MCioObservationHandler {
 
   // Collect observation and package into an ObservationPacket
   Optional<ObservationPacket> collectObservation(int lastFullTickActionSequence) {
-    ClientPlayerEntity player = client.player;
+    LocalPlayer player = client.player;
     if (player == null) {
       return Optional.empty();
     }
@@ -57,12 +57,12 @@ public class MCioObservationHandler {
 
     getCursorPosRV cursorPosRV = getCursorPos(client);
 
-    Vec3d playerPos = player.getPos();
+    Vec3 playerPos = player.position();
     float[] fPlayerPos =
         new float[] {(float) playerPos.x, (float) playerPos.y, (float) playerPos.z};
 
     Window window = client.getWindow();
-    int cursorMode = GLFW.glfwGetInputMode(window.getHandle(), GLFW.GLFW_CURSOR);
+    int cursorMode = GLFW.glfwGetInputMode(window.getWindow(), GLFW.GLFW_CURSOR);
     // There are other modes, but I believe these are the two used by Minecraft.
     cursorMode = cursorMode == GLFW.GLFW_CURSOR_DISABLED ? cursorMode : GLFW.GLFW_CURSOR_NORMAL;
 
@@ -82,7 +82,7 @@ public class MCioObservationHandler {
             new double[] {cursorPosRV.x, cursorPosRV.y},
             player.getHealth(),
             fPlayerPos,
-            player.getPitch(),
+            player.getXRot(),
             getYaw(player),
             inventoriesRV.main,
             inventoriesRV.armor,
@@ -126,8 +126,8 @@ public class MCioObservationHandler {
     return new StatsFullOption(updates);
   }
 
-  float getYaw(ClientPlayerEntity player) {
-    float yaw = player.getYaw();
+  float getYaw(LocalPlayer player) {
+    float yaw = player.getYRot();
     // Normalize yaw -180 to 180. Minecraft already normalizes pitch -90 to 90.
     yaw = yaw % 360f;
     if (yaw > 180f) {
@@ -179,16 +179,16 @@ public class MCioObservationHandler {
   }
 
   private InventoriesRV getInventories() {
-    ClientPlayerEntity player = MinecraftClient.getInstance().player;
+    LocalPlayer player = Minecraft.getInstance().player;
     if (player == null) {
       return InventoriesRV.empty();
     }
 
-    PlayerInventory inventory = player.getInventory();
+    Inventory inventory = player.getInventory();
     // main includes hotBar (0-8) and regular inventory (9-35). Split these?
-    ArrayList<InventorySlot> main = readInventory(inventory.main);
+    ArrayList<InventorySlot> main = readInventory(inventory.items);
     ArrayList<InventorySlot> armor = readInventory(inventory.armor);
-    ArrayList<InventorySlot> offHand = readInventory(inventory.offHand);
+    ArrayList<InventorySlot> offHand = readInventory(inventory.offhand);
     return new InventoriesRV(main, armor, offHand);
   }
 
@@ -199,7 +199,7 @@ public class MCioObservationHandler {
       if (!stack.isEmpty()) {
         InventorySlot inventorySlot =
             new InventorySlot(
-                slot_num, Registries.ITEM.getId(stack.getItem()).toString(), stack.getCount());
+                slot_num, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), stack.getCount());
         slots.add(inventorySlot);
       }
     }
@@ -208,7 +208,7 @@ public class MCioObservationHandler {
 
   record getCursorPosRV(double x, double y) {}
 
-  private getCursorPosRV getCursorPos(MinecraftClient client) {
+  private getCursorPosRV getCursorPos(Minecraft client) {
     Window window = client.getWindow();
     if (window == null) {
       return new getCursorPosRV(0.0, 0.0);
@@ -216,11 +216,11 @@ public class MCioObservationHandler {
 
     // Scale mouse position to frame.
     // This only matters for high DPI displays (Retina), but doing this works either way.
-    double scaleX = (double) window.getFramebufferWidth() / window.getWidth();
-    double scaleY = (double) window.getFramebufferHeight() / window.getHeight();
+    double scaleX = (double) window.getWidth() / window.getScreenWidth();
+    double scaleY = (double) window.getHeight() / window.getScreenHeight();
     // Mouse positions are relative to the window.
-    double frameMouseX = client.mouse.getX() * scaleX;
-    double frameMouseY = client.mouse.getY() * scaleY;
+    double frameMouseX = client.mouseHandler.xpos() * scaleX;
+    double frameMouseY = client.mouseHandler.ypos() * scaleY;
 
     return new getCursorPosRV(frameMouseX, frameMouseY);
   }

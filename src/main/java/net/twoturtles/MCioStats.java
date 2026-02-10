@@ -8,11 +8,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Objects;
 import java.util.Set;
-import net.minecraft.registry.Registries;
-import net.minecraft.stat.ServerStatHandler;
-import net.minecraft.stat.Stat;
-import net.minecraft.stat.StatType;
-import net.minecraft.stat.Stats;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.stats.ServerStatsCounter;
+import net.minecraft.stats.Stat;
+import net.minecraft.stats.StatType;
+import net.minecraft.stats.Stats;
 import org.slf4j.Logger;
 
 public class MCioStats {
@@ -26,7 +26,7 @@ public class MCioStats {
   }
 
   // The handler associated with the local player
-  private ServerStatHandler localHandler;
+  private ServerStatsCounter localHandler;
 
   /*
    * Shared between the client and server threads.
@@ -39,7 +39,7 @@ public class MCioStats {
   private MCioStats() {}
 
   // The first init is the handler associated with the local player.
-  public void onServerStatHandlerInit(ServerStatHandler handler) {
+  public void onServerStatHandlerInit(ServerStatsCounter handler) {
     if (localHandler == null) {
       localHandler = handler;
     }
@@ -48,14 +48,14 @@ public class MCioStats {
   /* ** Synchronized ** */
 
   // Called by server when a stat is updated
-  public synchronized void updateStats(ServerStatHandler handler, Stat<?> stat, int value) {
+  public synchronized void updateStats(ServerStatsCounter handler, Stat<?> stat, int value) {
     if (handler != localHandler) return;
     this.statMap.put(stat, value);
     this.pendingStats.add(stat);
   }
 
   // Called by server after the stats are loaded from json
-  public synchronized void replaceStats(ServerStatHandler handler, Object2IntMap<Stat<?>> other) {
+  public synchronized void replaceStats(ServerStatsCounter handler, Object2IntMap<Stat<?>> other) {
     if (handler != localHandler) return;
     this.statMap = new Object2IntOpenHashMap<>(other);
     this.pendingStats = Sets.newHashSet(this.statMap.keySet());
@@ -94,12 +94,12 @@ public class MCioStats {
 
   // From ServerStatHandler.asString(). E.g., minecraft:mined
   public static String getStatCategory(Stat<?> stat) {
-    return Objects.toString(Registries.STAT_TYPE.getId(stat.getType()), "unknown");
+    return Objects.toString(BuiltInRegistries.STAT_TYPE.getKey(stat.getType()), "unknown");
   }
 
   // Based on ServerStatHandler.getId(). E.g., minecraft:grass_block
   public static <T> String getStatId(Stat<T> stat) {
-    return Objects.toString(stat.getType().getRegistry().getId(stat.getValue()), "unknown");
+    return Objects.toString(stat.getType().getRegistry().getKey(stat.getValue()), "unknown");
   }
 
   /**
@@ -118,7 +118,7 @@ public class MCioStats {
         @SuppressWarnings("unchecked")
         StatType<Object> statType = (StatType<Object>) field.get(null);
         for (Object value : statType.getRegistry()) {
-          Stat<Object> stat = statType.getOrCreateStat(value);
+          Stat<Object> stat = statType.get(value);
           sb.append(String.format("%s %s\n", getStatCategory(stat), getStatId(stat)));
         }
       } catch (IllegalAccessException e) {

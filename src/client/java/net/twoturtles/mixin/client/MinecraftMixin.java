@@ -1,6 +1,6 @@
 package net.twoturtles.mixin.client;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.twoturtles.*;
 import net.twoturtles.MCioConfig;
 import org.slf4j.Logger;
@@ -13,21 +13,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(MinecraftClient.class)
-public class MinecraftClientMixin {
+@Mixin(Minecraft.class)
+public class MinecraftMixin {
   @Unique
   private static final Logger LOGGER =
       LoggerFactory.getLogger("net.twoturtles.mixin.client.MinecraftClientMixin");
 
-  @Shadow private boolean windowFocused;
+  @Shadow private boolean windowActive;
 
-  @Inject(method = "onWindowFocusChanged(Z)V", at = @At("HEAD"), cancellable = true)
+  @Inject(method = "setWindowActive(Z)V", at = @At("HEAD"), cancellable = true)
   private void onWindowFocusChanged(boolean focused, CallbackInfo ci) {
     // Store the true value of windowFocused in the MCioClient for access by MouseMixin
     // XXX There has to be a cleaner way to do this
     MCioClient.MCioWindowFocused = focused;
     // Keep MinecraftClient's copy always true
-    windowFocused = true;
+    windowActive = true;
     // Cancel the original method to prevent overwriting
     ci.cancel();
   }
@@ -37,7 +37,7 @@ public class MinecraftClientMixin {
   // Seems brittle. This targets the first int assigned in the method.
   // This is the number of ticks to take. Normally 0 or 1, but can be higher (to catch up?).
   // Make it always 1 so we tick every frame, but not more than 1 so we generate a frame every tick.
-  @ModifyVariable(method = "render(Z)V", at = @At("STORE"), ordinal = 0)
+  @ModifyVariable(method = "runTick(Z)V", at = @At("STORE"), ordinal = 0)
   private int injected(int i) {
     if (MCioConfig.getInstance().mode == MCioConfig.MCioMode.SYNC) {
       if (i > 1) {

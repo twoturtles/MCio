@@ -3,12 +3,12 @@ package net.twoturtles;
 import com.mojang.logging.LogUtils;
 import java.util.Optional;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 
 public class MCioClientSync {
   private final Logger LOGGER = LogUtils.getLogger();
-  private final MinecraftClient client;
+  private final Minecraft client;
   private MCioConfig config;
 
   private final MCioNetworkConnection connection;
@@ -22,7 +22,7 @@ public class MCioClientSync {
 
   /** See MCioSyncUtil for more info. */
   MCioClientSync(MCioConfig config) {
-    client = MinecraftClient.getInstance();
+    client = Minecraft.getInstance();
     this.config = config;
 
     connection = new MCioNetworkConnection();

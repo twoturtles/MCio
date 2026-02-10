@@ -3,8 +3,8 @@ package net.twoturtles;
 import com.mojang.logging.LogUtils;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.util.SkinTextures;
-import net.twoturtles.mixin.client.DefaultSkinHelperMixin;
+import net.minecraft.client.resources.PlayerSkin;
+import net.twoturtles.mixin.client.DefaultPlayerSkinMixin;
 import org.slf4j.Logger;
 
 public class MCioClientUtil {
@@ -12,7 +12,7 @@ public class MCioClientUtil {
 
   public static List<String> getDefaultSkins() {
     List<String> result = new ArrayList<>();
-    for (SkinTextures skin : DefaultSkinHelperMixin.SkinAccessor.getSkins()) {
+    for (PlayerSkin skin : DefaultPlayerSkinMixin.SkinAccessor.getSkins()) {
       String[] parts = skin.texture().getPath().split("/");
       int len = parts.length;
       if (len >= 2) {

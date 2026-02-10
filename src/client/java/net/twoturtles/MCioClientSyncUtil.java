@@ -1,6 +1,6 @@
 package net.twoturtles;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public class MCioClientSyncUtil {
   /**
@@ -8,7 +8,7 @@ public class MCioClientSyncUtil {
    * MCioSyncUtil can't access MinecraftClient.
    */
   public static void checkAndSetGameRunning() {
-    MinecraftClient client = MinecraftClient.getInstance();
+    Minecraft client = Minecraft.getInstance();
 
     boolean chunksReady =
         !MCioConfig.getInstance().mcioPreloadChunks
@@ -16,7 +16,7 @@ public class MCioClientSyncUtil {
 
     // A "Screen" is an overlay, like "Loading", so currentScreen is null when the game window is
     // up.
-    if (client.currentScreen == null && chunksReady) {
+    if (client.screen == null && chunksReady) {
       MCioSyncUtil.getInstance().setGameRunning(true);
     }
   }

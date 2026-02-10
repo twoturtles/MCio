@@ -2,11 +2,11 @@ package net.twoturtles.mixin;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.io.File;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.stat.ServerStatHandler;
-import net.minecraft.stat.Stat;
-import net.minecraft.stat.StatHandler;
+import net.minecraft.stats.ServerStatsCounter;
+import net.minecraft.stats.Stat;
+import net.minecraft.stats.StatsCounter;
 import net.twoturtles.MCioConfig;
 import net.twoturtles.MCioStats;
 import org.slf4j.Logger;
@@ -19,27 +19,27 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ServerStatHandler.class)
-public abstract class ServerStatHandlerMixin {
+@Mixin(ServerStatsCounter.class)
+public abstract class ServerStatsCounterMixin {
   @Unique
   private static final Logger LOGGER =
       LoggerFactory.getLogger("net.twoturtles.mixin.ServerStatHandlerMixin");
 
-  @Mixin(StatHandler.class)
-  public interface StatHandlerAccessor {
-    @Accessor("statMap")
-    Object2IntMap<Stat<?>> getStatMap();
+  @Mixin(StatsCounter.class)
+  public interface StatsCounterAccessor {
+    @Accessor("stats")
+    Object2IntMap<Stat<?>> getStats();
   }
 
-  @Mixin(ServerStatHandler.class)
+  @Mixin(ServerStatsCounter.class)
   public interface asStringInvoker {
-    @Invoker("asString")
-    public String invokeAsString();
+    @Invoker("toJson")
+    public String invokeToJson();
   }
 
-  @Inject(method = "setStat", at = @At("HEAD"))
-  private void injectSetStatHead(PlayerEntity player, Stat<?> stat, int value, CallbackInfo ci) {
-    MCioStats.getInstance().updateStats((ServerStatHandler) (Object) this, stat, value);
+  @Inject(method = "setValue", at = @At("HEAD"))
+  private void injectSetStatHead(Player player, Stat<?> stat, int value, CallbackInfo ci) {
+    MCioStats.getInstance().updateStats((ServerStatsCounter) (Object) this, stat, value);
   }
 
   /* This targets the ServerStatHandler constructor. This needs to run at the start, but you
@@ -52,14 +52,14 @@ public abstract class ServerStatHandlerMixin {
           @At(
               value = "FIELD",
               target =
-                  "Lnet/minecraft/stat/ServerStatHandler;server:Lnet/minecraft/server/MinecraftServer;",
+                      "Lnet/minecraft/stats/ServerStatsCounter;server:Lnet/minecraft/server/MinecraftServer;",
               shift = At.Shift.AFTER))
   private void onInit(MinecraftServer server, File file, CallbackInfo ci) {
-    MCioStats.getInstance().onServerStatHandlerInit((ServerStatHandler) (Object) this);
+    MCioStats.getInstance().onServerStatHandlerInit((ServerStatsCounter) (Object) this);
   }
 
   /* Optionally skip the stats load to reset */
-  @Inject(method = "parse", at = @At("HEAD"), cancellable = true)
+  @Inject(method = "parseLocal", at = @At("HEAD"), cancellable = true)
   private void injectParseHead(CallbackInfo ci) {
     if (MCioConfig.getInstance().statsReset) {
       ci.cancel(); // Cancel the parse
@@ -67,10 +67,10 @@ public abstract class ServerStatHandlerMixin {
   }
 
   /* Copy stats loaded from JSON to MCioStats */
-  @Inject(method = "parse", at = @At("RETURN"))
+  @Inject(method = "parseLocal", at = @At("RETURN"))
   private void injectParseReturn(CallbackInfo ci) {
     MCioStats.getInstance()
         .replaceStats(
-            (ServerStatHandler) (Object) this, ((StatHandlerAccessor) (Object) this).getStatMap());
+            (ServerStatsCounter) (Object) this, ((StatsCounterAccessor) (Object) this).getStats());
   }
 }

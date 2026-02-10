@@ -4,8 +4,8 @@ import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.Window;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.Window;
 import net.twoturtles.MCioConfig;
 import net.twoturtles.MCioFrameCapture;
 import org.lwjgl.glfw.GLFW;
@@ -31,7 +31,7 @@ public class WindowMixin {
   // This captures frames and stores them to MCioFrameCapture. This plugs in to the Minecraft
   // swapBuffers method so the frame is ready to go when it's captured.
   // ObservationHandler picks up the most recent frame at the end of every tick */
-  @Inject(method = "swapBuffers", at = @At("HEAD"))
+  @Inject(method = "updateDisplay", at = @At("HEAD"))
   private void beforeSwap(CallbackInfo ci) {
     MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
     frameCapture.incrementFrameSequence();
@@ -48,8 +48,8 @@ public class WindowMixin {
 
   private void doCapture(MCioFrameCapture frameCapture) {
     Window window = (Window) (Object) this;
-    int width = window.getFramebufferWidth();
-    int height = window.getFramebufferHeight();
+    int width = window.getWidth();
+    int height = window.getHeight();
 
     ByteBuffer pixelBuffer =
         ByteBuffer.allocateDirect(width * height * frameCapture.BYTES_PER_PIXEL);
@@ -68,13 +68,13 @@ public class WindowMixin {
   }
 
   private void doCaptureExp(MCioFrameCapture frameCapture) {
-    MinecraftClient minecraftClient = MinecraftClient.getInstance();
+    Minecraft minecraftClient = Minecraft.getInstance();
     frameCapture.upload();
-    frameCapture.captureExp(minecraftClient.getFramebuffer());
+    frameCapture.captureExp(minecraftClient.getMainRenderTarget());
   }
 
   // Intercepts the call to glfwDefaultWindowHints() so we can make modifications to the hints.
-  @Shadow @Final private long handle;
+  @Shadow @Final private long window;
 
   @Redirect(
       at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwDefaultWindowHints()V"),
@@ -97,7 +97,7 @@ public class WindowMixin {
   // https://github.com/FlashyReese/sodium-extra-fabric/blob/1.21/dev/common/src/main/java/me/flashyreese/mods/sodiumextra/mixin/reduce_resolution_on_mac/MixinWindow.java
   // Disable double sized frame buffer on retina displays.
   private void retinaHack() {
-    if (MinecraftClient.IS_SYSTEM_MAC) {
+    if (Minecraft.ON_OSX) {
       // This makes it so windows aren't double resolution on retina displays
       LOGGER.info("RETINA-FRAMEBUFFER-DISABLE");
       GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER /* 143361 */, GLFW.GLFW_FALSE);
@@ -123,16 +123,16 @@ public class WindowMixin {
           int[] frameWidth = new int[1];
           int[] frameHeight = new int[1];
 
-          GLFW.glfwGetFramebufferSize(handle, frameWidth, frameHeight);
-          GLFW.glfwGetWindowSize(handle, winWidth, winHeight);
+          GLFW.glfwGetFramebufferSize(window, frameWidth, frameHeight);
+          GLFW.glfwGetWindowSize(window, winWidth, winHeight);
           LOGGER.debug(
               "RETINA-HACK frame={},{} win={},{}",
               frameWidth[0],
               frameHeight[0],
               winWidth[0],
               winHeight[0]);
-          GLFW.glfwSetWindowSize(handle, winWidth[0] - 1, winHeight[0] - 1);
-          GLFW.glfwSetWindowSize(handle, winWidth[0], winHeight[0]);
+          GLFW.glfwSetWindowSize(window, winWidth[0] - 1, winHeight[0] - 1);
+          GLFW.glfwSetWindowSize(window, winWidth[0], winHeight[0]);
           if (frameWidth[0] == winWidth[0] || frameHeight[0] == winHeight[0]) {
             LOGGER.info("RETINA-HACK-SUCCESS");
             checkFrameSize = false;

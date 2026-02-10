@@ -6,8 +6,8 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerTickManager;
-import net.twoturtles.mixin.ServerTickManagerAccessor;
+import net.minecraft.server.ServerTickRateManager;
+import net.twoturtles.mixin.ServerTickRateManagerAccessor;
 import org.slf4j.Logger;
 
 /**
@@ -87,7 +87,7 @@ public class MCioSyncUtil {
    */
   public void serverInit(MinecraftServer svr) {
     server = svr;
-    ServerTickManager tickManager = server.getTickManager();
+    ServerTickRateManager tickManager = server.tickRateManager();
     tickManager.setFrozen(true);
   }
 
@@ -96,12 +96,12 @@ public class MCioSyncUtil {
    * It will go as fast as we step.
    */
   private void serverStartSprint() {
-    ServerTickManager tickManager = server.getTickManager();
+    ServerTickRateManager tickManager = server.tickRateManager();
     tickManager.setFrozen(false);
     // Start the sprint with the normal API, then set the sprint to go forever.
-    tickManager.startSprint(1);
-    ((ServerTickManagerAccessor) tickManager).setSprintTicks(Long.MAX_VALUE);
-    ((ServerTickManagerAccessor) tickManager).setScheduledSprintTicks(Long.MAX_VALUE);
+    tickManager.requestGameToSprint(1);
+    ((ServerTickRateManagerAccessor) tickManager).setRemainingSprintTicks(Long.MAX_VALUE);
+    ((ServerTickRateManagerAccessor) tickManager).setScheduledCurrentSprintTicks(Long.MAX_VALUE);
   }
 
   // This should be called via MCioClientSyncUtil.checkAndSetGameRunning().
@@ -116,7 +116,7 @@ public class MCioSyncUtil {
 
   private void handleThreadSyncTransition() {
     if (!gameRunning && readyToSyncThreads) {
-      if (server.isOnThread()) {
+      if (server.isSameThread()) {
         // About to transition to running. Set the server to sprint.
         serverStartSprint();
       }

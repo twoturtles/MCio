@@ -3,15 +3,15 @@ package net.twoturtles;
 import com.mojang.logging.LogUtils;
 import java.util.HashSet;
 import java.util.Set;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.twoturtles.mixin.client.MouseMixin;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.twoturtles.mixin.client.MouseHandlerMixin;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 /** Processes incoming actions from the agent */
 class MCioActionHandler {
-  private final MinecraftClient client;
+  private final Minecraft client;
 
   private final Logger LOGGER = LogUtils.getLogger();
   private static final TrackPerSecond recvPPS = new TrackPerSecond("ActionsReceived");
@@ -21,7 +21,7 @@ class MCioActionHandler {
   private final InputManager buttonManager;
   private volatile boolean pendingClearInput = false;
 
-  MCioActionHandler(MinecraftClient client) {
+  MCioActionHandler(Minecraft client) {
     this.client = client;
     keyManager = new InputManager(InputManager.Type.KEY, client);
     buttonManager = new InputManager(InputManager.Type.BUTTON, client);
@@ -40,7 +40,7 @@ class MCioActionHandler {
     /* Stop */
     if (action.stop()) {
       LOGGER.info("Received-Stop-Command");
-      client.scheduleStop();
+      client.stop();
     }
 
     /* Clear input
@@ -55,11 +55,11 @@ class MCioActionHandler {
     }
 
     /* Commands */
-    ClientPlayerEntity player = client.player;
+    LocalPlayer player = client.player;
     if (player != null) {
       for (String command : action.commands()) {
         LOGGER.info("Run-Command: {}", command);
-        player.networkHandler.sendChatCommand(command);
+        player.connection.sendCommand(command);
       }
     }
 
@@ -74,8 +74,8 @@ class MCioActionHandler {
     for (double[] tuple : action.cursor_pos()) {
       client.execute(
           () -> {
-            ((MouseMixinInterface) client.mouse)
-                .onCursorPosAgent$Mixin(client.getWindow().getHandle(), tuple[0], tuple[1]);
+            ((MouseMixinInterface) client.mouseHandler)
+                .onCursorPosAgent$Mixin(client.getWindow().getWindow(), tuple[0], tuple[1]);
           });
     }
   }
@@ -86,8 +86,8 @@ class MCioActionHandler {
     buttonManager.clear();
     client.execute(
         () -> {
-          ((MouseMixin.MouseAccessor) client.mouse).setX(0.0);
-          ((MouseMixin.MouseAccessor) client.mouse).setY(0.0);
+          ((MouseHandlerMixin.MouseHandlerAccessor) client.mouseHandler).setXpos(0.0);
+          ((MouseHandlerMixin.MouseHandlerAccessor) client.mouseHandler).setYpos(0.0);
         });
   }
 
@@ -111,9 +111,9 @@ class InputManager {
 
   public final Set<Integer> pressed = new HashSet<>();
   final InputManager.Type type;
-  private final MinecraftClient client;
+  private final Minecraft client;
 
-  InputManager(Type type, MinecraftClient client) {
+  InputManager(Type type, Minecraft client) {
     this.type = type;
     this.client = client;
   }
@@ -122,13 +122,13 @@ class InputManager {
   // inputCode can be a keyCode or buttonCode, depending on Type.
   // Call from within client.execute().
   private void updateSingle(int inputCode, int actionCode) {
-    long handle = client.getWindow().getHandle();
+    long handle = client.getWindow().getWindow();
 
     if (type == Type.KEY) {
-      client.keyboard.onKey(handle, inputCode, 0, actionCode, 0);
+      client.keyboardHandler.keyPress(handle, inputCode, 0, actionCode, 0);
     } else if (type == Type.BUTTON) {
-      ((MouseMixin.OnMouseButtonInvoker) client.mouse)
-          .invokeOnMouseButton(handle, inputCode, actionCode, 0);
+      ((MouseHandlerMixin.OnMouseHandlerButtonInvoker) client.mouseHandler)
+          .invokeOnPress(handle, inputCode, actionCode, 0);
     }
 
     if (actionCode == GLFW.GLFW_PRESS) {

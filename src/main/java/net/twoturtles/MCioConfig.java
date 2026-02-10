@@ -1,3 +1,4 @@
+// TODO(Ravel): Failed to fully resolve file: null cannot be cast to non-null type com.intellij.psi.PsiJavaCodeReferenceElement
 package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
@@ -7,7 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import net.minecraft.world.GameMode;
+import net.minecraft.world.level.GameType;
 import org.slf4j.Logger;
 
 /* XXX Refactor */
@@ -56,7 +57,7 @@ public class MCioConfig {
   public int skin;
   public boolean openToLan;
   public int openLanToPort;
-  public GameMode openToLanMode;
+  public GameType openToLanMode;
   public boolean statsReset;
 
   // Defaults
@@ -76,7 +77,7 @@ public class MCioConfig {
   public static final int DEFAULT_MCIO_SKIN = 15; // wide/steve
   public static final boolean DEFAULT_OPEN_TO_LAN = false;
   public static final int DEFAULT_OPEN_TO_LAN_PORT = 12001;
-  public static final GameMode DEFAULT_OPEN_TO_LAN_MODE = GameMode.SPECTATOR;
+  public static final GameType DEFAULT_OPEN_TO_LAN_MODE = GameType.SPECTATOR;
   public static final boolean DEFAULT_STATS_RESET = true;
 
   // Singleton instance

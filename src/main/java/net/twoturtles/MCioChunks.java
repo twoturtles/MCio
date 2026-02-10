@@ -2,8 +2,8 @@ package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.slf4j.Logger;
 
 public class MCioChunks {
@@ -58,7 +58,7 @@ public class MCioChunks {
         });
   }
 
-  public synchronized void serverLoad(WorldChunk chunk) {
+  public synchronized void serverLoad(LevelChunk chunk) {
     // Note: The first loads are for spawn chunks
     if (selectStarted && !serverStarted) {
       LOGGER.info("ServerChunks Started");
@@ -76,13 +76,13 @@ public class MCioChunks {
     }
   }
 
-  public synchronized void serverUnload(WorldChunk chunk) {
+  public synchronized void serverUnload(LevelChunk chunk) {
     ChunkPos pos = chunk.getPos();
     LOGGER.debug("Server-Unload-Chunk [{}, {}]", pos.x, pos.z);
   }
 
   // Client
-  public synchronized void clientLoad(WorldChunk chunk) {
+  public synchronized void clientLoad(LevelChunk chunk) {
     if (selectStarted && !clientStarted) {
       LOGGER.info("ClientChunks Started");
       clientStarted = true;
@@ -99,7 +99,7 @@ public class MCioChunks {
     }
   }
 
-  public synchronized void clientUnload(WorldChunk chunk) {
+  public synchronized void clientUnload(LevelChunk chunk) {
     ChunkPos pos = chunk.getPos();
     LOGGER.debug("Client-Unload-Chunk [{}, {}]", pos.x, pos.z);
   }

@@ -4,12 +4,12 @@ import com.mojang.logging.LogUtils;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 
 public class MCioClientAsync {
   private final Logger LOGGER = LogUtils.getLogger();
-  private final MinecraftClient client;
+  private final Minecraft client;
 
   private final MCioNetworkConnection connection;
   private final MCioActionHandler actionHandler;
@@ -30,7 +30,7 @@ public class MCioClientAsync {
   // Observations are sent at the end of every client tick. Actions are received and processed on
   // a separate thread.
   public MCioClientAsync(MCioConfig config) {
-    client = MinecraftClient.getInstance();
+    client = Minecraft.getInstance();
 
     connection = new MCioNetworkConnection();
     actionHandler = new MCioActionHandler(client);

@@ -3,8 +3,8 @@ package net.twoturtles.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import java.util.function.Consumer;
-import net.minecraft.server.network.ChunkFilter;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.server.level.ChunkTrackingView;
+import net.minecraft.world.level.ChunkPos;
 import net.twoturtles.MCioChunks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ChunkFilter.Cylindrical.class)
+@Mixin(ChunkTrackingView.Positioned.class)
 public abstract class ChunkFilterCylindricalMixin {
   @Unique
   private static final Logger LOGGER =
@@ -23,27 +23,27 @@ public abstract class ChunkFilterCylindricalMixin {
 
   /* The recommended use of Shadow is to declare the class and methods abstract */
   @Shadow
-  abstract int getLeft();
+  abstract int minX();
 
   @Shadow
-  abstract int getRight();
+  abstract int maxX();
 
   @Shadow
-  abstract int getBottom();
+  abstract int minZ();
 
   @Shadow
-  abstract int getTop();
+  abstract int maxZ();
 
   @Inject(method = "forEach", at = @At("HEAD"))
   private void beforeForEachStart(Consumer<ChunkPos> consumer, CallbackInfo ci) {
-    ChunkFilter.Cylindrical cyl = ((ChunkFilter.Cylindrical) (Object) this);
+    ChunkTrackingView.Positioned cyl = ((ChunkTrackingView.Positioned) (Object) this);
     LOGGER.info(
         "SelectChunks Started center={} range-x={}:{} range-z={}:{} viewDistance={}",
         cyl.center(),
-        getLeft(),
-        getRight(),
-        getBottom(),
-        getTop(),
+        minX(),
+        maxX(),
+        minZ(),
+        maxZ(),
         cyl.viewDistance());
     MCioChunks.getInstance().selectStart();
   }

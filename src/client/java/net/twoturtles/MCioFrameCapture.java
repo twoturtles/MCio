@@ -1,5 +1,10 @@
 package net.twoturtles;
 
+import com.mojang.blaze3d.buffers.BufferType;
+import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuFence;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.logging.LogUtils;
@@ -9,7 +14,7 @@ import java.util.List;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.gl.*;
-import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.KeyMapping;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.stb.STBImageWrite;
 import org.slf4j.Logger;
@@ -30,7 +35,7 @@ public final class MCioFrameCapture {
   private int width = 1280;
   private int height = 720;
   private GpuBuffer pixelBuffer = null;
-  private GlFenceSync fenceSync = null;
+  private GpuFence fenceSync = null;
 
   // Singleton instance
   private static final MCioFrameCapture INSTANCE = new MCioFrameCapture();
@@ -58,7 +63,7 @@ public final class MCioFrameCapture {
   private GpuBuffer getPixelBuffer() {
     // Call of opengl too early (eg: initialization of fabric mod) will cause error.
     if (this.pixelBuffer == null) {
-      this.pixelBuffer = new GpuBuffer(GlBufferTarget.PIXEL_PACK, GlUsage.STREAM_READ, 0);
+      this.pixelBuffer = new GpuBuffer(BufferType.PIXEL_PACK, BufferUsage.STREAM_READ, 0);
       this.pixelBuffer.resize(this.width * this.height * this.BYTES_PER_PIXEL);
     }
     return this.pixelBuffer;
@@ -77,11 +82,11 @@ public final class MCioFrameCapture {
   }
 
   // Experimental higher performance frame capture
-  public void captureExp(Framebuffer framebuffer) {
+  public void captureExp(RenderTarget framebuffer) {
     if (this.fenceSync == null) {
-      if (framebuffer.textureWidth != this.width || framebuffer.textureHeight != this.height) {
-        this.width = framebuffer.textureWidth;
-        this.height = framebuffer.textureHeight;
+      if (framebuffer.width != this.width || framebuffer.height != this.height) {
+        this.width = framebuffer.width;
+        this.height = framebuffer.height;
         this.getPixelBuffer().resize(this.width * this.height * this.BYTES_PER_PIXEL);
       }
 
@@ -89,11 +94,11 @@ public final class MCioFrameCapture {
       captureFPS.count();
 
       this.getPixelBuffer().bind();
-      GlStateManager._glBindFramebuffer(GlConst.GL_READ_FRAMEBUFFER, framebuffer.fbo);
+      GlStateManager._glBindFramebuffer(GlConst.GL_READ_FRAMEBUFFER, framebuffer.frameBufferId);
       GlStateManager._readPixels(
           0, 0, this.width, this.height, GlConst.GL_RGB, GlConst.GL_UNSIGNED_BYTE, 0L);
       GlStateManager._glBindFramebuffer(GlConst.GL_READ_FRAMEBUFFER, 0);
-      this.fenceSync = new GlFenceSync();
+      this.fenceSync = new GpuFence();
     }
   }
 
@@ -103,7 +108,7 @@ public final class MCioFrameCapture {
       if (this.fenceSync.wait(0L)) {
         this.fenceSync = null;
 
-        try (GpuBuffer.ReadResult readResult = this.getPixelBuffer().read()) {
+        try (GpuBuffer.ReadView readResult = this.getPixelBuffer().read()) {
           if (readResult != null) {
             MCioFrame frame =
                 new MCioFrame(
@@ -112,7 +117,7 @@ public final class MCioFrameCapture {
                     this.width,
                     this.height,
                     this.BYTES_PER_PIXEL,
-                    readResult.getBuf());
+                    readResult.data());
             lastCapturedFrame = frame;
             invokeCaptureCallbacks(frame);
           }
@@ -180,7 +185,7 @@ public final class MCioFrameCapture {
 class MCioFrameSave {
   private static MCioFrameSave instance;
   private final Logger LOGGER = LogUtils.getLogger();
-  private final KeyBinding captureKey;
+  private final KeyMapping captureKey;
 
   public static void initialize() {
     // Use for initial setup.
@@ -198,12 +203,12 @@ class MCioFrameSave {
     // Register the keybinding (default to V)
     captureKey =
         KeyBindingHelper.registerKeyBinding(
-            new KeyBinding("MCioFrameSave", GLFW.GLFW_KEY_V, MCioConfig.KEY_CATEGORY));
+            new KeyMapping("MCioFrameSave", GLFW.GLFW_KEY_V, MCioConfig.KEY_CATEGORY));
 
     // Register the tick event to pick up the key press.
     ClientTickEvents.END_CLIENT_TICK.register(
         client -> {
-          if (captureKey.wasPressed() && client.world != null) {
+          if (captureKey.consumeClick() && client.level != null) {
             doCapture();
           }
         });
