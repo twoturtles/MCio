@@ -1,8 +1,10 @@
 # Changelog
 
-## 1.4.1+1.21.3 - 2025-XX-XX
+## 1.5.0+1.21.3 - 2026-02-09
 
 - Move disable command feedback to mcio_ctrl
+- Last version before converting to Mojang mappings
+- MCIO_PROTOCOL_VERSION = 7
 
 ## 1.4.0+1.21.3 - 2025-10-22
 
