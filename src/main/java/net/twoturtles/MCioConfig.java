@@ -1,5 +1,3 @@
-// TODO(Ravel): Failed to fully resolve file: null cannot be cast to non-null type
-// com.intellij.psi.PsiJavaCodeReferenceElement
 package net.twoturtles;
 
 import com.mojang.logging.LogUtils;
