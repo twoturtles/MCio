@@ -38,12 +38,7 @@ public class WindowMixin {
 
     if (!frameCapture.isEnabled()) return;
 
-    MCioConfig config = MCioConfig.getInstance();
-    if (config.mcioExp1) {
-      doCaptureExp(frameCapture);
-    } else {
-      doCapture(frameCapture);
-    }
+    doCapture(frameCapture);
   }
 
   private void doCapture(MCioFrameCapture frameCapture) {
@@ -65,12 +60,6 @@ public class WindowMixin {
     glPixelStorei(GL_PACK_ALIGNMENT, alignment[0]);
 
     frameCapture.capture(pixelBuffer, width, height);
-  }
-
-  private void doCaptureExp(MCioFrameCapture frameCapture) {
-    Minecraft minecraftClient = Minecraft.getInstance();
-    frameCapture.upload();
-    frameCapture.captureExp(minecraftClient.getMainRenderTarget());
   }
 
   // Intercepts the call to glfwDefaultWindowHints() so we can make modifications to the hints.

@@ -53,7 +53,6 @@ public class MCioConfig {
   public boolean hideMinecraftWindow;
   public boolean retinaHack;
   public boolean syncSpeedTest;
-  public boolean mcioExp1;
   public boolean mcioPreloadChunks;
   public int skin;
   public boolean openToLan;
@@ -73,7 +72,6 @@ public class MCioConfig {
   public static final boolean DEFAULT_HIDE_MINECRAFT_WINDOW = false;
   public static final boolean DEFAULT_RETINA_HACK = true; // Disable retina double resolution
   public static final boolean DEFAULT_SYNC_SPEED_TEST = false;
-  public static final boolean DEFAULT_MCIO_EXP1 = false;
   public static final boolean DEFAULT_MCIO_PRELOAD_CHUNKS = true;
   public static final int DEFAULT_MCIO_SKIN = 15; // wide/steve
   public static final boolean DEFAULT_OPEN_TO_LAN = false;
@@ -111,7 +109,6 @@ public class MCioConfig {
     hideMinecraftWindow = getBoolean("MCIO_HIDE_WINDOW", DEFAULT_HIDE_MINECRAFT_WINDOW);
     retinaHack = getBoolean("MCIO_DO_RETINA_HACK", DEFAULT_RETINA_HACK);
     syncSpeedTest = getBoolean("MCIO_SYNC_SPEED_TEST", DEFAULT_SYNC_SPEED_TEST);
-    mcioExp1 = getBoolean("MCIO_EXP1", DEFAULT_MCIO_EXP1);
     mcioPreloadChunks = getBoolean("MCIO_PRELOAD_CHUNKS", DEFAULT_MCIO_PRELOAD_CHUNKS);
     skin = getInt("MCIO_SKIN", DEFAULT_MCIO_SKIN);
     openToLan = getBoolean("MCIO_OPEN_TO_LAN", DEFAULT_OPEN_TO_LAN);
@@ -128,7 +125,6 @@ public class MCioConfig {
     LOGGER.info("MCIO_HIDE_WINDOW={}", hideMinecraftWindow);
     LOGGER.info("MCIO_RETINA_HACK={}", retinaHack);
     LOGGER.info("MCIO_SYNC_SPEED_TEST={}", syncSpeedTest);
-    LOGGER.info("MCIO_EXP1={}", mcioExp1);
     LOGGER.info("MCIO_PRELOAD_CHUNKS={}", mcioPreloadChunks);
     LOGGER.info("MCIO_SKIN={}", skin);
     LOGGER.info("MCIO_OPEN_TO_LAN={}", openToLan);
@@ -286,9 +282,6 @@ public class MCioConfig {
                   MCIO_ASYNC_OBSERVATION_TRIGGER %s Default: %s
                     Trigger method for async observations
 
-                  MCIO_EXP1                      [boolean] Default: %b
-                    Enable experimental feature 1
-
                   MCIO_FRAME_TYPE                %s Default: %s
                     Set the frame type format
 
@@ -312,7 +305,6 @@ public class MCioConfig {
             DEFAULT_STATS_RESET,
             Arrays.toString(MCioAsyncObsTrigger.values()),
             DEFAULT_ASYNC_OBSERVATION_TRIGGER,
-            DEFAULT_MCIO_EXP1,
             Arrays.toString(MCioFrameType.values()),
             DEFAULT_MCIO_FRAME_TYPE);
   }
