@@ -74,8 +74,8 @@ class MCioActionHandler {
     for (double[] tuple : action.cursor_pos()) {
       client.execute(
           () -> {
-            ((MouseMixinInterface) client.mouseHandler)
-                .onCursorPosAgent$Mixin(client.getWindow().getWindow(), tuple[0], tuple[1]);
+            ((MouseHandlerMixinInterface) client.mouseHandler)
+                .onMoveAgent$Mixin(client.getWindow().getWindow(), tuple[0], tuple[1]);
           });
     }
   }
@@ -127,7 +127,7 @@ class InputManager {
     if (type == Type.KEY) {
       client.keyboardHandler.keyPress(handle, inputCode, 0, actionCode, 0);
     } else if (type == Type.BUTTON) {
-      ((MouseHandlerMixin.OnMouseHandlerButtonInvoker) client.mouseHandler)
+      ((MouseHandlerMixin.OnPressInvoker) client.mouseHandler)
           .invokeOnPress(handle, inputCode, actionCode, 0);
     }
 

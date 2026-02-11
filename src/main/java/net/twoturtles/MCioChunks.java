@@ -6,9 +6,25 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.slf4j.Logger;
 
+/**
+ * Tracks initial chunk loading through three phases to determine when it's safe to start ticking.
+ * Fast game ticks starve chunk loading, so in sync mode we delay ticks until chunks are ready.
+ *
+ * <p>Phase 1 - Select: The mixin on ChunkTrackingView.Positioned.forEach counts how many chunks the
+ * server selects to send to the player. This sets the target count.
+ *
+ * <p>Phase 2 - Server: ServerChunkEvents count server-side loads until they match the select count.
+ *
+ * <p>Phase 3 - Client: ClientChunkEvents (via MCioClientChunks) count client-side loads until they
+ * match the select count. When complete, clientInitialLoadComplete() returns true.
+ *
+ * <p>MCioClientSyncUtil checks clientInitialLoadComplete() to gate setGameRunning(), which controls
+ * when sync mode begins ticking.
+ */
 public class MCioChunks {
   private static final Logger LOGGER = LogUtils.getLogger();
 
+  // State flags for each phase
   private boolean selectStarted = false;
   private boolean selectEnded = false;
   private boolean serverStarted = false;
@@ -16,6 +32,7 @@ public class MCioChunks {
   private boolean clientStarted = false;
   private volatile boolean clientEnded =
       false; // volatile so render thread can read without locking
+  // Per-phase counters. Each phase is complete when its count matches selectPerSec's total.
   private final TrackPerSecond selectPerSec = new TrackPerSecond("SelectChunks");
   private final TrackPerSecond serverPerSec = new TrackPerSecond("ServerChunks");
   private final TrackPerSecond clientPerSec = new TrackPerSecond("ClientChunks");

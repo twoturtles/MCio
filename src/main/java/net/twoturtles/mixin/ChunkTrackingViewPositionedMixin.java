@@ -1,4 +1,3 @@
-// package net.minecraft.server.network;
 package net.twoturtles.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
@@ -15,11 +14,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Hooks into the server's chunk selection to count how many chunks will be sent to the player. This
+ * count becomes the target that MCioChunks uses to know when initial chunk loading is done (server
+ * and client load counts must match the selection count).
+ *
+ * <p>The three injections track the start, each selected chunk, and the end of forEach.
+ */
 @Mixin(ChunkTrackingView.Positioned.class)
-public abstract class ChunkFilterCylindricalMixin {
+public abstract class ChunkTrackingViewPositionedMixin {
   @Unique
   private static final Logger LOGGER =
-      LoggerFactory.getLogger("net.twoturtles.mixin.main.ChunkFilterCylindricalMixin");
+      LoggerFactory.getLogger("net.twoturtles.mixin.main.ChunkTrackingViewPositionedMixin");
 
   /* The recommended use of Shadow is to declare the class and methods abstract */
   @Shadow

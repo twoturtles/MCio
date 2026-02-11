@@ -29,10 +29,10 @@ public class WindowMixin {
   @Unique private static boolean checkFrameSize = false;
 
   // This captures frames and stores them to MCioFrameCapture. This plugs in to the Minecraft
-  // swapBuffers method so the frame is ready to go when it's captured.
+  // updateDisplay (frame buffer swap) method so the frame is ready to go when it's captured.
   // ObservationHandler picks up the most recent frame at the end of every tick */
   @Inject(method = "updateDisplay", at = @At("HEAD"))
-  private void beforeSwap(CallbackInfo ci) {
+  private void beforeUpdateDisplay(CallbackInfo ci) {
     MCioFrameCapture frameCapture = MCioFrameCapture.getInstance();
     frameCapture.incrementFrameSequence();
 
@@ -41,6 +41,7 @@ public class WindowMixin {
     doCapture(frameCapture);
   }
 
+  @Unique
   private void doCapture(MCioFrameCapture frameCapture) {
     Window window = (Window) (Object) this;
     int width = window.getWidth();
@@ -85,6 +86,7 @@ public class WindowMixin {
   // Based on
   // https://github.com/FlashyReese/sodium-extra-fabric/blob/1.21/dev/common/src/main/java/me/flashyreese/mods/sodiumextra/mixin/reduce_resolution_on_mac/MixinWindow.java
   // Disable double sized frame buffer on retina displays.
+  @Unique
   private void retinaHack() {
     if (Minecraft.ON_OSX) {
       // This makes it so windows aren't double resolution on retina displays
@@ -93,15 +95,14 @@ public class WindowMixin {
       checkFrameSize = true;
     }
 
-    // The retina flag above doesn't quite work. The frame buffer ends up being twice the size of
-    // the window.
-    // I noticed that resizing the window fixes this. This hack does little resizes to the window
-    // until
-    // the frame buffer matches. It seems to take multiple calls, so do it until it works. Maybe
-    // some
-    // timing issue. This has to be done late enough in initialization that the frame buffer exists.
-    // Triggering off client ticks seems safe.
-    // Possibly related to this https://github.com/glfw/glfw/issues/1968
+    /*
+    The retina flag above doesn't quite work. The frame buffer ends up being twice the size of the window.
+    I noticed that resizing the window fixes this. This hack does little resizes to the window until
+    the frame buffer matches. It seems to take multiple calls, so do it until it works. Maybe some
+    timing issue. This has to be done late enough in initialization that the frame buffer exists.
+    Triggering off client ticks seems safe.
+    Possibly related to this https://github.com/glfw/glfw/issues/1968
+    */
     ClientTickEvents.END_CLIENT_TICK.register(
         client -> {
           if (!checkFrameSize) {

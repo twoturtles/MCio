@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class DefaultPlayerSkinMixin {
   @Unique
   private static final Logger LOGGER =
-      LoggerFactory.getLogger("net.twoturtles.mixin.client.DefaultSkinHelperMixin");
+      LoggerFactory.getLogger("net.twoturtles.mixin.client.DefaultPlayerSkinMixin");
 
   @Final @Shadow private static PlayerSkin[] DEFAULT_SKINS;
 

@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ServerStatsCounterMixin {
   @Unique
   private static final Logger LOGGER =
-      LoggerFactory.getLogger("net.twoturtles.mixin.ServerStatHandlerMixin");
+      LoggerFactory.getLogger("net.twoturtles.mixin.ServerStatCounterMixin");
 
   @Mixin(StatsCounter.class)
   public interface StatsCounterAccessor {
@@ -38,11 +38,11 @@ public abstract class ServerStatsCounterMixin {
   }
 
   @Inject(method = "setValue", at = @At("HEAD"))
-  private void injectSetStatHead(Player player, Stat<?> stat, int value, CallbackInfo ci) {
+  private void injectSetValueHead(Player player, Stat<?> stat, int value, CallbackInfo ci) {
     MCioStats.getInstance().updateStats((ServerStatsCounter) (Object) this, stat, value);
   }
 
-  /* This targets the ServerStatHandler constructor. This needs to run at the start, but you
+  /* This targets the ServerStatCounter constructor. This needs to run at the start, but you
    * can't target HEAD of init. Instead, targeting the first assignment.
    * XXX Seems brittle
    */
@@ -60,7 +60,7 @@ public abstract class ServerStatsCounterMixin {
 
   /* Optionally skip the stats load to reset */
   @Inject(method = "parseLocal", at = @At("HEAD"), cancellable = true)
-  private void injectParseHead(CallbackInfo ci) {
+  private void injectParseLocalHead(CallbackInfo ci) {
     if (MCioConfig.getInstance().statsReset) {
       ci.cancel(); // Cancel the parse
     }
@@ -68,7 +68,7 @@ public abstract class ServerStatsCounterMixin {
 
   /* Copy stats loaded from JSON to MCioStats */
   @Inject(method = "parseLocal", at = @At("RETURN"))
-  private void injectParseReturn(CallbackInfo ci) {
+  private void injectParseLocalReturn(CallbackInfo ci) {
     MCioStats.getInstance()
         .replaceStats(
             (ServerStatsCounter) (Object) this, ((StatsCounterAccessor) (Object) this).getStats());

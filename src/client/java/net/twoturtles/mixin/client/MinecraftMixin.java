@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MinecraftMixin {
   @Unique
   private static final Logger LOGGER =
-      LoggerFactory.getLogger("net.twoturtles.mixin.client.MinecraftClientMixin");
+      LoggerFactory.getLogger("net.twoturtles.mixin.client.MinecraftMixin");
 
   @Shadow private boolean windowActive;
 

@@ -4,6 +4,10 @@ import com.mojang.logging.LogUtils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import org.slf4j.Logger;
 
+/**
+ * Client-side bridge for chunk events. Forwards ClientChunkEvents to MCioChunks (which lives in the
+ * main source set and can't access client-only APIs directly).
+ */
 public class MCioClientChunks {
   private static final Logger LOGGER = LogUtils.getLogger();
 

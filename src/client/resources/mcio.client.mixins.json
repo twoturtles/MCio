@@ -8,8 +8,8 @@
     "MinecraftMixin",
     "MouseHandlerMixin",
     "MouseHandlerMixin$MouseHandlerAccessor",
-    "MouseHandlerMixin$OnCursorPosInvoker",
-    "MouseHandlerMixin$OnMouseHandlerButtonInvoker",
+    "MouseHandlerMixin$OnMoveInvoker",
+    "MouseHandlerMixin$OnPressInvoker",
     "RenderSystemMixin",
     "WindowMixin"
   ],
