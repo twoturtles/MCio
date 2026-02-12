@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.0+1.21.3 - 2026-02-11
+
+- Convert to Mojang mappings in preparation for deobfuscated Minecraft
+
 ## 1.5.0+1.21.3 - 2026-02-09
 
 - Move disable command feedback to mcio_ctrl
