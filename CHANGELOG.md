@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.6.1+1.21.3 - 2026-02-XX
+## 1.6.1+1.21.3 - 2026-02-15
 
 - Fix issue that caused initial mouse movements to be ignored in some cases
 
