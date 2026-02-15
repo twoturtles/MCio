@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1+1.21.3 - 2026-02-XX
+
+- Fix issue that caused initial mouse movements to be ignored in some cases
+
 ## 1.6.0+1.21.3 - 2026-02-11
 
 - Convert to Mojang mappings in preparation for deobfuscated Minecraft

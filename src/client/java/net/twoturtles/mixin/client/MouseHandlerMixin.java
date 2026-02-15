@@ -30,6 +30,9 @@ public class MouseHandlerMixin implements MouseHandlerMixinInterface {
 
     @Accessor("ypos")
     void setYpos(double y);
+
+    @Accessor("ignoreFirstMove")
+    void setIgnoreFirstMove(boolean ignore);
   }
 
   // Access to onPress for the agent. (Mouse button press)
@@ -64,6 +67,10 @@ public class MouseHandlerMixin implements MouseHandlerMixinInterface {
   public void onMoveAgent$Mixin(long window, double x, double y) {
     isAgentMovement = true;
     try {
+      // Clear ignoreFirstMove so agent movements are never silently absorbed.
+      // Minecraft sets this flag in grabMouse() when a screen closes (e.g. death screen),
+      // causing the next onMove() to only sync xpos/ypos without accumulating any camera delta.
+      ((MouseHandlerAccessor) this).setIgnoreFirstMove(false);
       ((OnMoveInvoker) this).invokeOnMove(window, x, y);
     } finally {
       isAgentMovement = false;
